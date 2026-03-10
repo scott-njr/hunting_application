@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
-  LayoutDashboard, Users, AlertCircle, Activity, MessageSquare, FileText,
+  LayoutDashboard, Users, AlertCircle, Activity, MessageSquare, FileText, Rocket,
   Menu, X, LogOut, ChevronDown, LayoutGrid, Home, Shield,
   Crosshair, Target, Heart, Fish, Dumbbell,
 } from 'lucide-react'
@@ -44,6 +44,7 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/issues', label: 'Issues', icon: AlertCircle },
+  { href: '/admin/deploys', label: 'Deploys', icon: Rocket },
   { href: '/admin/ai-usage', label: 'AI Usage', icon: Activity },
   { href: '/admin/ai-logs', label: 'AI Logs', icon: FileText },
   { href: '/admin/community', label: 'Community', icon: MessageSquare },

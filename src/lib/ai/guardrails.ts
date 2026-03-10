@@ -3,10 +3,11 @@ import { HUNTING_SYSTEM_RULES, SCOUT_REPORT_RULES, DRAW_ASSISTANT_RULES, UNIT_SC
 import { FITNESS_SYSTEM_RULES } from './rules/fitness.rules'
 import { FITNESS_COACH_RULES } from './rules/fitness-coach.rules'
 import { FIREARMS_SYSTEM_RULES } from './rules/firearms.rules'
+import { BUG_TRIAGE_RULES } from './rules/system.rules'
 
 // ─── Module types ──────────────────────────────────────────────────────────────
 
-export type AIModule = 'hunting' | 'fitness' | 'firearms'
+export type AIModule = 'hunting' | 'fitness' | 'firearms' | 'system'
 export type AIFeature =
   | 'scout_report'
   | 'draw_assistant'
@@ -19,6 +20,7 @@ export type AIFeature =
   | 'fitness_coach'
   | 'firearms_education'
   | 'unit_scout'
+  | 'bug_triage'
 
 // ─── System prompt builder ─────────────────────────────────────────────────────
 
@@ -26,6 +28,7 @@ const MODULE_RULES: Record<AIModule, string> = {
   hunting: HUNTING_SYSTEM_RULES,
   fitness: FITNESS_SYSTEM_RULES,
   firearms: FIREARMS_SYSTEM_RULES,
+  system: '',
 }
 
 const FEATURE_RULES: Partial<Record<AIFeature, string>> = {
@@ -33,6 +36,7 @@ const FEATURE_RULES: Partial<Record<AIFeature, string>> = {
   draw_assistant: DRAW_ASSISTANT_RULES,
   fitness_coach: FITNESS_COACH_RULES,
   unit_scout: UNIT_SCOUT_RULES,
+  bug_triage: BUG_TRIAGE_RULES,
 }
 
 /**

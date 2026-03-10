@@ -560,6 +560,40 @@ export type Database = {
         }
         Relationships: []
       }
+      deploy_log: {
+        Row: {
+          id: string
+          triggered_by: string | null
+          issue_id: string | null
+          severity: string | null
+          status: 'triggered' | 'building' | 'success' | 'failed'
+          github_pr_url: string | null
+          admin_notes: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          triggered_by?: string | null
+          issue_id?: string | null
+          severity?: string | null
+          status?: 'triggered' | 'building' | 'success' | 'failed'
+          github_pr_url?: string | null
+          admin_notes?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          triggered_by?: string | null
+          issue_id?: string | null
+          severity?: string | null
+          status?: 'triggered' | 'building' | 'success' | 'failed'
+          github_pr_url?: string | null
+          admin_notes?: string | null
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
       draw_states: {
         Row: {
           id: string
@@ -927,6 +961,11 @@ export type Database = {
           resolved_by: string | null
           release_tag: string | null
           notified_at: string | null
+          severity: 'easy' | 'major' | null
+          ai_classified_at: string | null
+          ai_proposed_fix: string | null
+          github_issue_url: string | null
+          admin_deploy_notes: string | null
           created_at: string
           updated_at: string
         }
@@ -945,6 +984,11 @@ export type Database = {
           resolved_by?: string | null
           release_tag?: string | null
           notified_at?: string | null
+          severity?: 'easy' | 'major' | null
+          ai_classified_at?: string | null
+          ai_proposed_fix?: string | null
+          github_issue_url?: string | null
+          admin_deploy_notes?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -961,6 +1005,11 @@ export type Database = {
           resolved_by?: string | null
           release_tag?: string | null
           notified_at?: string | null
+          severity?: 'easy' | 'major' | null
+          ai_classified_at?: string | null
+          ai_proposed_fix?: string | null
+          github_issue_url?: string | null
+          admin_deploy_notes?: string | null
           updated_at?: string
         }
         Relationships: []
