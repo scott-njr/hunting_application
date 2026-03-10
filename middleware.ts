@@ -17,6 +17,11 @@ const ONBOARDING_EXEMPT = ['/onboarding', '/auth/login', '/auth/signup', '/auth/
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Webhook endpoints bypass all gates (authenticated via shared secret, not cookies)
+  if (pathname.startsWith('/api/webhooks')) {
+    return NextResponse.next()
+  }
+
   // Preview password gate — only active when PREVIEW_PASSWORD is set (Vercel deploys only)
   const previewPassword = process.env.PREVIEW_PASSWORD
   if (previewPassword) {
