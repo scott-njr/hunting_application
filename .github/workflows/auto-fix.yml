@@ -80,18 +80,19 @@ jobs:
       - name: Run build
         run: npm run build
 
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "fix: ${{ github.event.inputs.title }}
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: ${{ github.event.inputs.title }}
 
           Issue ID: ${{ github.event.inputs.issue_id }}
           Severity: ${{ github.event.inputs.severity }}
 
           Co-Authored-By: Claude <noreply@anthropic.com>"
+          fi
           git push origin "$BRANCH"
 
       - name: Create PR
