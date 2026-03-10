@@ -87,6 +87,7 @@ export type Database = {
           phone: string | null
           backup_email: string | null
           date_of_birth: string | null
+          gender: 'male' | 'female' | null
           height_inches: number | null
           weight_lbs: number | null
           bench_press_lbs: number | null
@@ -134,6 +135,7 @@ export type Database = {
           phone?: string | null
           backup_email?: string | null
           date_of_birth?: string | null
+          gender?: 'male' | 'female' | null
           height_inches?: number | null
           weight_lbs?: number | null
           bench_press_lbs?: number | null
@@ -181,6 +183,7 @@ export type Database = {
           phone?: string | null
           backup_email?: string | null
           date_of_birth?: string | null
+          gender?: 'male' | 'female' | null
           height_inches?: number | null
           weight_lbs?: number | null
           bench_press_lbs?: number | null
