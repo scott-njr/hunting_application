@@ -1,24 +1,10 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
+import { verifyAdmin } from '@/lib/admin-utils'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return member?.is_admin ? user : null
-}
 
 /** POST — Manually trigger AI triage on an existing issue */
 export async function POST(req: NextRequest) {

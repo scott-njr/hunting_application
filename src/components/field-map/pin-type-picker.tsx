@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { PIN_TYPES, PIN_GROUPS, type PinGroup } from '@/lib/field-map/pin-types'
+import { PIN_TYPES, PIN_GROUPS } from '@/lib/field-map/pin-types'
 
 type Props = {
   value: string

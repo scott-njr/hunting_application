@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   // Fetch the share — RLS ensures only target_user can update
   const { data: share } = await supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .select('*')
     .eq('id', share_id)
     .eq('target_user_id', user.id)
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   if (action === 'decline') {
     const { error } = await supabase
-      .from('shared_plans')
+      .from('fitness_shared_plans')
       .update({ status: 'declined' as const })
       .eq('id', share_id)
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   // Accept: copy the source plan for the recipient
   const { data: sourcePlan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('plan_type, config, plan_data, goal, weeks_total')
     .eq('id', share.source_plan_id)
     .single()
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   // Abandon any existing active plan of this type for the recipient
   await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .update({ status: 'abandoned' as const })
     .eq('user_id', user.id)
     .eq('plan_type', sourcePlan.plan_type)
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   // Create the copy
   const { data: newPlan, error: insertError } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .insert({
       user_id: user.id,
       plan_type: sourcePlan.plan_type,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   // Update the share with the new plan reference
   const { error: updateError } = await supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .update({
       target_plan_id: newPlan.id,
       status: 'accepted' as const,

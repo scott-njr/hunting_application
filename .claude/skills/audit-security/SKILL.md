@@ -188,13 +188,13 @@ If `src/lib/ai/` exists, audit the guardrails framework:
 ### Critical Vulnerabilities
 | # | Category | Location | Description | Severity | Fix |
 |---|----------|----------|-------------|----------|-----|
-| 1 | Prompt Injection | /api/hunts/scout-data | User location data injected into prompt without sanitization | HIGH | Use structured message format |
+| 1 | Prompt Injection | /api/hunting/scout-data | User location data injected into prompt without sanitization | HIGH | Use structured message format |
 | 2 | ... | ... | ... | ... | ... |
 
 ### AI Security
 | Endpoint | System Prompt Protected | Input Sanitized | Output Validated | Rate Limited | Guardrails |
 |----------|----------------------|----------------|-----------------|-------------|------------|
-| /api/hunts/scout-data | NO (inline) | Partial | NO | Quota only | None |
+| /api/hunting/scout-data | NO (inline) | Partial | NO | Quota only | None |
 | ... | ... | ... | ... | ... | ... |
 
 ### Authentication & Authorization

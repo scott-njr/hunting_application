@@ -8,10 +8,12 @@ import {
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
 import { WowPreview } from '@/components/fitness/wow-preview'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Fitness Module — AI Coaching & Plans',
   description: 'AI run coaching, strength programming, meal planning, baseline testing, and weekly challenges — all personalized to your goals and built for outdoor performance.',
+  alternates: { canonical: '/fitness' },
 }
 
 const features = [
@@ -107,7 +109,7 @@ export default function FitnessPage() {
         <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <Dumbbell className="h-7 w-7 text-green-400" />
-            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Fitness</h1>
+            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Fitness — AI Coaching & Meal Plans</h1>
           </div>
           <p className="text-sm font-semibold uppercase tracking-wide text-green-400 mb-4">Built for Real Life</p>
           <p className="text-secondary text-lg max-w-2xl mb-0">
@@ -158,10 +160,7 @@ export default function FitnessPage() {
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
-                  {/* Fallback overlay when image doesn't exist yet */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-elevated/80 backdrop-blur-sm">
-                    <p className="text-muted text-xs text-center px-4">Screenshot coming soon</p>
-                  </div>
+                  <div className="absolute inset-0 bg-elevated/60" />
                 </div>
               </div>
             </div>
@@ -186,9 +185,7 @@ export default function FitnessPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

@@ -14,7 +14,7 @@ export async function GET(
 
   // Fetch the share — RLS ensures user is source or target
   const { data: share } = await supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .select('*')
     .eq('id', shareId)
     .eq('status', 'accepted')
@@ -27,12 +27,12 @@ export async function GET(
   // Fetch both plans (cross-plan RLS policies allow this)
   const [sourceResult, targetResult] = await Promise.all([
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('id, user_id, plan_type, plan_data, goal, weeks_total, started_at')
       .eq('id', share.source_plan_id)
       .single(),
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('id, user_id, plan_type, plan_data, goal, weeks_total, started_at')
       .eq('id', share.target_plan_id)
       .single(),
@@ -44,7 +44,7 @@ export async function GET(
 
   // Fetch both plans' logs (cross-plan RLS policies allow this)
   const { data: allLogs } = await supabase
-    .from('plan_workout_logs')
+    .from('fitness_plan_workout_logs')
     .select('plan_id, week_number, session_number, notes, completed_at')
     .in('plan_id', [share.source_plan_id, share.target_plan_id])
 
@@ -92,7 +92,7 @@ export async function GET(
 
   // Fetch display names for both users
   const { data: profiles } = await supabase
-    .from('hunter_profiles')
+    .from('user_profile')
     .select('id, display_name')
     .in('id', [share.source_user_id, share.target_user_id])
 

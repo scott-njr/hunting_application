@@ -15,7 +15,7 @@ export async function DELETE(
   const { id } = await params
 
   const { error } = await supabase
-    .from('friendships')
+    .from('social_friendships')
     .delete()
     .eq('id', id)
 

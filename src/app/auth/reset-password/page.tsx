@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
+import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 
 function ResetPasswordForm() {
@@ -120,12 +121,12 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center px-4">
+    <div className="min-h-dvh bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
         <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm text-center">Loading...</div>}>

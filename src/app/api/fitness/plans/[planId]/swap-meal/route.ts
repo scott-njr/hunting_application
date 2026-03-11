@@ -31,7 +31,7 @@ export async function POST(
 
   // Fetch plan and verify ownership
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('*')
     .eq('id', planId)
     .eq('user_id', user.id)
@@ -115,7 +115,7 @@ Keep similar calorie count to the original. Make it different and appetizing.${p
   const updatedPlanData = { ...planData, days: updatedDays }
 
   const { error } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .update({ plan_data: updatedPlanData as unknown as Json })
     .eq('id', planId)
 

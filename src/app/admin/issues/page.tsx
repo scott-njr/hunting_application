@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { TacticalSelect } from '@/components/ui/tactical-select'
-import { CheckCircle, Clock, ChevronDown, Save, Zap, ExternalLink } from 'lucide-react'
+import { CheckCircle, Clock, ChevronDown, Save, Zap, ExternalLink, GitBranch } from 'lucide-react'
 
 interface Issue {
   id: string
@@ -23,7 +23,7 @@ interface Issue {
   ai_classified_at: string | null
   github_issue_url: string | null
   created_at: string
-  members: { email: string; full_name: string | null } | null
+  members: { email: string; display_name: string | null } | null
 }
 
 interface Stats {
@@ -37,6 +37,7 @@ const STATUS_OPTIONS = [
   { value: 'open', label: 'Open' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'resolved', label: 'Resolved' },
+  { value: 'closed', label: 'Closed' },
   { value: 'wont_fix', label: "Won't Fix" },
 ]
 
@@ -44,6 +45,7 @@ const FILTER_OPTIONS = [
   { value: 'open', label: 'Open' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'resolved', label: 'Resolved' },
+  { value: 'closed', label: 'Closed' },
   { value: 'all', label: 'All' },
 ]
 
@@ -70,6 +72,7 @@ const STATUS_COLORS: Record<string, string> = {
   open: 'bg-red-500/15 text-red-400',
   in_progress: 'bg-amber-500/15 text-amber-400',
   resolved: 'bg-accent/15 text-accent',
+  closed: 'bg-accent/15 text-accent',
   wont_fix: 'bg-muted/15 text-muted',
 }
 
@@ -95,6 +98,8 @@ export default function AdminIssuesPage() {
   const [savedField, setSavedField] = useState<string | null>(null)
   const [triaging, setTriaging] = useState<string | null>(null)
   const [triageSuccess, setTriageSuccess] = useState<string | null>(null)
+  const [fixingInGithub, setFixingInGithub] = useState<string | null>(null)
+  const [fixTriggered, setFixTriggered] = useState<string | null>(null)
 
   // Stats & changelog state
   const [stats, setStats] = useState<Stats | null>(null)
@@ -102,68 +107,55 @@ export default function AdminIssuesPage() {
   const [changelogExpanded, setChangelogExpanded] = useState<string | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
 
+  // Local status overrides (pending save)
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({})
+
   // Refs for textarea values
   const notesRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const resolutionRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const releaseTagRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
-  const loadIssues = useCallback(async () => {
-    setLoading(true)
-    const params = new URLSearchParams({ status: filter })
-    if (moduleFilter !== 'all') params.set('module', moduleFilter)
-    const res = await fetch(`/api/admin/issues?${params}`)
-    if (res.ok) {
-      const data = await res.json()
-      setIssues(data.issues)
+  useEffect(() => {
+    let cancelled = false
+    async function loadIssues() {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({ status: filter })
+        if (moduleFilter !== 'all') params.set('module', moduleFilter)
+        const res = await fetch(`/api/admin/issues?${params}`)
+        if (!cancelled && res.ok) {
+          const data = await res.json()
+          setIssues(data.issues)
+        }
+      } catch {
+        // Network error — will show empty list
+      }
+      if (!cancelled) setLoading(false)
     }
-    setLoading(false)
+    loadIssues()
+    return () => { cancelled = true }
   }, [filter, moduleFilter])
 
-  const loadStats = useCallback(async () => {
-    setStatsLoading(true)
-    const res = await fetch('/api/admin/issues?status=all&include_stats=true')
-    if (res.ok) {
-      const data = await res.json()
-      setStats(data.stats)
-      setResolvedIssues(data.resolvedIssues ?? [])
+  useEffect(() => {
+    let cancelled = false
+    async function loadStats() {
+      setStatsLoading(true)
+      try {
+        const res = await fetch('/api/admin/issues?status=all&include_stats=true')
+        if (!cancelled && res.ok) {
+          const data = await res.json()
+          setStats(data.stats)
+          setResolvedIssues(data.resolvedIssues ?? [])
+        }
+      } catch {
+        // Network error — stats will remain null
+      }
+      if (!cancelled) setStatsLoading(false)
     }
-    setStatsLoading(false)
+    loadStats()
+    return () => { cancelled = true }
   }, [])
 
-  useEffect(() => { loadIssues() }, [loadIssues])
-  useEffect(() => { loadStats() }, [loadStats])
-
-  async function updateIssue(issueId: string, updates: Record<string, unknown>) {
-    setSaving(issueId)
-    const res = await fetch('/api/admin/issues', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ issueId, ...updates }),
-    })
-    if (res.ok) {
-      setIssues(prev => prev.map(i =>
-        i.id === issueId ? { ...i, ...updates } as Issue : i
-      ))
-    }
-    setSaving(null)
-  }
-
-  async function saveField(issueId: string, field: string, value: string | null) {
-    setSaving(issueId)
-    const res = await fetch('/api/admin/issues', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ issueId, [field]: value }),
-    })
-    if (res.ok) {
-      setIssues(prev => prev.map(i =>
-        i.id === issueId ? { ...i, [field]: value } as Issue : i
-      ))
-      setSavedField(`${issueId}:${field}`)
-      setTimeout(() => setSavedField(null), 2000)
-    }
-    setSaving(null)
-  }
 
   async function triageIssue(issueId: string) {
     setTriaging(issueId)
@@ -191,6 +183,79 @@ export default function AdminIssuesPage() {
       alert(`Triage failed: ${err.error ?? 'Unknown error'}`)
     }
     setTriaging(null)
+  }
+
+  async function saveAllFields(issueId: string) {
+    const releaseTag = releaseTagRefs.current[issueId]?.value ?? ''
+    const adminNotes = notesRefs.current[issueId]?.value ?? ''
+    const resolution = resolutionRefs.current[issueId]?.value ?? ''
+    const status = statusOverrides[issueId]
+    setSaving(issueId)
+    const updates: Record<string, unknown> = {
+      issueId,
+      release_tag: releaseTag || null,
+      admin_notes: adminNotes || null,
+      resolution: resolution || null,
+    }
+    if (status) updates.status = status
+    const res = await fetch('/api/admin/issues', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+    if (res.ok) {
+      setIssues(prev => prev.map(i =>
+        i.id === issueId ? {
+          ...i,
+          release_tag: releaseTag || null,
+          admin_notes: adminNotes || null,
+          resolution: resolution || null,
+          ...(status ? { status } : {}),
+        } as Issue : i
+      ))
+      setStatusOverrides(prev => {
+        const next = { ...prev }
+        delete next[issueId]
+        return next
+      })
+      setSavedField(`${issueId}:all`)
+      setTimeout(() => setSavedField(null), 2000)
+      setExpanded(null)
+    }
+    setSaving(null)
+  }
+
+  async function triggerAutoFix(issue: Issue) {
+    if (!issue.ai_proposed_fix || !issue.severity) {
+      alert('Triage the issue first — need a proposed fix and severity.')
+      return
+    }
+    setFixingInGithub(issue.id)
+    try {
+      const res = await fetch(`/api/admin/issues/auto-fix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          issueId: issue.id,
+          title: issue.title,
+          description: issue.description,
+          proposedFix: issue.ai_proposed_fix,
+          adminNotes: issue.admin_notes || '',
+          severity: issue.severity,
+          pageUrl: issue.page_url || '',
+        }),
+      })
+      if (res.ok) {
+        setFixTriggered(issue.id)
+        setTimeout(() => setFixTriggered(null), 5000)
+      } else {
+        const err = await res.json()
+        alert(`Failed to trigger fix: ${err.error ?? 'Unknown error'}`)
+      }
+    } catch {
+      alert('Failed to trigger auto-fix workflow')
+    }
+    setFixingInGithub(null)
   }
 
   // Group resolved issues by release_tag
@@ -223,13 +288,13 @@ export default function AdminIssuesPage() {
 
       {/* Summary Stats Dashboard */}
       {statsLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-24 rounded-lg bg-surface border border-subtle animate-pulse" />
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="rounded-lg border border-subtle bg-surface p-5">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="h-4 w-4 text-accent" />
@@ -334,7 +399,7 @@ export default function AdminIssuesPage() {
                               <p className="text-muted text-xs mt-0.5">{issue.resolution}</p>
                             )}
                             <div className="flex items-center gap-2 mt-0.5 text-xs text-muted">
-                              <span>{issue.members?.full_name || issue.members?.email || 'Unknown'}</span>
+                              <span>{issue.members?.display_name || issue.members?.email || 'Unknown'}</span>
                               <span>&middot;</span>
                               <span>Resolved {new Date(issue.resolved_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                             </div>
@@ -392,7 +457,7 @@ export default function AdminIssuesPage() {
                       <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded', MODULE_COLORS[issue.module] || 'bg-muted/15 text-muted')}>
                         {issue.module}
                       </span>
-                      <span>{issue.members?.full_name || issue.members?.email || 'Unknown'}</span>
+                      <span>{issue.members?.display_name || issue.members?.email || 'Unknown'}</span>
                       <span>&middot;</span>
                       <span>{issue.category}</span>
                       <span>&middot;</span>
@@ -450,6 +515,24 @@ export default function AdminIssuesPage() {
                             Done
                           </span>
                         )}
+                        {issue.ai_proposed_fix && issue.severity && (
+                          <>
+                            <button
+                              onClick={() => triggerAutoFix(issue)}
+                              disabled={fixingInGithub === issue.id}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-purple-500/15 text-purple-400 text-xs font-medium hover:bg-purple-500/25 transition-colors disabled:opacity-50"
+                            >
+                              <GitBranch className="h-3 w-3" />
+                              {fixingInGithub === issue.id ? 'Triggering...' : 'Fix in GitHub'}
+                            </button>
+                            {fixTriggered === issue.id && (
+                              <span className="text-accent text-xs flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3" />
+                                Workflow triggered
+                              </span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                     {issue.ai_proposed_fix && (
@@ -474,8 +557,8 @@ export default function AdminIssuesPage() {
                   <div className="flex items-center gap-3">
                     <p className="text-xs text-muted uppercase tracking-wider">Status</p>
                     <TacticalSelect
-                      value={issue.status}
-                      onChange={val => updateIssue(issue.id, { status: val })}
+                      value={statusOverrides[issue.id] ?? issue.status}
+                      onChange={val => setStatusOverrides(prev => ({ ...prev, [issue.id]: val }))}
                       options={STATUS_OPTIONS}
                       className="text-xs"
                     />
@@ -483,29 +566,13 @@ export default function AdminIssuesPage() {
 
                   <div>
                     <p className="text-xs text-muted uppercase tracking-wider mb-1">Release Tag</p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        ref={el => { releaseTagRefs.current[issue.id] = el }}
-                        type="text"
-                        defaultValue={issue.release_tag || ''}
-                        placeholder="e.g., v1.2.0"
-                        className="flex-1 px-3 py-2 rounded border border-subtle bg-base text-primary text-sm placeholder:text-muted focus:outline-none focus:border-accent/40"
-                      />
-                      <button
-                        onClick={() => {
-                          const val = releaseTagRefs.current[issue.id]?.value ?? ''
-                          saveField(issue.id, 'release_tag', val || null)
-                        }}
-                        disabled={saving === issue.id}
-                        className="flex items-center gap-1 px-3 py-2 rounded bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition-colors disabled:opacity-50"
-                      >
-                        <Save className="h-3 w-3" />
-                        Save
-                      </button>
-                      {savedField === `${issue.id}:release_tag` && (
-                        <span className="text-accent text-xs">Saved</span>
-                      )}
-                    </div>
+                    <input
+                      ref={el => { releaseTagRefs.current[issue.id] = el }}
+                      type="text"
+                      defaultValue={issue.release_tag || ''}
+                      placeholder="e.g., v1.2.0"
+                      className="w-full px-3 py-2 rounded border border-subtle bg-base text-primary text-sm placeholder:text-muted focus:outline-none focus:border-accent/40"
+                    />
                   </div>
 
                   <div>
@@ -517,22 +584,6 @@ export default function AdminIssuesPage() {
                       className="w-full px-3 py-2 rounded border border-subtle bg-base text-primary text-sm placeholder:text-muted focus:outline-none focus:border-accent/40 resize-none"
                       rows={2}
                     />
-                    <div className="flex items-center gap-2 mt-1">
-                      <button
-                        onClick={() => {
-                          const val = notesRefs.current[issue.id]?.value ?? ''
-                          saveField(issue.id, 'admin_notes', val)
-                        }}
-                        disabled={saving === issue.id}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition-colors disabled:opacity-50"
-                      >
-                        <Save className="h-3 w-3" />
-                        Save
-                      </button>
-                      {savedField === `${issue.id}:admin_notes` && (
-                        <span className="text-accent text-xs">Saved</span>
-                      )}
-                    </div>
                   </div>
 
                   <div>
@@ -544,22 +595,23 @@ export default function AdminIssuesPage() {
                       className="w-full px-3 py-2 rounded border border-subtle bg-base text-primary text-sm placeholder:text-muted focus:outline-none focus:border-accent/40 resize-none"
                       rows={2}
                     />
-                    <div className="flex items-center gap-2 mt-1">
-                      <button
-                        onClick={() => {
-                          const val = resolutionRefs.current[issue.id]?.value ?? ''
-                          saveField(issue.id, 'resolution', val)
-                        }}
-                        disabled={saving === issue.id}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition-colors disabled:opacity-50"
-                      >
-                        <Save className="h-3 w-3" />
-                        Save
-                      </button>
-                      {savedField === `${issue.id}:resolution` && (
-                        <span className="text-accent text-xs">Saved</span>
-                      )}
-                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => saveAllFields(issue.id)}
+                      disabled={saving === issue.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition-colors disabled:opacity-50"
+                    >
+                      <Save className="h-3.5 w-3.5" />
+                      {saving === issue.id ? 'Saving...' : 'Save'}
+                    </button>
+                    {savedField === `${issue.id}:all` && (
+                      <span className="text-accent text-xs flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Saved
+                      </span>
+                    )}
                   </div>
                 </div>
               )}

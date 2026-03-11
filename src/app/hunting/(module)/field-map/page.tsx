@@ -54,7 +54,7 @@ export default function FieldMapPage() {
       if (!user) return
 
       const { data, error } = await supabase
-        .from('journal_pins')
+        .from('hunting_field_map_pins')
         .select('*')
         .eq('user_id', user.id)
         .order('observed_at', { ascending: false })
@@ -95,7 +95,7 @@ export default function FieldMapPage() {
       // Fetch conditions in background
       let conditions: Record<string, unknown> = {}
       try {
-        const res = await fetch(`/api/journal/conditions?lat=${lat}&lng=${lng}`)
+        const res = await fetch(`/api/hunting/field-map/conditions?lat=${lat}&lng=${lng}`)
         if (res.ok) conditions = await res.json()
       } catch { /* save without conditions */ }
 
@@ -117,7 +117,7 @@ export default function FieldMapPage() {
       }
 
       const { data, error } = await supabase
-        .from('journal_pins')
+        .from('hunting_field_map_pins')
         .insert(insertData)
         .select()
         .single()
@@ -147,7 +147,7 @@ export default function FieldMapPage() {
 
       let conditions: Record<string, unknown> = {}
       try {
-        const res = await fetch(`/api/journal/conditions?lat=${formData.lat}&lng=${formData.lng}`)
+        const res = await fetch(`/api/hunting/field-map/conditions?lat=${formData.lat}&lng=${formData.lng}`)
         if (res.ok) conditions = await res.json()
       } catch { /* save without conditions */ }
 
@@ -169,7 +169,7 @@ export default function FieldMapPage() {
         moon_illumination: (conditions.moon_illumination as number) ?? null,
       }
 
-      const { error } = await supabase.from('journal_pins').insert(insertData)
+      const { error } = await supabase.from('hunting_field_map_pins').insert(insertData)
 
       if (error) {
         console.error('[field-map] Failed to save pin:', error.message, error)
@@ -192,7 +192,7 @@ export default function FieldMapPage() {
     if (updates.metadata !== undefined) updateData.metadata = updates.metadata as import('@/types/database.types').Json
 
     const { error } = await supabase
-      .from('journal_pins')
+      .from('hunting_field_map_pins')
       .update(updateData)
       .eq('id', id)
 
@@ -206,7 +206,7 @@ export default function FieldMapPage() {
 
   // Delete pin
   async function handleDelete(id: string) {
-    await supabase.from('journal_pins').delete().eq('id', id)
+    await supabase.from('hunting_field_map_pins').delete().eq('id', id)
     setPins(prev => prev.filter(p => p.id !== id))
     if (selectedId === id) setSelectedId(null)
     if (editingId === id) { setEditingId(null); setFormOpen(false); setFormData(EMPTY_FORM) }
@@ -264,8 +264,8 @@ export default function FieldMapPage() {
       const cachedDrainage = drainageCacheRef.current.get(cacheKey)
 
       const [conditionsRes, terrainRes] = await Promise.all([
-        fetch(`/api/journal/conditions?lat=${pin.lat}&lng=${pin.lng}`).catch(() => null),
-        terrain ? Promise.resolve(null) : fetch(`/api/journal/terrain?lat=${pin.lat}&lng=${pin.lng}`).catch(() => null),
+        fetch(`/api/hunting/field-map/conditions?lat=${pin.lat}&lng=${pin.lng}`).catch(() => null),
+        terrain ? Promise.resolve(null) : fetch(`/api/hunting/field-map/terrain?lat=${pin.lat}&lng=${pin.lng}`).catch(() => null),
       ])
 
       // Parse live conditions (fall back to pin-stamped data)
@@ -318,7 +318,7 @@ export default function FieldMapPage() {
           const isUphill = state.mode === 'heating'
           const windBiasParam = windMph >= 4 ? `&windBias=${state.thermalDirDeg}` : ''
           const drainageRes = await fetch(
-            `/api/journal/drainage?lat=${pin.lat}&lng=${pin.lng}&range=${rangeM}&uphill=${isUphill}${windBiasParam}`,
+            `/api/hunting/field-map/drainage?lat=${pin.lat}&lng=${pin.lng}&range=${rangeM}&uphill=${isUphill}${windBiasParam}`,
           ).catch(() => null)
 
           if (drainageRes?.ok) {

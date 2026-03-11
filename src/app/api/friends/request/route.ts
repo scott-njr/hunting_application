@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   // Check if a friendship already exists in either direction
   const { data: existing } = await supabase
-    .from('friendships')
+    .from('social_friendships')
     .select('id, status')
     .or(`and(requester_id.eq.${user.id},recipient_id.eq.${recipient_id}),and(requester_id.eq.${recipient_id},recipient_id.eq.${user.id})`)
     .maybeSingle() as { data: { id: string; status: string } | null }
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data, error } = await supabase
-    .from('friendships')
+    .from('social_friendships')
     .insert({ requester_id: user.id, recipient_id })
     .select()
     .single()

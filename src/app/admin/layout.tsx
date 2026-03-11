@@ -10,10 +10,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/auth/login')
 
-  const [{ data: member }, memberTier] = await Promise.all([
+  const [{ data: profile }, { data: member }, memberTier] = await Promise.all([
+    supabase
+      .from('user_profile')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle(),
     supabase
       .from('members')
-      .select('full_name, is_admin')
+      .select('is_admin')
       .eq('id', user.id)
       .single(),
     getUserHighestTier(supabase, user.id),
@@ -26,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <ModuleHeader userId={user.id} email={user.email ?? ''} messagesHref="/home/messages" />
       <div className="flex flex-1 min-h-0">
         <AdminSidebar
-          memberName={member.full_name ?? null}
+          memberName={profile?.display_name ?? null}
           memberEmail={user.email ?? ''}
           memberTier={memberTier}
         />

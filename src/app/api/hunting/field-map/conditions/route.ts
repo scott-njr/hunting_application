@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       ...moon,
     })
   } catch (err) {
-    console.error('[journal/conditions] weather fetch failed:', err)
+    console.error('[hunting/field-map/conditions] weather fetch failed:', err)
     // Return moon data even if weather fails
     return NextResponse.json({
       temp_f: null,

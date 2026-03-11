@@ -11,7 +11,7 @@ export default async function RunCoachPage() {
 
   // Check for active run plan
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('id, goal, weeks_total')
     .eq('user_id', user.id)
     .eq('plan_type', 'run')

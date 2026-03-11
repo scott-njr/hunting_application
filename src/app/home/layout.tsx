@@ -9,10 +9,10 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const [{ data: member }, subscriptions, memberTier] = await Promise.all([
+  const [{ data: profile }, subscriptions, memberTier] = await Promise.all([
     supabase
-      .from('members')
-      .select('full_name')
+      .from('user_profile')
+      .select('display_name')
       .eq('id', user.id)
       .maybeSingle(),
     getUserModuleSubscriptions(supabase, user.id),
@@ -27,7 +27,7 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
       <div className="flex flex-1 min-h-0">
         <DashboardSidebar
           subscribedModules={subscribedModules}
-          memberName={member?.full_name ?? null}
+          memberName={profile?.display_name ?? null}
           memberEmail={user.email ?? ''}
           memberTier={memberTier}
         />

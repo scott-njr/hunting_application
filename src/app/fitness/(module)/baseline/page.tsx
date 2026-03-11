@@ -12,7 +12,7 @@ export default async function BaselinePage() {
   if (!user) redirect('/auth/login')
 
   const { data: tests } = await supabase
-    .from('baseline_tests')
+    .from('fitness_baseline_tests')
     .select('*')
     .eq('user_id', user.id)
     .order('tested_at', { ascending: false })

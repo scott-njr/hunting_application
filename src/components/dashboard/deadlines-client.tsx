@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   ChevronDown, ChevronUp, ExternalLink, CheckCircle2, AlertTriangle,
@@ -89,11 +90,11 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
     if (!user) { setSavingApply(false); return }
 
     await supabase
-      .from('hunt_applications')
+      .from('hunting_applications')
       .upsert({
         user_id: user.id,
         state: d.state_code,
-        state_name: d.draw_states.state_name,
+        state_name: d.hunting_draw_states.state_name,
         species: d.species,
         season: d.seasons[0] ?? 'general',
         year: d.year,
@@ -117,7 +118,7 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
     if (!user) return
 
     await supabase
-      .from('hunt_applications')
+      .from('hunting_applications')
       .delete()
       .eq('user_id', user.id)
       .eq('state', d.state_code)
@@ -160,9 +161,9 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
         <div className="mb-4 rounded-lg border border-default bg-elevated/50 px-4 py-3 text-sm">
           <p className="text-secondary">
             Showing all available draws.{' '}
-            <a href="/hunting/profile" className="text-accent-hover hover:underline">
+            <Link href="/hunting/profile" className="text-accent-hover hover:underline">
               Set your species and state interests in your profile
-            </a>{' '}
+            </Link>{' '}
             to filter to what&apos;s relevant to you.
           </p>
         </div>
@@ -173,13 +174,13 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
         <div className="glass-card px-6 py-10 text-center">
           <p className="text-secondary text-sm mb-2">No draws found matching your profile interests yet.</p>
           <p className="text-muted text-xs mb-4">More states are coming soon.</p>
-          <a href="/hunting/profile" className="text-accent-hover hover:underline text-sm">Update your interests →</a>
+          <Link href="/hunting/profile" className="text-accent-hover hover:underline text-sm">Update your interests →</Link>
         </div>
       )}
 
       <div className="space-y-3">
         {groups.map((group) => {
-          const state = group[0].draw_states
+          const state = group[0].hunting_draw_states
           const cardKey = `${state.state_code}-${group[0].year}`
           const isOpen = expanded === cardKey
           const members = applyMembers[cardKey] ?? []

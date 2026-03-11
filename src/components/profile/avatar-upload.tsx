@@ -5,11 +5,10 @@ import { Camera, Upload, Loader2 } from 'lucide-react'
 
 export function AvatarUpload({
   currentUrl,
-  userId,
   onUploaded,
 }: {
   currentUrl: string | null
-  userId: string
+  userId?: string
   onUploaded: (url: string) => void
 }) {
   const [uploading, setUploading] = useState(false)

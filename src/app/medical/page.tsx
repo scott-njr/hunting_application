@@ -7,10 +7,12 @@ import {
   Radio,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Wilderness Medical Training',
   description: 'Wilderness first aid protocols, emergency preparedness, medical kit building, evacuation planning, and CPR refreshers for backcountry safety.',
+  alternates: { canonical: '/medical' },
 }
 
 const features = [
@@ -69,7 +71,7 @@ export default function MedicalPage() {
         <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <Heart className="h-7 w-7 text-red-400" />
-            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Medical</h1>
+            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Medical — Wilderness First Aid Training</h1>
           </div>
           <p className="text-sm font-semibold uppercase tracking-wide text-red-400 mb-4">Be Ready When It Matters</p>
           <p className="text-secondary text-lg max-w-2xl mb-0">
@@ -110,9 +112,7 @@ export default function MedicalPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

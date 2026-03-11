@@ -13,6 +13,8 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, defaultView, redirectTo }: AuthModalProps) {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  const [prevDefaultView, setPrevDefaultView] = useState(defaultView)
   const [view, setView] = useState<'login' | 'signup'>(defaultView)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -22,7 +24,9 @@ export function AuthModal({ isOpen, onClose, defaultView, redirectTo }: AuthModa
   const [emailSent, setEmailSent] = useState(false)
 
   // Reset state when modal opens or view changes
-  useEffect(() => {
+  if (isOpen !== prevIsOpen || defaultView !== prevDefaultView) {
+    setPrevIsOpen(isOpen)
+    setPrevDefaultView(defaultView)
     if (isOpen) {
       setView(defaultView)
       setEmail('')
@@ -32,7 +36,7 @@ export function AuthModal({ isOpen, onClose, defaultView, redirectTo }: AuthModa
       setLoading(false)
       setEmailSent(false)
     }
-  }, [isOpen, defaultView])
+  }
 
   // Close on Escape
   const handleKeyDown = useCallback((e: KeyboardEvent) => {

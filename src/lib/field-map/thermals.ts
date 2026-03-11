@@ -258,7 +258,6 @@ export function getThermalState(params: ThermalParams): ThermalState {
     slopeAspectDeg = 180,
     slopeDeg = 10,
     datetime = new Date(),
-    ambientTempF: _ambientTempF = 50,
     cloudCoverPct = 0,
     surfaceWindMph = 0,
     surfaceWindDirDeg = 0,

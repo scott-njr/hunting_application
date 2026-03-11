@@ -51,7 +51,7 @@ export default async function AdminDashboard() {
     admin.from('issue_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
     admin
       .from('members')
-      .select('id, email, full_name, created_at')
+      .select('id, email, created_at')
       .order('created_at', { ascending: false })
       .limit(10),
     admin.from('ai_responses').select('*', { count: 'exact', head: true })
@@ -67,23 +67,26 @@ export default async function AdminDashboard() {
       .limit(10),
   ])
 
-  // Enrich failures with user info
+  // Enrich recent signups + failures with display names from user_profile
+  const signupIds = (recentSignups ?? []).map(u => u.id)
   const failureUserIds = [...new Set((recentFailures ?? []).map(f => f.user_id))]
-  let failureMembers: Record<string, { email: string; full_name: string | null }> = {}
-  if (failureUserIds.length > 0) {
-    const { data: members } = await admin
-      .from('members')
-      .select('id, email, full_name')
-      .in('id', failureUserIds)
-    for (const m of members ?? []) {
-      failureMembers[m.id] = { email: m.email, full_name: m.full_name }
-    }
+  const allUserIds = [...new Set([...signupIds, ...failureUserIds])]
+
+  const profileMap: Record<string, string | null> = {}
+  const emailMap: Record<string, string> = {}
+  if (allUserIds.length > 0) {
+    const [{ data: profiles }, { data: members }] = await Promise.all([
+      admin.from('user_profile').select('id, display_name').in('id', allUserIds),
+      admin.from('members').select('id, email').in('id', failureUserIds),
+    ])
+    for (const p of profiles ?? []) profileMap[p.id] = p.display_name
+    for (const m of members ?? []) emailMap[m.id] = m.email
   }
 
   const enrichedFailures = (recentFailures ?? []).map(f => ({
     ...f,
-    user_email: failureMembers[f.user_id]?.email ?? 'Unknown',
-    user_name: failureMembers[f.user_id]?.full_name ?? null,
+    user_email: emailMap[f.user_id] ?? 'Unknown',
+    user_name: profileMap[f.user_id] ?? null,
   }))
 
   // Count unique tiers from module_subscriptions
@@ -104,7 +107,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Users} label="Total Users" value={totalUsers ?? 0} sub={`${paidUsers} paid`} accent />
         <StatCard icon={CreditCard} label="Paid Subscriptions" value={paidUsers} sub={`${basicCount} basic · ${proCount} pro`} accent={paidUsers > 0} />
         <StatCard icon={AlertCircle} label="Open Issues" value={openIssues ?? 0} accent={(openIssues ?? 0) > 0} />
@@ -154,8 +157,8 @@ export default async function AdminDashboard() {
             {(recentSignups ?? []).map(user => (
               <div key={user.id} className="flex items-center justify-between py-1.5 border-b border-subtle last:border-0">
                 <div className="min-w-0">
-                  <p className="text-primary text-sm truncate">{user.full_name || user.email}</p>
-                  {user.full_name && <p className="text-muted text-xs truncate">{user.email}</p>}
+                  <p className="text-primary text-sm truncate">{profileMap[user.id] || user.email}</p>
+                  {profileMap[user.id] && <p className="text-muted text-xs truncate">{user.email}</p>}
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
                   <p className="text-muted text-[10px]">

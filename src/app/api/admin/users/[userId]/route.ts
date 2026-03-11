@@ -1,20 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return member?.is_admin ? user : null
-}
+import { verifyAdmin } from '@/lib/admin-utils'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   const adminUser = await verifyAdmin()
@@ -27,19 +13,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ use
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const [{ data: member }, { data: subscriptions }, { data: plans }] = await Promise.all([
+  const [{ data: member }, { data: profile }, { data: subscriptions }, { data: plans }] = await Promise.all([
     admin
       .from('members')
-      .select('id, email, full_name, is_admin, created_at')
+      .select('id, email, is_admin, created_at')
       .eq('id', userId)
       .single(),
+    admin
+      .from('user_profile')
+      .select('display_name')
+      .eq('id', userId)
+      .maybeSingle(),
     admin
       .from('module_subscriptions')
       .select('module_slug, tier, status')
       .eq('user_id', userId)
       .eq('status', 'active'),
     admin
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('id, plan_type, status, goal, weeks_total, started_at, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
@@ -47,7 +38,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ use
 
   if (!member) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  return NextResponse.json({ member, subscriptions: subscriptions ?? [], plans: plans ?? [] })
+  return NextResponse.json({
+    member: { ...member, display_name: profile?.display_name ?? null },
+    subscriptions: subscriptions ?? [],
+    plans: plans ?? [],
+  })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
@@ -73,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
   )
 
   const { error } = await admin
-    .from('training_plans')
+    .from('fitness_training_plans')
     .update({ status })
     .eq('id', planId)
     .eq('user_id', userId)

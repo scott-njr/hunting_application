@@ -7,10 +7,12 @@ import {
   Video,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Archery Module — Training & Community',
   description: 'Structured archery training from beginner to competitive. Bow setup guides, form coaching, shot tracking, and a community of archers at every level.',
+  alternates: { canonical: '/archery' },
 }
 
 const features = [
@@ -69,7 +71,7 @@ export default function ArcheryPage() {
         <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <Target className="h-7 w-7 text-teal-400" />
-            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Archery</h1>
+            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Archery — Training, Tuning & Community</h1>
           </div>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-400 mb-4">Aim True. Shoot Often.</p>
           <p className="text-secondary text-lg max-w-2xl mb-0">
@@ -110,9 +112,7 @@ export default function ArcheryPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

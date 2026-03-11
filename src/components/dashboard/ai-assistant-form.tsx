@@ -27,7 +27,7 @@ const YEAR_OPTIONS = [
   { value: '2027', label: '2027' },
 ]
 
-export function AIAssistantForm({ isPersonalized }: { isPersonalized: boolean }) {
+export function AIAssistantForm() {
   const [state, setState] = useState('')
   const [species, setSpecies] = useState('')
   const [year, setYear] = useState('2026')

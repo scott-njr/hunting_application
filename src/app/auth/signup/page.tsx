@@ -70,9 +70,9 @@ function SignupForm() {
           Didn&apos;t receive it? Check your spam folder.
         </p>
         <div className="mt-6 pt-4 border-t border-subtle flex justify-center gap-4 text-xs">
-          <a href="/auth/login" className="text-accent-hover hover:text-accent-hover">Back to sign in</a>
+          <Link href="/auth/login" className="text-accent-hover hover:text-accent-hover">Back to sign in</Link>
           <span className="text-muted">·</span>
-          <a href="/auth/signup" className="text-muted hover:text-secondary">Try again</a>
+          <Link href="/auth/signup" className="text-muted hover:text-secondary">Try again</Link>
         </div>
       </div>
     )
@@ -161,12 +161,12 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center px-4">
+    <div className="min-h-dvh bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
         <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm">Loading...</div>}>

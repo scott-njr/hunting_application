@@ -7,10 +7,12 @@ import {
   CloudSun,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Fishing Module — Guides & Community',
   description: 'Trip logs, species databases, regulation trackers, gear management, and fly tying resources for freshwater and saltwater anglers at every level.',
+  alternates: { canonical: '/fishing' },
 }
 
 const features = [
@@ -70,7 +72,7 @@ export default function FishingPage() {
         <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <Fish className="h-7 w-7 text-cyan-400" />
-            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Fishing</h1>
+            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Fishing — Trip Planning & Species Guides</h1>
           </div>
           <p className="text-sm font-semibold uppercase tracking-wide text-cyan-400 mb-4">Read the Water. Land the Fish.</p>
           <p className="text-secondary text-lg max-w-2xl mb-0">
@@ -111,9 +113,7 @@ export default function FishingPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

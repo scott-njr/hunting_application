@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { Trash2, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -14,7 +14,7 @@ interface Post {
   content: string
   module: string
   created_at: string
-  members: { email: string; full_name: string | null } | null
+  display_name: string | null
 }
 
 const MODULE_OPTIONS = [
@@ -40,27 +40,45 @@ export default function AdminCommunityPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  const loadPosts = useCallback(async () => {
-    setLoading(true)
-    const supabase = createClient()
+  useEffect(() => {
+    let cancelled = false
+    async function loadPosts() {
+      setLoading(true)
+      const supabase = createClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabase as any)
-      .from('community_posts')
-      .select('id, user_id, post_type, entity_name, content, module, created_at, members!community_posts_user_id_fkey(email, full_name)')
-      .order('created_at', { ascending: false })
-      .limit(50)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let query = (supabase as any)
+        .from('social_posts')
+        .select('id, user_id, post_type, entity_name, content, module, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50)
 
-    if (moduleFilter !== 'all') {
-      query = query.eq('module', moduleFilter)
+      if (moduleFilter !== 'all') {
+        query = query.eq('module', moduleFilter)
+      }
+
+      const { data: rawPosts } = await query
+      const posts = rawPosts ?? []
+
+      // Fetch display names from user_profile
+      const userIds = [...new Set(posts.map((p: { user_id: string }) => p.user_id))] as string[]
+      const profileMap = new Map<string, string | null>()
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profile')
+          .select('id, display_name')
+          .in('id', userIds)
+        for (const p of profiles ?? []) profileMap.set(p.id, p.display_name)
+      }
+
+      if (!cancelled) {
+        setPosts(posts.map((p: { user_id: string }) => ({ ...p, display_name: profileMap.get(p.user_id) ?? null })))
+        setLoading(false)
+      }
     }
-
-    const { data } = await query
-    setPosts(data ?? [])
-    setLoading(false)
+    loadPosts()
+    return () => { cancelled = true }
   }, [moduleFilter])
-
-  useEffect(() => { loadPosts() }, [loadPosts])
 
   async function deletePost(postId: string) {
     if (!confirm('Delete this post? This cannot be undone.')) return
@@ -70,7 +88,7 @@ export default function AdminCommunityPage() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
-      .from('community_posts')
+      .from('social_posts')
       .delete()
       .eq('id', postId)
 
@@ -117,7 +135,7 @@ export default function AdminCommunityPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-primary text-sm font-medium">
-                      {post.members?.full_name || post.members?.email || 'Unknown'}
+                      {post.display_name || 'Unknown'}
                     </span>
                     <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded', TYPE_COLORS[post.post_type] || TYPE_COLORS.discussion)}>
                       {post.post_type.replace('_', ' ')}

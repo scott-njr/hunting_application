@@ -37,16 +37,17 @@ export async function POST(
     return NextResponse.json({ error: 'Issue must be resolved before notifying' }, { status: 400 })
   }
 
-  // Get reporter email
-  const { data: reporter } = await supabase
-    .from('members')
-    .select('email, full_name')
-    .eq('id', issue.user_id)
-    .single()
+  // Get reporter email and display name
+  const [{ data: reporter }, { data: reporterProfile }] = await Promise.all([
+    supabase.from('members').select('email').eq('id', issue.user_id).single(),
+    supabase.from('user_profile').select('display_name').eq('id', issue.user_id).maybeSingle(),
+  ])
 
   if (!reporter?.email) {
     return NextResponse.json({ error: 'Reporter email not found' }, { status: 404 })
   }
+
+  const reporterName = reporterProfile?.display_name ?? 'there'
 
   // Send email via Resend
   if (process.env.RESEND_API_KEY) {
@@ -55,7 +56,7 @@ export async function POST(
       from: 'Lead the Wild <noreply@praevius.com>',
       to: reporter.email,
       subject: `Your issue report has been resolved: ${issue.title}`,
-      text: `Hi ${reporter.full_name ?? 'there'},\n\nYour issue report "${issue.title}" has been resolved.\n\n${issue.resolution ? `Resolution: ${issue.resolution}` : 'The issue has been fixed.'}\n\nThank you for helping us improve Lead the Wild!\n\n— The Lead the Wild Team`,
+      text: `Hi ${reporterName},\n\nYour issue report "${issue.title}" has been resolved.\n\n${issue.resolution ? `Resolution: ${issue.resolution}` : 'The issue has been fixed.'}\n\nThank you for helping us improve Lead the Wild!\n\n— The Lead the Wild Team`,
     })
   } else {
     console.log('[Issue Notify]', { to: reporter.email, issue: issue.title, resolution: issue.resolution })

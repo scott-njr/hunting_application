@@ -1,20 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return member?.is_admin ? user : null
-}
+import { verifyAdmin } from '@/lib/admin-utils'
 
 export async function GET(req: NextRequest) {
   const adminUser = await verifyAdmin()
@@ -51,24 +37,24 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Fetch user emails for display
+  // Fetch user emails and display names
   const userIds = [...new Set((logs ?? []).map(l => l.user_id))]
-  let userMap: Record<string, { email: string; full_name: string | null }> = {}
+  const emailMap: Record<string, string> = {}
+  const nameMap: Record<string, string | null> = {}
   if (userIds.length > 0) {
-    const { data: members } = await admin
-      .from('members')
-      .select('id, email, full_name')
-      .in('id', userIds)
-    for (const m of members ?? []) {
-      userMap[m.id] = { email: m.email, full_name: m.full_name }
-    }
+    const [{ data: members }, { data: profiles }] = await Promise.all([
+      admin.from('members').select('id, email').in('id', userIds),
+      admin.from('user_profile').select('id, display_name').in('id', userIds),
+    ])
+    for (const m of members ?? []) emailMap[m.id] = m.email
+    for (const p of profiles ?? []) nameMap[p.id] = p.display_name
   }
 
   // Attach user info to each log
   const enrichedLogs = (logs ?? []).map(log => ({
     ...log,
-    user_email: userMap[log.user_id]?.email ?? '',
-    user_name: userMap[log.user_id]?.full_name ?? null,
+    user_email: emailMap[log.user_id] ?? '',
+    user_name: nameMap[log.user_id] ?? null,
   }))
 
   // Get distinct features for filter dropdown

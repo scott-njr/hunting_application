@@ -63,8 +63,8 @@ export function ResearchWizard({
   const [species, setSpecies] = useState(defaultSpecies)
   const [season, setSeason] = useState('')
   const [residency, setResidency] = useState(
-    autoContext.residencyState && defaultState
-      ? autoContext.residencyState === defaultState ? 'resident' : 'nonresident'
+    autoContext.state && defaultState
+      ? autoContext.state === defaultState ? 'resident' : 'nonresident'
       : ''
   )
   const [transportation, setTransportation] = useState<string[]>([])
@@ -75,8 +75,8 @@ export function ResearchWizard({
   // Auto-detect residency when state changes
   function handleStateChange(val: string) {
     setState(val)
-    if (autoContext.residencyState) {
-      setResidency(autoContext.residencyState === val ? 'resident' : 'nonresident')
+    if (autoContext.state) {
+      setResidency(autoContext.state === val ? 'resident' : 'nonresident')
     }
   }
 
@@ -171,9 +171,9 @@ export function ResearchWizard({
               Fitness: {autoContext.physicalCondition}
             </span>
           )}
-          {autoContext.residencyState && (
+          {autoContext.state && (
             <span className="px-2 py-1 rounded text-xs bg-elevated text-secondary border border-subtle">
-              Resident: {autoContext.residencyState}
+              Resident: {autoContext.state}
             </span>
           )}
           {autoContext.baselineTest && (

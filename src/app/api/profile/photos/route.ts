@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   // Get current photos
   const { data: profile } = await admin
-    .from('hunter_profiles')
+    .from('user_profile')
     .select('photo_urls')
     .eq('id', user.id)
     .maybeSingle()
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   const updatedPhotos = [...currentPhotos, url]
 
   const { error: dbErr } = await admin
-    .from('hunter_profiles')
+    .from('user_profile')
     .update({ photo_urls: updatedPhotos })
     .eq('id', user.id)
 
@@ -87,7 +87,7 @@ export async function DELETE(request: Request) {
   const admin = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
 
   const { data: profile } = await admin
-    .from('hunter_profiles')
+    .from('user_profile')
     .select('photo_urls')
     .eq('id', user.id)
     .maybeSingle()
@@ -103,7 +103,7 @@ export async function DELETE(request: Request) {
   }
 
   const { error: dbErr } = await admin
-    .from('hunter_profiles')
+    .from('user_profile')
     .update({ photo_urls: updatedPhotos })
     .eq('id', user.id)
 

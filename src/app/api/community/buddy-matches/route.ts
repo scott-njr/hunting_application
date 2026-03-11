@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-type HunterProfile = {
+type MergedProfile = {
   id: string
   display_name: string | null
-  home_state: string | null
-  residency_state: string | null
+  user_name: string | null
+  state: string | null
   experience_level: string | null
   years_hunting: number | null
   physical_condition: string | null
@@ -19,12 +19,16 @@ type HunterProfile = {
   buddy_bio: string | null
   avatar_url: string | null
   is_verified: boolean
+  social_facebook: string | null
+  social_instagram: string | null
+  social_x: string | null
 }
 
 export type BuddyMatch = {
   user_id: string
   display_name: string | null
-  home_state: string | null
+  user_name: string | null
+  state: string | null
   experience_level: string | null
   years_hunting: number | null
   states_of_interest: string[]
@@ -64,7 +68,7 @@ function overlap(a: string[], b: string[]): string[] {
   return a.filter(x => setB.has(x))
 }
 
-function scoreBuddy(me: HunterProfile, candidate: HunterProfile): { score: number; reasons: string[] } {
+function scoreBuddy(me: MergedProfile, candidate: MergedProfile): { score: number; reasons: string[] } {
   let score = 0
   const reasons: string[] = []
 
@@ -103,9 +107,7 @@ function scoreBuddy(me: HunterProfile, candidate: HunterProfile): { score: numbe
   }
 
   // Same home state (2 pts)
-  const myHome = me.home_state ?? me.residency_state
-  const theirHome = candidate.home_state ?? candidate.residency_state
-  if (myHome && myHome === theirHome) {
+  if (me.state && me.state === candidate.state) {
     score += 2
   }
 
@@ -129,28 +131,47 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Get current user's profile
-  const { data: myProfile } = await supabase
-    .from('hunter_profiles')
-    .select('id, display_name, home_state, residency_state, experience_level, years_hunting, physical_condition, annual_budget, states_of_interest, target_species, hunt_styles, weapon_types, looking_for_buddy, willing_to_mentor, buddy_bio, avatar_url, is_verified')
-    .eq('id', user.id)
-    .maybeSingle()
+  // Get current user's profile from both tables
+  const [{ data: myUserProfile }, { data: myHuntingProfile }] = await Promise.all([
+    supabase
+      .from('user_profile')
+      .select('id, display_name, user_name, state, physical_condition, avatar_url, is_verified, social_facebook, social_instagram, social_x')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('hunting_profile')
+      .select('id, experience_level, years_hunting, annual_budget, states_of_interest, target_species, hunt_styles, weapon_types, looking_for_buddy, willing_to_mentor, buddy_bio')
+      .eq('id', user.id)
+      .maybeSingle(),
+  ])
 
-  if (!myProfile) {
+  if (!myUserProfile || !myHuntingProfile) {
     return NextResponse.json({ matches: [], mentors: [], incomplete_profile: true })
   }
 
-  if (!myProfile.is_verified) {
+  if (!myUserProfile.is_verified) {
     return NextResponse.json({ matches: [], mentors: [], not_verified: true })
   }
 
-  if (!myProfile.states_of_interest?.length && !myProfile.target_species?.length) {
+  if (!myHuntingProfile.states_of_interest?.length && !myHuntingProfile.target_species?.length) {
     return NextResponse.json({ matches: [], mentors: [], incomplete_profile: true })
+  }
+
+  const myProfile: MergedProfile = {
+    ...myUserProfile,
+    ...myHuntingProfile,
+    id: myUserProfile.id,
+    user_name: myUserProfile.user_name ?? null,
+    state: myUserProfile.state,
+    states_of_interest: myHuntingProfile.states_of_interest ?? [],
+    target_species: myHuntingProfile.target_species ?? [],
+    hunt_styles: myHuntingProfile.hunt_styles ?? [],
+    weapon_types: myHuntingProfile.weapon_types ?? [],
   }
 
   // Get existing friend IDs to exclude
   const { data: friendships } = await supabase
-    .from('friendships')
+    .from('social_friendships')
     .select('requester_id, recipient_id')
     .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
 
@@ -159,42 +180,66 @@ export async function GET() {
     excludeIds.add(f.requester_id === user.id ? f.recipient_id : f.requester_id)
   }
 
-  // Get buddy candidates (verified, opted in)
-  const { data: candidates } = await supabase
-    .from('hunter_profiles')
-    .select('id, display_name, home_state, residency_state, experience_level, years_hunting, physical_condition, annual_budget, states_of_interest, target_species, hunt_styles, weapon_types, looking_for_buddy, willing_to_mentor, buddy_bio, avatar_url, is_verified, social_facebook, social_instagram, social_x')
-    .eq('is_verified', true)
-    .or('looking_for_buddy.eq.true,willing_to_mentor.eq.true')
+  // Get buddy candidates from both tables
+  const [{ data: candidateUserProfiles }, { data: candidateHuntingProfiles }] = await Promise.all([
+    supabase
+      .from('user_profile')
+      .select('id, display_name, user_name, state, physical_condition, avatar_url, is_verified, social_facebook, social_instagram, social_x')
+      .eq('is_verified', true),
+    supabase
+      .from('hunting_profile')
+      .select('id, experience_level, years_hunting, annual_budget, states_of_interest, target_species, hunt_styles, weapon_types, looking_for_buddy, willing_to_mentor, buddy_bio')
+      .or('looking_for_buddy.eq.true,willing_to_mentor.eq.true'),
+  ])
 
-  if (!candidates) {
+  if (!candidateUserProfiles || !candidateHuntingProfiles) {
     return NextResponse.json({ matches: [], mentors: [] })
   }
 
-  const scored: BuddyMatch[] = []
-  for (const c of candidates) {
-    if (excludeIds.has(c.id)) continue
+  // Build map of user profiles by id
+  const userProfileMap = new Map((candidateUserProfiles).map(p => [p.id, p]))
 
-    const { score, reasons } = scoreBuddy(myProfile as HunterProfile, c as HunterProfile)
+  // Merge hunting profiles with user profiles, only keeping candidates that exist in both
+  const scored: BuddyMatch[] = []
+  for (const hp of candidateHuntingProfiles) {
+    if (excludeIds.has(hp.id)) continue
+    const up = userProfileMap.get(hp.id)
+    if (!up) continue
+
+    const candidate: MergedProfile = {
+      ...up,
+      ...hp,
+      id: hp.id,
+      user_name: up.user_name ?? null,
+      state: up.state,
+      states_of_interest: hp.states_of_interest ?? [],
+      target_species: hp.target_species ?? [],
+      hunt_styles: hp.hunt_styles ?? [],
+      weapon_types: hp.weapon_types ?? [],
+    }
+
+    const { score, reasons } = scoreBuddy(myProfile, candidate)
     if (score > 0) {
       scored.push({
-        user_id: c.id,
-        display_name: c.display_name,
-        home_state: c.home_state ?? c.residency_state,
-        experience_level: c.experience_level,
-        years_hunting: c.years_hunting,
-        states_of_interest: c.states_of_interest ?? [],
-        target_species: c.target_species ?? [],
-        hunt_styles: c.hunt_styles ?? [],
-        willing_to_mentor: c.willing_to_mentor,
-        looking_for_buddy: c.looking_for_buddy,
-        buddy_bio: c.buddy_bio,
-        avatar_url: c.avatar_url,
-        is_verified: c.is_verified,
+        user_id: candidate.id,
+        display_name: candidate.display_name,
+        user_name: candidate.user_name ?? null,
+        state: candidate.state,
+        experience_level: candidate.experience_level,
+        years_hunting: candidate.years_hunting,
+        states_of_interest: candidate.states_of_interest,
+        target_species: candidate.target_species,
+        hunt_styles: candidate.hunt_styles,
+        willing_to_mentor: candidate.willing_to_mentor,
+        looking_for_buddy: candidate.looking_for_buddy,
+        buddy_bio: candidate.buddy_bio,
+        avatar_url: candidate.avatar_url,
+        is_verified: candidate.is_verified,
         score,
         overlap_reasons: reasons.slice(0, 4),
-        social_facebook: c.social_facebook ?? null,
-        social_instagram: c.social_instagram ?? null,
-        social_x: c.social_x ?? null,
+        social_facebook: candidate.social_facebook ?? null,
+        social_instagram: candidate.social_instagram ?? null,
+        social_x: candidate.social_x ?? null,
       })
     }
   }

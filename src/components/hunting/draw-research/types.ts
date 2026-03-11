@@ -13,7 +13,7 @@ export type AutoContext = {
   points: { state: string; species: string; points: number; point_type: string }[]
   physicalCondition: string | null
   experienceLevel: string | null
-  residencyState: string | null
+  state: string | null
   yearsHunting: number | null
   weaponTypes: string[] | null
   statesOfInterest: string[] | null

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Navbar } from '@/components/layout/navbar'
 import { Nav2 } from '@/components/layout/nav2'
 import { Send, CheckCircle, MessageSquare } from 'lucide-react'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export default function ContactPage() {
   const [name, setName] = useState('')
@@ -171,9 +172,7 @@ export default function ContactPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

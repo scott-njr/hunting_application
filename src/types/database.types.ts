@@ -50,150 +50,189 @@ export type Database = {
         }
         Relationships: []
       }
-      hunter_profiles: {
+      user_profile: {
         Row: {
           id: string
+          first_name: string | null
+          last_name: string | null
           display_name: string | null
-          residency_state: string | null
-          hunter_ed_number: string | null
-          sat_device_type: 'inreach' | 'spot' | 'none' | null
-          sat_device_id: string | null
+          user_name: string | null
+          gender: 'male' | 'female' | null
+          date_of_birth: string | null
+          avatar_url: string | null
+          phone: string | null
+          email: string | null
+          city: string | null
+          state: string | null
+          country: string | null
+          nearest_airport: string | null
+          nearest_airport_name: string | null
+          photo_urls: string[]
+          physical_condition: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
+          training_interests: string[]
+          social_facebook: string | null
+          social_instagram: string | null
+          social_x: string | null
+          is_verified: boolean
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id: string
+          first_name?: string | null
+          last_name?: string | null
+          display_name?: string | null
+          user_name?: string | null
+          gender?: 'male' | 'female' | null
+          date_of_birth?: string | null
+          avatar_url?: string | null
+          phone?: string | null
+          email?: string | null
+          city?: string | null
+          state?: string | null
+          country?: string | null
+          nearest_airport?: string | null
+          nearest_airport_name?: string | null
+          photo_urls?: string[]
+          physical_condition?: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
+          training_interests?: string[]
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_x?: string | null
+          is_verified?: boolean
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          id?: string
+          first_name?: string | null
+          last_name?: string | null
+          display_name?: string | null
+          user_name?: string | null
+          gender?: 'male' | 'female' | null
+          date_of_birth?: string | null
+          avatar_url?: string | null
+          phone?: string | null
+          email?: string | null
+          city?: string | null
+          state?: string | null
+          country?: string | null
+          nearest_airport?: string | null
+          nearest_airport_name?: string | null
+          photo_urls?: string[]
+          physical_condition?: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
+          training_interests?: string[]
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_x?: string | null
+          is_verified?: boolean
+          created_on?: string
+          updated_on?: string
+        }
+        Relationships: []
+      }
+      hunting_profile: {
+        Row: {
+          id: string
           weapon_types: string[]
           target_species: string[]
           states_of_interest: string[]
           hunt_access_types: string[]
           experience_level: 'beginner' | 'intermediate' | 'experienced' | 'expert' | null
           years_hunting: number | null
-          physical_condition: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
           annual_budget: 'under_500' | '500_2000' | '2000_5000' | '5000_15000' | '15000_plus' | null
           hunt_styles: string[]
-          training_interests: string[]
-          home_city: string | null
-          home_state: string | null
-          nearest_airport: string | null
-          nearest_airport_name: string | null
+          hunter_ed_number: string | null
+          sat_device_type: 'inreach' | 'spot' | 'none' | null
+          sat_device_id: string | null
           willing_to_fly: boolean | null
           max_drive_hours: number | null
-          typical_trip_days: number | null
-          max_trips_per_year: number | null
           looking_for_buddy: boolean
           willing_to_mentor: boolean
           buddy_bio: string | null
-          avatar_url: string | null
-          is_verified: boolean
-          social_facebook: string | null
-          social_instagram: string | null
-          social_x: string | null
-          phone: string | null
-          backup_email: string | null
-          date_of_birth: string | null
-          gender: 'male' | 'female' | null
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id: string
+          weapon_types?: string[]
+          target_species?: string[]
+          states_of_interest?: string[]
+          hunt_access_types?: string[]
+          experience_level?: 'beginner' | 'intermediate' | 'experienced' | 'expert' | null
+          years_hunting?: number | null
+          annual_budget?: 'under_500' | '500_2000' | '2000_5000' | '5000_15000' | '15000_plus' | null
+          hunt_styles?: string[]
+          hunter_ed_number?: string | null
+          sat_device_type?: 'inreach' | 'spot' | 'none' | null
+          sat_device_id?: string | null
+          willing_to_fly?: boolean | null
+          max_drive_hours?: number | null
+          looking_for_buddy?: boolean
+          willing_to_mentor?: boolean
+          buddy_bio?: string | null
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          id?: string
+          weapon_types?: string[]
+          target_species?: string[]
+          states_of_interest?: string[]
+          hunt_access_types?: string[]
+          experience_level?: 'beginner' | 'intermediate' | 'experienced' | 'expert' | null
+          years_hunting?: number | null
+          annual_budget?: 'under_500' | '500_2000' | '2000_5000' | '5000_15000' | '15000_plus' | null
+          hunt_styles?: string[]
+          hunter_ed_number?: string | null
+          sat_device_type?: 'inreach' | 'spot' | 'none' | null
+          sat_device_id?: string | null
+          willing_to_fly?: boolean | null
+          max_drive_hours?: number | null
+          looking_for_buddy?: boolean
+          willing_to_mentor?: boolean
+          buddy_bio?: string | null
+          created_on?: string
+          updated_on?: string
+        }
+        Relationships: []
+      }
+      fitness_profile: {
+        Row: {
+          id: string
           height_inches: number | null
           weight_lbs: number | null
           bench_press_lbs: number | null
           squat_lbs: number | null
           deadlift_lbs: number | null
           overhead_press_lbs: number | null
-          photo_urls: string[]
-          profile_completed_at: string | null
-          created_at: string
-          updated_at: string
+          fitness_level: 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id: string
-          display_name?: string | null
-          residency_state?: string | null
-          hunter_ed_number?: string | null
-          sat_device_type?: 'inreach' | 'spot' | 'none' | null
-          sat_device_id?: string | null
-          weapon_types?: string[]
-          target_species?: string[]
-          states_of_interest?: string[]
-          hunt_access_types?: string[]
-          experience_level?: 'beginner' | 'intermediate' | 'experienced' | 'expert' | null
-          years_hunting?: number | null
-          physical_condition?: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
-          annual_budget?: 'under_500' | '500_2000' | '2000_5000' | '5000_15000' | '15000_plus' | null
-          hunt_styles?: string[]
-          training_interests?: string[]
-          home_city?: string | null
-          home_state?: string | null
-          nearest_airport?: string | null
-          nearest_airport_name?: string | null
-          willing_to_fly?: boolean | null
-          max_drive_hours?: number | null
-          typical_trip_days?: number | null
-          max_trips_per_year?: number | null
-          looking_for_buddy?: boolean
-          willing_to_mentor?: boolean
-          buddy_bio?: string | null
-          avatar_url?: string | null
-          is_verified?: boolean
-          social_facebook?: string | null
-          social_instagram?: string | null
-          social_x?: string | null
-          phone?: string | null
-          backup_email?: string | null
-          date_of_birth?: string | null
-          gender?: 'male' | 'female' | null
           height_inches?: number | null
           weight_lbs?: number | null
           bench_press_lbs?: number | null
           squat_lbs?: number | null
           deadlift_lbs?: number | null
           overhead_press_lbs?: number | null
-          photo_urls?: string[]
-          profile_completed_at?: string | null
-          created_at?: string
-          updated_at?: string
+          fitness_level?: 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
-          display_name?: string | null
-          residency_state?: string | null
-          hunter_ed_number?: string | null
-          sat_device_type?: 'inreach' | 'spot' | 'none' | null
-          sat_device_id?: string | null
-          weapon_types?: string[]
-          target_species?: string[]
-          states_of_interest?: string[]
-          hunt_access_types?: string[]
-          experience_level?: 'beginner' | 'intermediate' | 'experienced' | 'expert' | null
-          years_hunting?: number | null
-          physical_condition?: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
-          annual_budget?: 'under_500' | '500_2000' | '2000_5000' | '5000_15000' | '15000_plus' | null
-          hunt_styles?: string[]
-          training_interests?: string[]
-          home_city?: string | null
-          home_state?: string | null
-          nearest_airport?: string | null
-          nearest_airport_name?: string | null
-          willing_to_fly?: boolean | null
-          max_drive_hours?: number | null
-          typical_trip_days?: number | null
-          max_trips_per_year?: number | null
-          looking_for_buddy?: boolean
-          willing_to_mentor?: boolean
-          buddy_bio?: string | null
-          avatar_url?: string | null
-          is_verified?: boolean
-          social_facebook?: string | null
-          social_instagram?: string | null
-          social_x?: string | null
-          phone?: string | null
-          backup_email?: string | null
-          date_of_birth?: string | null
-          gender?: 'male' | 'female' | null
           height_inches?: number | null
           weight_lbs?: number | null
           bench_press_lbs?: number | null
           squat_lbs?: number | null
           deadlift_lbs?: number | null
           overhead_press_lbs?: number | null
-          photo_urls?: string[]
-          profile_completed_at?: string | null
-          created_at?: string
-          updated_at?: string
+          fitness_level?: 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -203,10 +242,6 @@ export type Database = {
           email: string
           full_name: string | null
           stripe_customer_id: string | null
-          experience_level: 'beginner' | 'intermediate' | 'expert' | null
-          interests: string[]
-          fitness_level: 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null
-          residential_state: string | null
           onboarding_completed: boolean
           community_guidelines_accepted_at: string | null
           community_guidelines_version: number
@@ -219,10 +254,6 @@ export type Database = {
           email: string
           full_name?: string | null
           stripe_customer_id?: string | null
-          experience_level?: 'beginner' | 'intermediate' | 'expert' | null
-          interests?: string[]
-          fitness_level?: 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null
-          residential_state?: string | null
           onboarding_completed?: boolean
           community_guidelines_accepted_at?: string | null
           community_guidelines_version?: number
@@ -235,10 +266,6 @@ export type Database = {
           email?: string
           full_name?: string | null
           stripe_customer_id?: string | null
-          experience_level?: 'beginner' | 'intermediate' | 'expert' | null
-          interests?: string[]
-          fitness_level?: 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null
-          residential_state?: string | null
           onboarding_completed?: boolean
           community_guidelines_accepted_at?: string | null
           community_guidelines_version?: number
@@ -248,7 +275,7 @@ export type Database = {
         }
         Relationships: []
       }
-      hunter_points: {
+      hunting_points: {
         Row: {
           id: string
           user_id: string
@@ -290,7 +317,7 @@ export type Database = {
         }
         Relationships: []
       }
-      hunt_applications: {
+      hunting_applications: {
         Row: {
           id: string
           user_id: string
@@ -350,7 +377,7 @@ export type Database = {
         }
         Relationships: []
       }
-      hunt_plans: {
+      hunting_plans: {
         Row: {
           id: string
           user_id: string
@@ -373,8 +400,6 @@ export type Database = {
           base_camp_state: string | null
           checklist: Json
           ai_recommendations: Json | null
-          ai_chat: Json
-          saved_services: Json
           gear_list: Json
           notes: string | null
           emergency_contact_name: string | null
@@ -405,8 +430,6 @@ export type Database = {
           base_camp_state?: string | null
           checklist?: Json
           ai_recommendations?: Json | null
-          ai_chat?: Json
-          saved_services?: Json
           gear_list?: Json
           notes?: string | null
           emergency_contact_name?: string | null
@@ -437,8 +460,6 @@ export type Database = {
           base_camp_state?: string | null
           checklist?: Json
           ai_recommendations?: Json | null
-          ai_chat?: Json
-          saved_services?: Json
           gear_list?: Json
           notes?: string | null
           emergency_contact_name?: string | null
@@ -449,7 +470,7 @@ export type Database = {
         }
         Relationships: []
       }
-      hunt_members: {
+      hunting_plan_members: {
         Row: {
           id: string
           hunt_plan_id: string
@@ -494,7 +515,7 @@ export type Database = {
         }
         Relationships: []
       }
-      hunt_locations: {
+      hunting_locations: {
         Row: {
           id: string
           hunt_plan_id: string
@@ -530,7 +551,7 @@ export type Database = {
         }
         Relationships: []
       }
-      gear_items: {
+      hunting_gear_items: {
         Row: {
           id: string
           user_id: string
@@ -597,7 +618,7 @@ export type Database = {
         }
         Relationships: []
       }
-      draw_states: {
+      hunting_draw_states: {
         Row: {
           id: string
           state_name: string
@@ -636,7 +657,7 @@ export type Database = {
         }
         Relationships: []
       }
-      draw_species: {
+      hunting_draw_species: {
         Row: {
           id: string
           draw_state_id: string
@@ -702,7 +723,7 @@ export type Database = {
         }
         Relationships: []
       }
-      draw_research_reports: {
+      hunting_draw_research_reports: {
         Row: {
           id: string
           user_id: string
@@ -756,7 +777,7 @@ export type Database = {
         }
         Relationships: []
       }
-      friendships: {
+      social_friendships: {
         Row: {
           id: string
           requester_id: string
@@ -779,7 +800,7 @@ export type Database = {
         }
         Relationships: []
       }
-      community_posts: {
+      social_posts: {
         Row: {
           id: string
           user_id: string
@@ -812,7 +833,7 @@ export type Database = {
         }
         Relationships: []
       }
-      direct_messages: {
+      social_messages: {
         Row: {
           id: string
           sender_id: string
@@ -834,7 +855,7 @@ export type Database = {
         }
         Relationships: []
       }
-      post_comments: {
+      social_comments: {
         Row: {
           id: string
           post_id: string
@@ -854,7 +875,7 @@ export type Database = {
         }
         Relationships: []
       }
-      post_reactions: {
+      social_reactions: {
         Row: {
           id: string
           post_id: string
@@ -868,84 +889,6 @@ export type Database = {
           created_at?: string
         }
         Update: { [_ in never]: never }
-        Relationships: []
-      }
-      journal_sightings: {
-        Row: {
-          id: string
-          user_id: string
-          species: string
-          point_count: number | null
-          distance_yards: number | null
-          direction: string | null
-          animal_count: number
-          behavior: string | null
-          notes: string | null
-          lat: number | null
-          lng: number | null
-          location_name: string | null
-          property_name: string | null
-          observed_at: string
-          temp_f: number | null
-          wind_speed_mph: number | null
-          wind_direction: string | null
-          pressure_inhg: number | null
-          pressure_trend: string | null
-          moon_phase: string | null
-          moon_illumination: number | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          species: string
-          point_count?: number | null
-          distance_yards?: number | null
-          direction?: string | null
-          animal_count?: number
-          behavior?: string | null
-          notes?: string | null
-          lat?: number | null
-          lng?: number | null
-          location_name?: string | null
-          property_name?: string | null
-          observed_at?: string
-          temp_f?: number | null
-          wind_speed_mph?: number | null
-          wind_direction?: string | null
-          pressure_inhg?: number | null
-          pressure_trend?: string | null
-          moon_phase?: string | null
-          moon_illumination?: number | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          species?: string
-          point_count?: number | null
-          distance_yards?: number | null
-          direction?: string | null
-          animal_count?: number
-          behavior?: string | null
-          notes?: string | null
-          lat?: number | null
-          lng?: number | null
-          location_name?: string | null
-          property_name?: string | null
-          observed_at?: string
-          temp_f?: number | null
-          wind_speed_mph?: number | null
-          wind_direction?: string | null
-          pressure_inhg?: number | null
-          pressure_trend?: string | null
-          moon_phase?: string | null
-          moon_illumination?: number | null
-          created_at?: string
-          updated_at?: string
-        }
         Relationships: []
       }
       issue_reports: {
@@ -1017,7 +960,7 @@ export type Database = {
         }
         Relationships: []
       }
-      journal_pins: {
+      hunting_field_map_pins: {
         Row: {
           id: string
           user_id: string
@@ -1086,7 +1029,7 @@ export type Database = {
         }
         Relationships: []
       }
-      gear_checklist: {
+      hunting_gear_checklist: {
         Row: {
           user_id: string
           item_slug: string
@@ -1260,7 +1203,7 @@ export type Database = {
         }
         Relationships: []
       }
-      weekly_workouts: {
+      fitness_weekly_workouts: {
         Row: {
           id: string
           week_start: string
@@ -1287,7 +1230,7 @@ export type Database = {
         }
         Relationships: []
       }
-      workout_submissions: {
+      fitness_workout_submissions: {
         Row: {
           id: string
           workout_id: string
@@ -1323,7 +1266,7 @@ export type Database = {
         }
         Relationships: []
       }
-      baseline_tests: {
+      fitness_baseline_tests: {
         Row: {
           id: string
           user_id: string
@@ -1359,7 +1302,7 @@ export type Database = {
         }
         Relationships: []
       }
-      leaderboard_points: {
+      fitness_leaderboard_points: {
         Row: {
           id: string
           user_id: string
@@ -1392,7 +1335,7 @@ export type Database = {
         }
         Relationships: []
       }
-      shared_plans: {
+      fitness_shared_plans: {
         Row: {
           id: string
           source_plan_id: string
@@ -1425,7 +1368,7 @@ export type Database = {
         }
         Relationships: []
       }
-      training_plans: {
+      fitness_training_plans: {
         Row: {
           id: string
           user_id: string
@@ -1453,7 +1396,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
-          plan_type?: 'run' | 'strength'
+          plan_type?: 'run' | 'strength' | 'meal'
           status?: 'active' | 'completed' | 'abandoned'
           config?: Json
           plan_data?: Json
@@ -1464,7 +1407,7 @@ export type Database = {
         }
         Relationships: []
       }
-      plan_workout_logs: {
+      fitness_plan_workout_logs: {
         Row: {
           id: string
           plan_id: string

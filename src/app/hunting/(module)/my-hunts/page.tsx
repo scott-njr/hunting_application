@@ -11,8 +11,9 @@ export default async function MyHuntsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const today = new Date().toISOString().split('T')[0]
-  const thirtyDaysOut = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
+  const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   const [
     subInfo,
@@ -27,32 +28,32 @@ export default async function MyHuntsPage() {
     getUserModuleSubscriptionInfo(supabase, user.id, 'hunting'),
     // Active hunts
     supabase
-      .from('hunt_plans')
+      .from('hunting_plans')
       .select('id, title, status, trip_start_date, state, species')
       .eq('user_id', user.id)
       .in('status', ['planning', 'applied', 'booked'] as const)
       .order('trip_start_date', { ascending: true }),
     // Draw deadlines in next 30 days
     supabase
-      .from('draw_species')
+      .from('hunting_draw_species')
       .select('species, state_code, deadline')
       .gte('deadline', today)
       .lte('deadline', thirtyDaysOut)
       .order('deadline', { ascending: true }),
     // User's states of interest for filtering deadlines
     supabase
-      .from('hunter_profiles')
+      .from('hunting_profile')
       .select('states_of_interest')
       .eq('id', user.id)
       .maybeSingle(),
     // Field map pins
     supabase
-      .from('journal_pins')
+      .from('hunting_field_map_pins')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id),
     // Gear items
     supabase
-      .from('gear_items')
+      .from('hunting_gear_items')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id),
     // Hunting courses

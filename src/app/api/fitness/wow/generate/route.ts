@@ -1,6 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 
 function getCurrentMonday(): string {
@@ -62,7 +62,7 @@ Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
   }
 }`
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   // Dev-only — production uses Vercel cron at /api/cron/wow
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Use /api/cron/wow in production' }, { status: 403 })
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   )
 
   const { data: existing } = await admin
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('id')
     .eq('week_start', weekStart)
     .maybeSingle()
@@ -109,12 +109,12 @@ export async function POST(req: NextRequest) {
   try {
     parsed = extractJSON(result.response) as typeof parsed
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response', raw: result.response }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
   }
 
   // Insert into DB
   const { data: workout, error } = await admin
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .insert({
       week_start: weekStart,
       title: parsed.title,

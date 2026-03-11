@@ -1,20 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return member?.is_admin ? user : null
-}
+import { verifyAdmin } from '@/lib/admin-utils'
 
 export async function GET(req: NextRequest) {
   const adminUser = await verifyAdmin()
@@ -32,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   let query = admin
     .from('members')
-    .select('id, email, full_name, is_admin, onboarding_completed, created_at', { count: 'exact' })
+    .select('id, email, is_admin, onboarding_completed, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -40,7 +26,7 @@ export async function GET(req: NextRequest) {
     // Sanitize search to prevent PostgREST filter injection
     const safe = search.replace(/[(),."'\\]/g, '')
     if (safe) {
-      query = query.or(`email.ilike.%${safe}%,full_name.ilike.%${safe}%`)
+      query = query.or(`email.ilike.%${safe}%`)
     }
   }
 
@@ -48,12 +34,16 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Fetch module subscriptions for all returned users
+  // Fetch display names and module subscriptions for all returned users
   const userIds = (data ?? []).map(u => u.id)
-  const { data: subs } = userIds.length > 0
-    ? await admin.from('module_subscriptions').select('user_id, module_slug, tier, status').in('user_id', userIds)
-    : { data: [] }
+  const [{ data: profiles }, { data: subs }] = userIds.length > 0
+    ? await Promise.all([
+        admin.from('user_profile').select('id, display_name').in('id', userIds),
+        admin.from('module_subscriptions').select('user_id, module_slug, tier, status').in('user_id', userIds),
+      ])
+    : [{ data: [] }, { data: [] }]
 
+  const profileMap = new Map((profiles ?? []).map(p => [p.id, p.display_name]))
   const subsByUser = new Map<string, { module_slug: string; tier: string; status: string }[]>()
   for (const sub of subs ?? []) {
     const list = subsByUser.get(sub.user_id) ?? []
@@ -63,6 +53,7 @@ export async function GET(req: NextRequest) {
 
   const users = (data ?? []).map(u => ({
     ...u,
+    display_name: profileMap.get(u.id) ?? null,
     subscriptions: subsByUser.get(u.id) ?? [],
   }))
 

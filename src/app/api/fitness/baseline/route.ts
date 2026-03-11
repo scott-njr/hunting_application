@@ -7,7 +7,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: tests, error } = await supabase
-    .from('baseline_tests')
+    .from('fitness_baseline_tests')
     .select('*')
     .eq('user_id', user.id)
     .order('tested_at', { ascending: false })
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: test, error } = await supabase
-    .from('baseline_tests')
+    .from('fitness_baseline_tests')
     .insert({
       user_id: user.id,
       run_time_seconds,

@@ -11,7 +11,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   // Check if already liked
   const { data: existing } = await supabase
-    .from('post_reactions')
+    .from('social_reactions')
     .select('id')
     .eq('post_id', postId)
     .eq('user_id', user.id)
@@ -19,15 +19,15 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   if (existing) {
     // Unlike
-    await supabase.from('post_reactions').delete().eq('id', existing.id)
+    await supabase.from('social_reactions').delete().eq('id', existing.id)
   } else {
     // Like
-    await supabase.from('post_reactions').insert({ post_id: postId, user_id: user.id })
+    await supabase.from('social_reactions').insert({ post_id: postId, user_id: user.id })
   }
 
   // Return updated count
   const { data: reactions } = await supabase
-    .from('post_reactions')
+    .from('social_reactions')
     .select('id')
     .eq('post_id', postId)
 

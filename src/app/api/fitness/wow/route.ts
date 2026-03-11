@@ -19,7 +19,7 @@ export async function GET() {
 
   // Try current week first
   const { data, error } = await supabase
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('*')
     .eq('week_start', weekStart)
     .maybeSingle()
@@ -29,7 +29,7 @@ export async function GET() {
   // Fall back to the most recent workout if none generated yet this week
   if (!data) {
     const { data: latest, error: latestError } = await supabase
-      .from('weekly_workouts')
+      .from('fitness_weekly_workouts')
       .select('*')
       .lte('week_start', weekStart)
       .order('week_start', { ascending: false })

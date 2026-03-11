@@ -11,7 +11,7 @@ export default async function MealPrepPage() {
 
   // Check for active meal plan
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('id')
     .eq('user_id', user.id)
     .eq('plan_type', 'meal')

@@ -31,7 +31,7 @@ export async function POST(
 
   // Fetch plan and verify ownership
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('*')
     .eq('id', planId)
     .eq('user_id', user.id)
@@ -111,7 +111,7 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
   }
 
   const { error } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .update({
       plan_data: parsed as unknown as Json,
       goal: (parsed.goal_summary as string) ?? plan.goal,

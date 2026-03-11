@@ -7,10 +7,12 @@ import {
   Compass,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Spearfishing Module',
   description: 'Dive logs, species identification, regulation tracking, spot mapping, and gear management for freedivers and spearfishing enthusiasts at every level.',
+  alternates: { canonical: '/spearfishing' },
 }
 
 const features = [
@@ -109,9 +111,7 @@ export default function SpearfishingPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

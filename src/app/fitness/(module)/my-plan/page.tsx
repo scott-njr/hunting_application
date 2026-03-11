@@ -8,7 +8,6 @@ import { AdjustPlanButton } from '@/components/fitness/coach/adjust-plan-button'
 import { SharePlanButton } from '@/components/fitness/coach/share-plan-button'
 import { SharedPlanInbox } from '@/components/fitness/coach/shared-plan-inbox'
 import { SharedPlansList } from '@/components/fitness/coach/shared-plans-list'
-import { MyPlanMeals } from './my-plan-meals'
 import { TodayChecklist } from './today-checklist'
 import { ExpandableText } from '@/components/ui/expandable-text'
 
@@ -57,21 +56,21 @@ export default async function MyPlanPage() {
   // Fetch all active plans in parallel
   const [runResult, strengthResult, mealResult] = await Promise.all([
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('*')
       .eq('user_id', user.id)
       .eq('plan_type', 'run')
       .eq('status', 'active')
       .maybeSingle(),
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('*')
       .eq('user_id', user.id)
       .eq('plan_type', 'strength')
       .eq('status', 'active')
       .maybeSingle(),
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('*')
       .eq('user_id', user.id)
       .eq('plan_type', 'meal')
@@ -90,7 +89,7 @@ export default async function MyPlanPage() {
   let allLogs: Array<{ plan_id: string; week_number: number; session_number: number; notes: string | null; completed_at: string }> = []
   if (planIds.length > 0) {
     const { data } = await supabase
-      .from('plan_workout_logs')
+      .from('fitness_plan_workout_logs')
       .select('plan_id, week_number, session_number, notes, completed_at')
       .in('plan_id', planIds)
     allLogs = data ?? []
@@ -158,8 +157,6 @@ export default async function MyPlanPage() {
   const todayStrengthSessions = strengthThisWeek ? getTodaySessions(strengthThisWeek, strengthLogs, strengthCurrentWeek) : []
   const todayMealItems = todayMeals ? (todayMeals.meals as unknown as Array<{ meal_number: number; meal_type: string; title: string; calories: number; protein_g: number }>)
     .map(m => ({ ...m, isCompleted: mealLogs.get(todayDayNumber)?.has(m.meal_number) ?? false })) : []
-  const hasTodayItems = todayRunSessions.length > 0 || todayStrengthSessions.length > 0 || todayMealItems.length > 0
-
   // Chart data builders
   function buildChartData(planData: PlanData | null, logsByWeek: Map<number, Set<number>>) {
     const sessionsPerWeek: number[] = []

@@ -6,10 +6,12 @@ import {
   Mountain, Target, Users, Shield, Route,
   Heart,
 } from 'lucide-react'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'About Us',
   description: 'Meet the team behind Praevius — hunters, anglers, and outdoor athletes building the structured training and tools platform they wish existed.',
+  alternates: { canonical: '/about' },
 }
 
 const values = [
@@ -108,9 +110,7 @@ export default function AboutPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

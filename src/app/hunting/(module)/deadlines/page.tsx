@@ -4,11 +4,11 @@ import { Calendar } from 'lucide-react'
 import { Database } from '@/types/database.types'
 import { DeadlinesClient } from '@/components/dashboard/deadlines-client'
 
-type DrawSpeciesRow = Database['public']['Tables']['draw_species']['Row']
-type DrawStatesRow = Database['public']['Tables']['draw_states']['Row']
+type DrawSpeciesRow = Database['public']['Tables']['hunting_draw_species']['Row']
+type DrawStatesRow = Database['public']['Tables']['hunting_draw_states']['Row']
 
 export type DrawSpeciesWithState = DrawSpeciesRow & {
-  draw_states: DrawStatesRow
+  hunting_draw_states: DrawStatesRow
 }
 
 export default async function DeadlinesPage() {
@@ -18,7 +18,7 @@ export default async function DeadlinesPage() {
 
   // Fetch user's species + state interests from their profile
   const { data: profile } = await supabase
-    .from('hunter_profiles')
+    .from('hunting_profile')
     .select('target_species, states_of_interest')
     .eq('id', user.id)
     .maybeSingle()
@@ -27,10 +27,10 @@ export default async function DeadlinesPage() {
   const statesFilter: string[] = profile?.states_of_interest ?? []
   const hasInterests = speciesFilter.length > 0 || statesFilter.length > 0
 
-  // Fetch draw_species rows with nested draw_states
+  // Fetch hunting_draw_species rows with nested hunting_draw_states
   let query = supabase
-    .from('draw_species')
-    .select('*, draw_states(*)')
+    .from('hunting_draw_species')
+    .select('*, hunting_draw_states(*)')
     .order('state_code')
     .order('species')
 
@@ -41,12 +41,12 @@ export default async function DeadlinesPage() {
   const [{ data: draws }, { data: applications }, { data: pointRows }] = await Promise.all([
     query,
     supabase
-      .from('hunt_applications')
+      .from('hunting_applications')
       .select('state, species, year')
       .eq('user_id', user.id)
       .eq('status', 'applied'),
     supabase
-      .from('hunter_points')
+      .from('hunting_points')
       .select('state, species, points, point_type')
       .eq('user_id', user.id),
   ])

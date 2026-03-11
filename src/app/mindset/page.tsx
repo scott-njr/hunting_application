@@ -7,10 +7,12 @@ import {
   Users,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Mindset Module — Mental Performance',
   description: 'Mental performance training for hunters and athletes — visualization, stress inoculation, focus drills, resilience building, and decision frameworks.',
+  alternates: { canonical: '/mindset' },
 }
 
 const features = [
@@ -71,7 +73,7 @@ export default function MindsetPage() {
             <Brain className="h-7 w-7 text-purple-400" />
             <h1 className="text-4xl sm:text-5xl font-bold text-primary">Mindset</h1>
           </div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-purple-400 mb-4">Become Who You're Meant to Be</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-purple-400 mb-4">Become Who You&apos;re Meant to Be</p>
           <p className="text-secondary text-lg max-w-2xl mb-0">
             Mental preparation, focus training, stress management, and resilience — because the hardest part of the field isn&apos;t physical.
           </p>
@@ -109,9 +111,7 @@ export default function MindsetPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

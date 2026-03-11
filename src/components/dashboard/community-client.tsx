@@ -23,7 +23,8 @@ type Friend = {
 type SearchResult = {
   user_id: string
   display_name: string | null
-  email: string
+  user_name: string | null
+  avatar_url: string | null
 }
 
 type Props = {
@@ -88,7 +89,7 @@ export default function CommunityClient({ initialFriends, currentUserId }: Props
           friendship_id: crypto.randomUUID(),
           friend_id: recipientId,
           display_name: target.display_name,
-          email: target.email,
+          email: '',
           direction: 'sent',
           status: 'pending',
           created_at: new Date().toISOString(),
@@ -216,8 +217,8 @@ export default function CommunityClient({ initialFriends, currentUserId }: Props
                   searchResults.map(r => (
                     <div key={r.user_id} className="flex items-center justify-between px-3 py-2 border-b border-subtle last:border-0">
                       <div>
-                        <p className="text-xs text-primary">{r.display_name || r.email}</p>
-                        {r.display_name && <p className="text-xs text-muted">{r.email}</p>}
+                        <p className="text-xs text-primary">{r.display_name || r.user_name || 'Member'}</p>
+                        {r.user_name && <p className="text-xs text-muted">@{r.user_name}</p>}
                       </div>
                       <button onClick={() => sendRequest(r.user_id)} disabled={friendActionLoading === r.user_id} className="flex items-center gap-1 text-xs btn-primary disabled:opacity-50 px-2 py-1 rounded transition-colors">
                         <UserPlus className="w-3 h-3" />

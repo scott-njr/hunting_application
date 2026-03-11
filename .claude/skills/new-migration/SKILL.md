@@ -7,7 +7,7 @@ argument-hint: "<snake_case_description>"
 Scaffold a new Supabase migration file for this project.
 
 Arguments: $ARGUMENTS
-(Expected format: a short snake_case description — e.g., `add_scout_reports_table` or `alter_hunt_plans_add_safety_share`)
+(Expected format: a short snake_case description — e.g., `add_scout_reports_table` or `alter_hunting_plans_add_safety_share`)
 
 ## Your Task
 

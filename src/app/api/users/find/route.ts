@@ -27,66 +27,43 @@ export async function GET(req: NextRequest) {
   if (email) {
     const { data: member } = await supabase
       .from('members')
-      .select('id, full_name')
+      .select('id')
       .eq('email', email)
       .maybeSingle()
 
     if (!member) return NextResponse.json({ found: false })
 
     const { data: profile } = await supabase
-      .from('hunter_profiles')
-      .select('display_name')
+      .from('user_profile')
+      .select('display_name, user_name')
       .eq('id', member.id)
       .maybeSingle()
 
-    const displayName = profile?.display_name || member.full_name || null
-
-    return NextResponse.json({ found: true, user_id: member.id, display_name: displayName })
+    return NextResponse.json({ found: true, user_id: member.id, display_name: profile?.display_name ?? null, user_name: profile?.user_name ?? null })
   }
 
   // ── Search by display_name or email prefix (community search) ───────────────
   if (q && q.length < 2) return NextResponse.json({ results: [] })
 
-  // Search members by email prefix
-  const { data: byEmail } = await supabase
-    .from('members')
-    .select('id, email, full_name')
-    .ilike('email', `${q}%`)
-    .limit(10)
+  // Sanitize q to prevent PostgREST filter metacharacter injection
+  const sanitizedQ = (q as string).replace(/[(),."'\\]/g, '')
+  if (!sanitizedQ) return NextResponse.json({ results: [] })
 
-  // Search hunter_profiles by display_name prefix
+  // Search user_profile by display_name or user_name
   const { data: byName } = await supabase
-    .from('hunter_profiles')
-    .select('id, display_name')
-    .ilike('display_name', `%${q}%`)
+    .from('user_profile')
+    .select('id, display_name, user_name, avatar_url')
+    .or(`display_name.ilike.%${sanitizedQ}%,user_name.ilike.%${sanitizedQ}%`)
     .limit(10)
 
-  // Merge and deduplicate by user id
+  // Merge and deduplicate by user id — return only safe fields (no email/PII)
   const userIds = new Set<string>()
-  const results: { user_id: string; display_name: string | null; email: string }[] = []
+  const results: { user_id: string; display_name: string | null; user_name: string | null; avatar_url: string | null }[] = []
 
   for (const p of byName ?? []) {
     if (userIds.has(p.id)) continue
     userIds.add(p.id)
-    // Fetch their email
-    const member = (byEmail ?? []).find(m => m.id === p.id)
-    const { data: m } = member ? { data: member } : await supabase
-      .from('members')
-      .select('email, full_name')
-      .eq('id', p.id)
-      .maybeSingle()
-    if (m) results.push({ user_id: p.id, display_name: p.display_name, email: (m as { email: string }).email })
-  }
-
-  for (const m of byEmail ?? []) {
-    if (userIds.has(m.id)) continue
-    userIds.add(m.id)
-    const { data: profile } = await supabase
-      .from('hunter_profiles')
-      .select('display_name')
-      .eq('id', m.id)
-      .maybeSingle()
-    results.push({ user_id: m.id, display_name: profile?.display_name || m.full_name || null, email: m.email })
+    results.push({ user_id: p.id, display_name: p.display_name, user_name: p.user_name ?? null, avatar_url: p.avatar_url ?? null })
   }
 
   return NextResponse.json({ results })

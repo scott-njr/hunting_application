@@ -158,7 +158,7 @@ export const ALL_MODULES: {
   isActive: boolean
 }[] = [
   { slug: 'hunting', name: 'Hunting', description: 'Draw deadlines, hunt planning, gear, and AI scouting reports.', icon: 'Tent', isActive: true },
-  { slug: 'archery', name: 'Archery', description: 'Shot training, bow setup, competition prep, and coaching.', icon: 'Target', isActive: true },
+  { slug: 'archery', name: 'Archery', description: 'Structured training, equipment guides, form coaching, and competition prep.', icon: 'Target', isActive: true },
   { slug: 'firearms', name: 'Firearms', description: 'Ballistics, maintenance logs, and range tracking.', icon: 'Crosshair', isActive: true },
   { slug: 'medical', name: 'Medical', description: 'Wilderness first aid protocols and emergency preparedness.', icon: 'Heart', isActive: true },
   { slug: 'fishing', name: 'Fishing', description: 'Fly fishing, spear fishing, regulations, and trip logs.', icon: 'Fish', isActive: true },

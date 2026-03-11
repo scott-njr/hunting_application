@@ -1,13 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Mail, Users } from 'lucide-react'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { AccountDropdown } from '@/components/layout/account-dropdown'
 import { createClient } from '@/lib/supabase/client'
-import { clearAuthCache } from '@/lib/use-auth-cached'
+import { useSignOut } from '@/hooks/use-sign-out'
 
 interface ModuleHeaderProps {
   userId: string
@@ -17,13 +16,13 @@ interface ModuleHeaderProps {
 }
 
 export function ModuleHeader({ userId, email }: ModuleHeaderProps) {
-  const router = useRouter()
+  const handleSignOut = useSignOut()
   const [pendingRequests, setPendingRequests] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
     supabase
-      .from('friendships')
+      .from('social_friendships')
       .select('id', { count: 'exact', head: true })
       .eq('recipient_id', userId)
       .eq('status', 'pending')
@@ -31,14 +30,6 @@ export function ModuleHeader({ userId, email }: ModuleHeaderProps) {
         setPendingRequests(count ?? 0)
       })
   }, [userId])
-
-  async function handleSignOut() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    clearAuthCache()
-    router.push('/')
-    router.refresh()
-  }
 
   return (
     <header className="hidden lg:flex items-center justify-between border-b border-subtle bg-surface px-6 h-12 shrink-0">

@@ -155,16 +155,21 @@ export default function GearPage() {
   const [expandedGroup, setExpandedGroup] = useState<string | null>('Hunting')
   const [showNeedsOnly, setShowNeedsOnly] = useState(false)
 
-  useEffect(() => { loadChecklist() }, [])
-
-  async function loadChecklist() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const { data } = await supabase.from('gear_checklist').select('item_slug').eq('user_id', user.id)
-    if (data) setOwned(new Set(data.map(r => r.item_slug)))
-    setLoading(false)
-  }
+  useEffect(() => {
+    let cancelled = false
+    async function loadChecklist() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) { if (!cancelled) setLoading(false); return }
+      const { data } = await supabase.from('hunting_gear_checklist').select('item_slug').eq('user_id', user.id)
+      if (!cancelled) {
+        if (data) setOwned(new Set(data.map(r => r.item_slug)))
+        setLoading(false)
+      }
+    }
+    loadChecklist()
+    return () => { cancelled = true }
+  }, [])
 
   async function toggleItem(slug: string) {
     if (toggling) return
@@ -174,10 +179,10 @@ export default function GearPage() {
     if (!user) { setToggling(null); return }
     const isOwned = owned.has(slug)
     if (isOwned) {
-      await supabase.from('gear_checklist').delete().eq('user_id', user.id).eq('item_slug', slug)
+      await supabase.from('hunting_gear_checklist').delete().eq('user_id', user.id).eq('item_slug', slug)
       setOwned(prev => { const next = new Set(prev); next.delete(slug); return next })
     } else {
-      await supabase.from('gear_checklist').insert({ user_id: user.id, item_slug: slug })
+      await supabase.from('hunting_gear_checklist').insert({ user_id: user.id, item_slug: slug })
       setOwned(prev => new Set(prev).add(slug))
     }
     setToggling(null)

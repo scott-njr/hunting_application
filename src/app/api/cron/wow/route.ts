@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 
   // Check if workout already exists for this week
   const { data: existing } = await admin
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('id')
     .eq('week_start', weekStart)
     .maybeSingle()
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
 
   // Insert into DB
   const { data: workout, error } = await admin
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .insert({
       week_start: weekStart,
       title: parsed.title,

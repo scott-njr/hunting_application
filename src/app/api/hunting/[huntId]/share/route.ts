@@ -69,10 +69,10 @@ export async function POST(
 
     // Fetch all data in parallel
     const [planResult, membersResult, locationsResult, profileResult] = await Promise.all([
-      supabase.from('hunt_plans').select('*').eq('id', huntId).eq('user_id', user.id).single(),
-      supabase.from('hunt_members').select('display_name, email, phone, role, tag_status').eq('hunt_plan_id', huntId),
-      supabase.from('hunt_locations').select('label, description, lat, lng, scout_report').eq('hunt_plan_id', huntId).order('created_at'),
-      supabase.from('hunter_profiles').select('display_name').eq('id', user.id).single(),
+      supabase.from('hunting_plans').select('*').eq('id', huntId).eq('user_id', user.id).single(),
+      supabase.from('hunting_plan_members').select('display_name, email, phone, role, tag_status').eq('hunt_plan_id', huntId),
+      supabase.from('hunting_locations').select('label, description, lat, lng, scout_report').eq('hunt_plan_id', huntId).order('created_at'),
+      supabase.from('user_profile').select('display_name').eq('id', user.id).single(),
     ])
 
     if (!planResult.data) {
@@ -86,7 +86,7 @@ export async function POST(
     let gearItems: { name: string; category: string | null; brand: string | null }[] = []
     if (gearIds.length > 0) {
       const { data: gear } = await supabase
-        .from('gear_items')
+        .from('hunting_gear_items')
         .select('name, category, brand')
         .in('id', gearIds)
         .order('category')

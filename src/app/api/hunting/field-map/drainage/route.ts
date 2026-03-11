@@ -17,7 +17,7 @@ const USGS_3DEP_URL =
   'https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/getSamples'
 
 /**
- * GET /api/journal/drainage?lat=X&lng=Y&range=500&uphill=false
+ * GET /api/hunting/field-map/drainage?lat=X&lng=Y&range=500&uphill=false
  *
  * Fetches a DEM grid from USGS 3DEP and traces terrain-following
  * scent flow path from the given location.
@@ -112,9 +112,9 @@ export async function GET(req: NextRequest) {
     return response
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      console.warn('[journal/drainage] USGS request timed out')
+      console.warn('[hunting/field-map/drainage] USGS request timed out')
     } else {
-      console.error('[journal/drainage] Error:', err)
+      console.error('[hunting/field-map/drainage] Error:', err)
     }
     // Return null — the client falls back to a straight cone
     return NextResponse.json({ bands: null })

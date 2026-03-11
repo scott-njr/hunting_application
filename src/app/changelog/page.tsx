@@ -1,5 +1,13 @@
+import type { Metadata } from 'next'
 import { Navbar } from '@/components/layout/navbar'
 import { Nav2 } from '@/components/layout/nav2'
+import { PublicFooter } from '@/components/layout/public-footer'
+
+export const metadata: Metadata = {
+  title: 'Changelog',
+  description: 'Recent fixes, improvements, and new features added to Lead the Wild by Praevius.',
+  alternates: { canonical: '/changelog' },
+}
 
 type ReleaseIssue = {
   id: string
@@ -97,9 +105,7 @@ export default async function ChangelogPage() {
         )}
       </main>
 
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

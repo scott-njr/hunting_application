@@ -7,10 +7,12 @@ import {
   ClipboardList,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'The Butcher Block — Field to Table',
   description: 'Wild game butchering guides, cut diagrams, field-to-freezer processing, meat care techniques, and recipes to honor your harvest from skinning to supper.',
+  alternates: { canonical: '/butcher-block' },
 }
 
 const features = [
@@ -109,9 +111,7 @@ export default function ButcherBlockPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

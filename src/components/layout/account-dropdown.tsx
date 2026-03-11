@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChevronDown, LogOut, CreditCard, User, LayoutGrid,
@@ -12,8 +11,9 @@ import { MODULE_TIER_RANK, MODULE_TIER_LABELS, type ModuleTier } from '@/lib/mod
 
 interface Profile {
   display_name: string | null
+  user_name: string | null
   phone: string | null
-  residency_state: string | null
+  state: string | null
   avatar_url: string | null
 }
 
@@ -31,7 +31,6 @@ interface AccountDropdownProps {
 }
 
 export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownProps) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(cacheUserId === userId ? cachedProfile : null)
   const [tier, setTier] = useState<TierInfo>(cacheUserId === userId ? cachedTier : null)
@@ -46,8 +45,8 @@ export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownPro
 
     const supabase = createClient()
     supabase
-      .from('hunter_profiles')
-      .select('display_name, phone, residency_state, avatar_url')
+      .from('user_profile')
+      .select('display_name, user_name, phone, state, avatar_url')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
@@ -109,6 +108,7 @@ export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownPro
         className="flex items-center gap-2 text-sm text-secondary hover:text-primary transition-colors rounded-lg px-2 py-1.5 hover:bg-surface"
       >
         {profile?.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={profile.avatar_url}
             alt=""
@@ -132,6 +132,7 @@ export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownPro
           <div className="px-4 py-3 border-b border-subtle">
             <div className="flex items-center gap-3">
               {profile?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
                   alt=""
@@ -144,14 +145,17 @@ export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownPro
               )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-primary truncate">{displayName}</p>
+                {profile?.user_name && (
+                  <p className="text-xs text-muted truncate">@{profile.user_name}</p>
+                )}
                 <div className="flex items-center gap-2">
                   {tier && (
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-accent bg-accent/15 px-1.5 py-0.5 rounded">
                       {MODULE_TIER_LABELS[tier.highestTier]} Member
                     </span>
                   )}
-                  {profile?.residency_state && (
-                    <span className="text-xs text-muted">{profile.residency_state}</span>
+                  {profile?.state && (
+                    <span className="text-xs text-muted">{profile.state}</span>
                   )}
                 </div>
               </div>

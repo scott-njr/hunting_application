@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { ActualCostCard } from './actual-cost-card'
 
@@ -12,8 +11,6 @@ interface FeatureStats {
 }
 
 export default async function AdminAIUsagePage() {
-  const supabase = await createClient()
-
   // Service role client to bypass RLS on ai_responses and module_subscriptions
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -82,17 +79,19 @@ export default async function AdminAIUsagePage() {
     .slice(0, 10)
 
   // Fetch member info for top users
-  let topUserDetails: { id: string; email: string; full_name: string | null; total_queries: number }[] = []
+  let topUserDetails: { id: string; email: string; display_name: string | null; total_queries: number }[] = []
   if (sortedUserIds.length > 0) {
-    const { data: members } = await admin
-      .from('members')
-      .select('id, email, full_name')
-      .in('id', sortedUserIds.map(([id]) => id))
-    const memberMap = new Map((members ?? []).map(m => [m.id, m]))
+    const ids = sortedUserIds.map(([id]) => id)
+    const [{ data: members }, { data: profiles }] = await Promise.all([
+      admin.from('members').select('id, email').in('id', ids),
+      admin.from('user_profile').select('id, display_name').in('id', ids),
+    ])
+    const emailMap = new Map((members ?? []).map(m => [m.id, m.email]))
+    const nameMap = new Map((profiles ?? []).map(p => [p.id, p.display_name]))
     topUserDetails = sortedUserIds.map(([id, count]) => ({
       id,
-      email: memberMap.get(id)?.email ?? '',
-      full_name: memberMap.get(id)?.full_name ?? null,
+      email: emailMap.get(id) ?? '',
+      display_name: nameMap.get(id) ?? null,
       total_queries: count,
     }))
   }
@@ -105,7 +104,7 @@ export default async function AdminAIUsagePage() {
       </div>
 
       {/* Overview stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <div className="rounded-lg border border-subtle bg-surface p-5">
           <p className="text-muted text-[10px] font-semibold uppercase tracking-wider mb-2">Queries This Month</p>
           <p className="text-primary text-3xl font-bold">{totalQueriesMonth}</p>
@@ -168,8 +167,8 @@ export default async function AdminAIUsagePage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-muted text-xs w-5 text-right">{i + 1}.</span>
                     <div className="min-w-0">
-                      <p className="text-primary text-sm truncate">{user.full_name || user.email}</p>
-                      {user.full_name && <p className="text-muted text-xs truncate">{user.email}</p>}
+                      <p className="text-primary text-sm truncate">{user.display_name || user.email}</p>
+                      {user.display_name && <p className="text-muted text-xs truncate">{user.email}</p>}
                     </div>
                   </div>
                   <span className="text-secondary text-sm font-medium flex-shrink-0 ml-3">

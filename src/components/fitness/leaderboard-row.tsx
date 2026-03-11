@@ -12,6 +12,7 @@ const SCALING_BADGE: Record<string, { label: string; className: string }> = {
 export type LeaderboardRowData = {
   rank: number
   displayName: string
+  userName: string | null
   avatarUrl: string | null
   isMine: boolean
   scaling?: string
@@ -25,6 +26,7 @@ export function LeaderboardRow({ data }: { data: LeaderboardRowData }) {
   const {
     rank,
     displayName,
+    userName,
     avatarUrl,
     isMine,
     scaling,
@@ -79,6 +81,9 @@ export function LeaderboardRow({ data }: { data: LeaderboardRowData }) {
         <p className={cn('text-sm font-medium truncate', isMine ? 'text-accent' : 'text-primary')}>
           {displayName}{isMine ? ' (you)' : ''}
         </p>
+        {userName && (
+          <p className="text-muted text-[10px] truncate">@{userName}</p>
+        )}
       </div>
 
       {/* Scaling badge (weekly view) */}
