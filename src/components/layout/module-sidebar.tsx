@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Bot, Users, Calendar, LogOut, UserCircle,
   ClipboardList, Package, MapPin, GraduationCap,
-  MessageSquare, Menu, X, Route, ClipboardCheck, Activity,
-  UtensilsCrossed, Sparkles, AlertCircle, Trophy, Mail,
+  MessageSquare, X, Route, ClipboardCheck, Activity,
+  UtensilsCrossed, Sparkles, AlertCircle, Trophy,
   LayoutDashboard, Tent, Dumbbell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { type ModuleSlug, type ModuleTier, MODULE_TIER_LABELS, MODULE_TIER_COLORS } from '@/lib/modules'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { ModuleSwitcher } from '@/components/layout/module-switcher'
+import { MobileTopBar } from '@/components/layout/mobile-top-bar'
 
 type NavItem = {
   href: string
@@ -159,23 +160,6 @@ export function ModuleSidebar({ moduleSlug, moduleTier, memberName, memberEmail 
   const router = useRouter()
   const navSections = MODULE_NAV[moduleSlug] ?? []
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [pendingFriendCount, setPendingFriendCount] = useState(0)
-  const friendsFetchedRef = useRef(false)
-
-  // Fetch pending friend request count for mobile top bar
-  useEffect(() => {
-    if (friendsFetchedRef.current) return
-    friendsFetchedRef.current = true
-    fetch('/api/friends')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!data?.friends) return
-        const count = (data.friends as Array<{ direction: string; status: string }>)
-          .filter(f => f.status === 'pending' && f.direction === 'received').length
-        setPendingFriendCount(count)
-      })
-      .catch(() => {})
-  }, [])
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -307,38 +291,7 @@ export function ModuleSidebar({ moduleSlug, moduleTier, memberName, memberEmail 
 
   return (
     <>
-      {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-surface border-b border-subtle px-4 py-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="p-2.5 text-muted hover:text-primary transition-colors"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <PraeviusWordmark size="sm" />
-        <div className="flex items-center gap-1">
-          <Link
-            href="/home/friends"
-            className="relative p-2.5 text-muted hover:text-primary transition-colors"
-            aria-label="Friends"
-          >
-            <Users className="h-5 w-5" />
-            {pendingFriendCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
-                {pendingFriendCount > 9 ? '9+' : pendingFriendCount}
-              </span>
-            )}
-          </Link>
-          <Link
-            href={`/${moduleSlug}/community/messages`}
-            className="p-2.5 text-muted hover:text-primary transition-colors"
-            aria-label="Messages"
-          >
-            <Mail className="h-5 w-5" />
-          </Link>
-        </div>
-      </div>
+      <MobileTopBar onMenuOpen={() => setMobileOpen(true)} messagesHref={`/${moduleSlug}/community/messages`} />
 
       {/* Mobile overlay */}
       {mobileOpen && (
