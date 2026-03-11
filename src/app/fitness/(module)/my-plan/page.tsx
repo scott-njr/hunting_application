@@ -380,6 +380,7 @@ export default async function MyPlanPage() {
                 ].filter(Boolean).join(' · ') || undefined,
                 type: 'run' as const,
                 isCompleted: s.isCompleted as boolean,
+                details: s as Record<string, unknown>,
               })),
               ...todayStrengthSessions.map(s => ({
                 id: `str-${strengthPlan!.id}-${strengthCurrentWeek}-${s.session_number}`,
@@ -390,6 +391,7 @@ export default async function MyPlanPage() {
                 sublabel: s.duration_min ? `${s.duration_min} min` : undefined,
                 type: 'strength' as const,
                 isCompleted: s.isCompleted as boolean,
+                details: s as Record<string, unknown>,
               })),
               ...todayMealItems.map(m => ({
                 id: `meal-${mealPlan!.id}-${todayDayNumber}-${m.meal_number}`,
@@ -400,6 +402,7 @@ export default async function MyPlanPage() {
                 sublabel: `${m.calories} cal · ${m.protein_g}g protein`,
                 type: 'meal' as const,
                 isCompleted: m.isCompleted,
+                details: m as unknown as Record<string, unknown>,
               })),
             ]} />
 
