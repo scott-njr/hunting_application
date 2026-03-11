@@ -57,10 +57,14 @@ export default function ReportIssuePage({ moduleSlug }: { moduleSlug: ModuleSlug
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const res = await fetch(`/api/issues?module=${moduleSlug}`)
-    if (res.ok) {
-      const data = await res.json()
-      setIssues(data.issues)
+    try {
+      const res = await fetch(`/api/issues?module=${moduleSlug}`)
+      if (res.ok) {
+        const data = await res.json()
+        setIssues(data.issues ?? [])
+      }
+    } catch {
+      // Silently fail — issues list is non-critical
     }
     setLoading(false)
   }, [moduleSlug, supabase.auth])

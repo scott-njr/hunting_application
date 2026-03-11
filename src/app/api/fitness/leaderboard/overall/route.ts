@@ -52,7 +52,10 @@ export async function GET(req: NextRequest) {
 
   const { data: pointsData, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
   if (!pointsData || pointsData.length === 0) {
     return NextResponse.json({ standings: [], my_rank: null, total_participants: 0 })
   }

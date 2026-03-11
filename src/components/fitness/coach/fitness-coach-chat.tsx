@@ -133,7 +133,7 @@ export function FitnessCoachChat({ userId: _userId }: { userId: string }) {
                   I have access to your plans, logs, baselines, and WOW scores.
                 </p>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full max-w-3xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full max-w-3xl">
                 {EXAMPLE_CATEGORIES.map(cat => (
                   <div key={cat.label} className="space-y-2">
                     <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">{cat.label}</span>

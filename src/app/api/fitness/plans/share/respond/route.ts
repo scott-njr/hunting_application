@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
       .update({ status: 'declined' as const })
       .eq('id', share_id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error(error)
+      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    }
     return NextResponse.json({ status: 'declined' })
   }
 
@@ -69,7 +72,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
+  if (insertError) {
+    console.error(insertError)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   // Update the share with the new plan reference
   const { error: updateError } = await supabase
@@ -81,7 +87,10 @@ export async function POST(req: NextRequest) {
     })
     .eq('id', share_id)
 
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+  if (updateError) {
+    console.error(updateError)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   return NextResponse.json({ status: 'accepted', plan: newPlan })
 }

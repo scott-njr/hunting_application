@@ -10,14 +10,32 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Check if user is admin
+  const { data: member } = await supabase
+    .from('members')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
   const { data: issue, error } = await supabase
     .from('issue_reports')
     .select('*')
     .eq('id', id)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   if (!issue) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Non-admin users can only see their own issues
+  if (!member?.is_admin && issue.user_id !== user.id) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  // Strip admin-only fields for non-admin users
+  if (!member?.is_admin) {
+    const { admin_notes: _, ai_proposed_fix: __, ...safeIssue } = issue
+    return NextResponse.json({ issue: safeIssue })
+  }
 
   return NextResponse.json({ issue })
 }
@@ -74,7 +92,7 @@ export async function PATCH(
     .select('*')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   return NextResponse.json({ issue })
 }

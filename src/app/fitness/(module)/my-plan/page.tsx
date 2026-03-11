@@ -8,6 +8,10 @@ import { AdjustPlanButton } from '@/components/fitness/coach/adjust-plan-button'
 import { SharePlanButton } from '@/components/fitness/coach/share-plan-button'
 import { SharedPlanInbox } from '@/components/fitness/coach/shared-plan-inbox'
 import { SharedPlansList } from '@/components/fitness/coach/shared-plans-list'
+import { SharedItemsInbox } from '@/components/fitness/coach/shared-items-inbox'
+import { ChallengesInbox } from '@/components/fitness/coach/challenges-inbox'
+import { PlanHistoryButton } from '@/components/fitness/coach/plan-history-button'
+import { CatchUpButton } from '@/components/fitness/coach/catch-up-button'
 import { TodayChecklist } from './today-checklist'
 import { ExpandableText } from '@/components/ui/expandable-text'
 
@@ -320,6 +324,8 @@ export default async function MyPlanPage() {
               ...(mealPlan ? ['meal'] : []),
             ]}
           />
+          <ChallengesInbox />
+          <SharedItemsInbox />
 
           {/* ── Today + Leaderboard ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -462,8 +468,10 @@ export default async function MyPlanPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-3 mt-auto border-t border-subtle">
+                  <PlanHistoryButton planType="run" />
                   <SharePlanButton planId={runPlan.id} />
                   <AdjustPlanButton planId={runPlan.id} planType="run" />
+                  <CatchUpButton planId={runPlan.id} planType="run" />
                   <StartNewPlanButton planType="run" />
                 </div>
               </div>
@@ -491,8 +499,10 @@ export default async function MyPlanPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-3 mt-auto border-t border-subtle">
+                  <PlanHistoryButton planType="strength" />
                   <SharePlanButton planId={strengthPlan.id} />
                   <AdjustPlanButton planId={strengthPlan.id} planType="strength" />
+                  <CatchUpButton planId={strengthPlan.id} planType="strength" />
                   <StartNewPlanButton planType="strength" />
                 </div>
               </div>
@@ -524,6 +534,7 @@ export default async function MyPlanPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-3 mt-auto border-t border-subtle">
+                  <PlanHistoryButton planType="meal" />
                   <SharePlanButton planId={mealPlan.id} />
                   <AdjustPlanButton planId={mealPlan.id} planType="meal" />
                   <StartNewPlanButton planType="meal" />

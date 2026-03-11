@@ -88,6 +88,7 @@ export default function AdminDeploysPage() {
   const [deploying, setDeploying] = useState<string | null>(null)
   const [deploySuccess, setDeploySuccess] = useState<string | null>(null)
   const [severityFilter, setSeverityFilter] = useState('all')
+  const [deployError, setDeployError] = useState<string | null>(null)
 
   const notesRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
 
@@ -138,8 +139,8 @@ export default function AdminDeploysPage() {
       setTimeout(() => setDeploySuccess(null), 3000)
       fetchDeployData()
     } else {
-      const err = await res.json()
-      alert(`Deploy failed: ${err.error ?? 'Unknown error'}`)
+      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+      setDeployError(`Deploy failed: ${err.error ?? 'Unknown error'}`)
     }
     setDeploying(null)
   }
@@ -154,6 +155,13 @@ export default function AdminDeploysPage() {
         <h1 className="text-2xl font-bold">Deploys</h1>
         <p className="text-muted text-sm mt-1">AI-triaged issue queue and deployment management.</p>
       </div>
+
+      {deployError && (
+        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
+          <span>{deployError}</span>
+          <button onClick={() => setDeployError(null)} className="text-red-400 hover:text-red-300 text-xs ml-4">Dismiss</button>
+        </div>
+      )}
 
       {/* Stat Cards */}
       {loading ? (

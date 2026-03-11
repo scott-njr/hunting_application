@@ -110,7 +110,8 @@ export function PeopleSidebar({
   async function removeFriend(friendshipId: string) {
     setFriendActionLoading(friendshipId)
     try {
-      await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
+      if (!res.ok) { setFriendError('Failed to remove friend'); return }
       setFriends(prev => prev.filter(f => f.friendship_id !== friendshipId))
     } finally { setFriendActionLoading(null) }
   }

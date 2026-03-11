@@ -23,6 +23,28 @@ If `$ARGUMENTS` is empty, audit all pages and components.
 
 ### 2. Audit layouts for mobile support
 
+**Mandatory file checklist — ALWAYS read these files first (ensures consistent coverage):**
+- `src/app/globals.css` — `.nav-link` touch targets, `.input-field` font-size
+- `src/components/layout/navbar.tsx` — Login button size
+- `src/components/layout/nav2.tsx` — Nav2 link touch targets
+- `src/components/layout/account-dropdown.tsx` — dropdown width overflow
+- `src/components/layout/module-sidebar.tsx` — sidebar responsive behavior
+- `src/components/pricing/tier-cards.tsx` — tier button grid on mobile
+- `src/components/fitness/coach/plan-compare-detail.tsx` — side-by-side comparison grid
+- `src/components/fitness/coach/challenges-inbox.tsx` — scaling button touch targets
+- `src/components/fitness/coach/share-item-button.tsx` — friend selection grid
+- `src/components/community/feed-panel.tsx` — reaction/comment touch targets
+- `src/components/field-map/side-panel.tsx` — map side panel height
+- `src/components/auth/auth-modal.tsx` — modal padding on mobile
+- `src/app/auth/login/page.tsx` — login card padding
+- `src/app/auth/signup/page.tsx` — signup card padding
+- `src/app/onboarding/page.tsx` — onboarding card padding
+- `src/app/contact/page.tsx` — contact form padding
+- `src/app/dashboard/page.tsx` — dashboard heading size
+- `src/app/admin/users/page.tsx` — pagination touch targets
+- `src/app/fitness/(module)/my-plan/page.tsx` — stat card grids
+- `src/components/hunts/share-hunt-modal.tsx` — modal touch targets
+
 Glob for `src/app/**/layout.tsx`. For each layout:
 
 - Does the main content area have responsive padding? (needs `px-4` or similar at mobile, scaling up with `sm:`, `lg:`)

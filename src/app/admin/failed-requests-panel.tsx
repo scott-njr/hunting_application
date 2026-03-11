@@ -46,6 +46,8 @@ const FLAG_COLORS: Record<string, string> = {
 export function FailedRequestsPanel({ failures, failedCount }: FailedRequestsPanelProps) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [creatingIssue, setCreatingIssue] = useState<string | null>(null)
+  const [issueSuccess, setIssueSuccess] = useState<string | null>(null)
+  const [issueError, setIssueError] = useState<string | null>(null)
 
   async function createBugFromFailure(failure: FailedRequest) {
     setCreatingIssue(failure.id)
@@ -78,9 +80,10 @@ export function FailedRequestsPanel({ failures, failedCount }: FailedRequestsPan
     })
 
     if (res.ok) {
-      alert('Bug issue created successfully')
+      setIssueSuccess(failure.id)
+      setTimeout(() => setIssueSuccess(null), 3000)
     } else {
-      alert('Failed to create issue')
+      setIssueError('Failed to create issue')
     }
     setCreatingIssue(null)
   }
@@ -158,6 +161,8 @@ export function FailedRequestsPanel({ failures, failedCount }: FailedRequestsPan
                     {creatingIssue === failure.id ? 'Creating...' : 'Create Bug'}
                   </button>
                   <span className="text-muted text-xs">ID: {failure.id.slice(0, 8)}...</span>
+                  {issueSuccess === failure.id && <span className="text-green-400 text-xs">Issue created</span>}
+                  {issueError && <span className="text-red-400 text-xs">{issueError}</span>}
                 </div>
               </div>
             )}

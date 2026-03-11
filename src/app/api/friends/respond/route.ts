@@ -28,7 +28,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[friends/respond POST] update error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
   if (!data) return NextResponse.json({ error: 'Request not found or already responded' }, { status: 404 })
 
   return NextResponse.json({ friendship: data })

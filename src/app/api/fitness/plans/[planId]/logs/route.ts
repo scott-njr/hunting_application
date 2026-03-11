@@ -40,7 +40,10 @@ export async function POST(
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[fitness/plans/logs POST] upsert error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   return NextResponse.json({ log })
 }
@@ -79,7 +82,10 @@ export async function DELETE(
     .eq('week_number', week_number)
     .eq('session_number', session_number)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[fitness/plans/logs DELETE] delete error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true })
 }

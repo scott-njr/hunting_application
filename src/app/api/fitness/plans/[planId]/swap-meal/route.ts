@@ -119,7 +119,7 @@ Keep similar calorie count to the original. Make it different and appetizing.${p
     .update({ plan_data: updatedPlanData as unknown as Json })
     .eq('id', planId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   await supabase.rpc('increment_module_ai_queries', {
     user_id_param: user.id,

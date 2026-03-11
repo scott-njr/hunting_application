@@ -291,7 +291,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[fitness/plans POST] insert error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   await supabase.rpc('increment_module_ai_queries', {
     user_id_param: user.id,

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   const { data, count, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   // Fetch display names and module subscriptions for all returned users
   const userIds = (data ?? []).map(u => u.id)
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest) {
     .update({ [field]: value })
     .eq('id', userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   return NextResponse.json({ ok: true })
 }

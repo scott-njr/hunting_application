@@ -16,7 +16,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .order('created_at', { ascending: true })
     .limit(100)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[community/posts/comments GET] fetch error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
   if (!comments || comments.length === 0) return NextResponse.json({ comments: [] })
 
   const userIds = [...new Set(comments.map(c => c.user_id))]
@@ -63,7 +66,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .select('id, post_id, user_id, content, created_at')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[community/posts/comments POST] insert error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   const { data: profile } = await supabase
     .from('user_profile')
@@ -91,6 +97,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     .eq('id', commentId)
     .eq('user_id', user.id) // RLS + belt-and-suspenders: own comment only
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[community/posts/comments DELETE] delete error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

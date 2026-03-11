@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   const { data: logs, count, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   // Fetch user emails and display names
   const userIds = [...new Set((logs ?? []).map(l => l.user_id))]

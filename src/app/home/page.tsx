@@ -61,7 +61,7 @@ const MODULE_QUICK_LINKS: Record<ModuleSlug, { label: string; href: string }[]> 
   hunting: [
     { label: 'Deadlines', href: '/hunting/deadlines' },
     { label: 'Field Map', href: '/hunting/field-map' },
-    { label: 'AI Assistant', href: '/hunting/ai-assistant' },
+    { label: 'Draw Research', href: '/hunting/ai-assistant' },
   ],
   archery: [
     { label: 'Courses', href: '/archery/courses' },

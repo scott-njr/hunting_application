@@ -792,7 +792,7 @@ export type Database = {
           post_type: 'discussion' | 'unit_review' | 'hunt_report' | 'guide_review' | 'progress' | 'gear_review' | 'tip' | 'catch_report' | 'spot_review' | 'range_report' | 'training_log' | 'wow_result'
           entity_name: string | null
           content: string
-          module: string
+          module: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           metadata: Record<string, unknown> | null
           created_at: string
           updated_at: string
@@ -803,7 +803,7 @@ export type Database = {
           post_type?: 'discussion' | 'unit_review' | 'hunt_report' | 'guide_review' | 'progress' | 'gear_review' | 'tip' | 'catch_report' | 'spot_review' | 'range_report' | 'training_log' | 'wow_result'
           entity_name?: string | null
           content: string
-          module?: string
+          module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           metadata?: Record<string, unknown> | null
           created_at?: string
           updated_at?: string
@@ -812,7 +812,7 @@ export type Database = {
           post_type?: 'discussion' | 'unit_review' | 'hunt_report' | 'guide_review' | 'progress' | 'gear_review' | 'tip' | 'catch_report' | 'spot_review' | 'range_report' | 'training_log' | 'wow_result'
           entity_name?: string | null
           content?: string
-          module?: string
+          module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           metadata?: Record<string, unknown> | null
           updated_at?: string
         }
@@ -880,7 +880,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
-          module: string
+          module: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           category: 'bug' | 'feature_request' | 'content_error' | 'other'
           title: string
           description: string
@@ -903,7 +903,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
-          module?: string
+          module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           category?: 'bug' | 'feature_request' | 'content_error' | 'other'
           title: string
           description: string
@@ -924,7 +924,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          module?: string
+          module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           category?: 'bug' | 'feature_request' | 'content_error' | 'other'
           title?: string
           description?: string
@@ -1029,7 +1029,7 @@ export type Database = {
       courses: {
         Row: {
           id: string
-          module: string
+          module: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           content_type: 'article' | 'video'
           title: string
           slug: string
@@ -1038,7 +1038,7 @@ export type Database = {
           video_url: string | null
           thumbnail_url: string | null
           duration_minutes: number | null
-          tier_required: string
+          tier_required: 'free' | 'basic' | 'pro'
           category: string | null
           sort_order: number
           published: boolean
@@ -1048,7 +1048,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          module?: string
+          module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           content_type: 'article' | 'video'
           title: string
           slug: string
@@ -1057,7 +1057,7 @@ export type Database = {
           video_url?: string | null
           thumbnail_url?: string | null
           duration_minutes?: number | null
-          tier_required?: string
+          tier_required?: 'free' | 'basic' | 'pro'
           category?: string | null
           sort_order?: number
           published?: boolean
@@ -1067,7 +1067,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          module?: string
+          module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           content_type?: 'article' | 'video'
           title?: string
           slug?: string
@@ -1076,7 +1076,7 @@ export type Database = {
           video_url?: string | null
           thumbnail_url?: string | null
           duration_minutes?: number | null
-          tier_required?: string
+          tier_required?: 'free' | 'basic' | 'pro'
           category?: string | null
           sort_order?: number
           published?: boolean

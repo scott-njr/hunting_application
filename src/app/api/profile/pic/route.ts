@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
   if (uploadErr) {
     console.error('[profile-pic] upload error:', uploadErr)
-    return NextResponse.json({ error: uploadErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
 
   const { data: { publicUrl } } = admin.storage
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('[profile-pic] update error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
     }
   } else {
     const { error } = await admin
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('[profile-pic] insert error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
     }
   }
 

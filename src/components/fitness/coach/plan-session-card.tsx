@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react'
+import { ShareItemButton } from '@/components/fitness/coach/share-item-button'
 
 interface RunSession {
   session_number: number
@@ -108,6 +109,11 @@ export function PlanSessionCard({ session, planId, weekNumber, isLogged }: PlanS
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
+          <ShareItemButton
+            itemType={isStrengthSession(session) ? 'strength_session' : 'run_session'}
+            itemSnapshot={session as unknown as Record<string, unknown>}
+            sourcePlanId={planId}
+          />
           {!logged && (
             <button
               onClick={() => setShowNotes(!showNotes)}

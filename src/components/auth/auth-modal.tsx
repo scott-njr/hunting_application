@@ -130,7 +130,7 @@ export function AuthModal({ isOpen, onClose, defaultView, redirectTo }: AuthModa
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 glass-card rounded-lg p-8 shadow-xl">
+      <div className="relative w-full max-w-md mx-4 glass-card rounded-lg p-5 sm:p-8 shadow-xl">
         {/* Close button */}
         <button
           onClick={onClose}

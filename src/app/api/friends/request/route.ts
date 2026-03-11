@@ -35,7 +35,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   return NextResponse.json({ friendship: data }, { status: 201 })
 }

@@ -194,7 +194,7 @@ export function TierCards({ onTierChanged }: TierCardsProps = {}) {
                   <button
                     key={t}
                     onClick={() => openAuthModal('signup')}
-                    className="h-8 flex items-center justify-center rounded text-xs font-medium bg-elevated hover:bg-strong text-secondary hover:text-primary transition-colors"
+                    className="h-8 sm:h-8 min-h-[44px] sm:min-h-0 flex items-center justify-center rounded text-xs font-medium bg-elevated hover:bg-strong text-secondary hover:text-primary transition-colors"
                   >
                     Sign Up
                   </button>
@@ -207,7 +207,7 @@ export function TierCards({ onTierChanged }: TierCardsProps = {}) {
                   disabled={saving}
                   onClick={() => setPendingTiers(prev => ({ ...prev, [mod.slug]: t }))}
                   className={cn(
-                    'h-8 rounded text-xs font-medium transition-colors',
+                    'h-8 sm:h-8 min-h-[44px] sm:min-h-0 rounded text-xs font-medium transition-colors',
                     isSelected && isSaved
                       ? 'bg-accent/15 text-accent cursor-default'
                       : isSelected && !isSaved

@@ -56,7 +56,7 @@ function ResetPasswordForm() {
 
   if (checking) {
     return (
-      <div className="glass-card rounded-lg p-8 text-secondary text-sm text-center">
+      <div className="glass-card rounded-lg p-5 sm:p-8 text-secondary text-sm text-center">
         Verifying reset link...
       </div>
     )
@@ -64,7 +64,7 @@ function ResetPasswordForm() {
 
   if (done) {
     return (
-      <div className="glass-card rounded-lg p-8 text-center">
+      <div className="glass-card rounded-lg p-5 sm:p-8 text-center">
         <div className="text-3xl mb-3">✓</div>
         <h2 className="text-primary font-semibold mb-1">Password updated</h2>
         <p className="text-secondary text-sm">Redirecting to your command center...</p>
@@ -73,7 +73,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="glass-card rounded-lg p-8">
+    <div className="glass-card rounded-lg p-5 sm:p-8">
       <h1 className="text-xl font-semibold text-primary mb-1">Set a new password</h1>
       <p className="text-muted text-sm mb-6">Choose something you&apos;ll remember.</p>
 
@@ -81,7 +81,7 @@ function ResetPasswordForm() {
         <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
           {error}
           {error.includes('expired') && (
-            <span> <a href="/auth/forgot-password" className="underline">Request a new link</a>.</span>
+            <span> <Link href="/auth/forgot-password" className="underline">Request a new link</Link>.</span>
           )}
         </div>
       )}
@@ -129,7 +129,7 @@ export default function ResetPasswordPage() {
           </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
-        <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm text-center">Loading...</div>}>
+        <Suspense fallback={<div className="glass-card rounded-lg p-5 sm:p-8 text-secondary text-sm text-center">Loading...</div>}>
           <ResetPasswordForm />
         </Suspense>
       </div>

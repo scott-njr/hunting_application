@@ -67,7 +67,10 @@ export async function GET(req: NextRequest) {
     .eq('workout_id', resolvedWorkoutId)
     .order('score_value', { ascending })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[fitness/wow/submissions GET] fetch error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   // Enrich with user display names, age_group, and fitness_level
   const userIds = [...new Set((submissions ?? []).map(s => s.user_id))]
@@ -138,7 +141,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[fitness/wow/submissions POST] upsert error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   // Fetch workout title for the community post
   const { data: workout } = await admin

@@ -8,11 +8,11 @@ import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Pricing — Plans & Features',
-  description: 'Free, Pro, and Pro+ plans for each Lead the Wild module. AI coaching, courses, community, field tools, and more. Subscribe per module — only pay for what you use.',
+  description: 'Free, Basic, and Pro plans for each Lead the Wild module. AI coaching, courses, community, field tools, and more. Subscribe per module — only pay for what you use.',
   alternates: { canonical: '/pricing' },
 }
 
-const tierNames = ['Free', 'Pro', 'Pro+']
+const tierNames = ['Free', 'Basic', 'Pro']
 
 type Availability = boolean | string
 

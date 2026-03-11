@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronUp, RefreshCw, Loader2 } from 'lucide-react'
 import { AIProgressModal } from '@/components/ui/ai-progress-modal'
+import { ShareItemButton } from '@/components/fitness/coach/share-item-button'
 
 export interface Meal {
   meal_number: number
@@ -136,6 +137,11 @@ export function MealCard({ meal, planId, dayNumber, isLogged, compact }: MealCar
 
         {!compact && (
           <div className="flex items-center gap-1 flex-shrink-0">
+            <ShareItemButton
+              itemType="meal"
+              itemSnapshot={meal as unknown as Record<string, unknown>}
+              sourcePlanId={planId}
+            />
             {!logged && (
               <button
                 onClick={handleSwap}

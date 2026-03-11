@@ -36,7 +36,7 @@ type StateGroup = {
 const STATUS_LABELS: Record<string, string> = {
   applied: 'Pending',
   drawn: 'Drawn!',
-  not_drawn: 'Rejected',
+  not_drawn: 'Unsuccessful',
   withdrawn: 'Withdrawn',
   hunt_started: 'Hunt Planned',
 }
@@ -53,7 +53,7 @@ const STATUS_TABS = [
   { key: 'all', label: 'All' },
   { key: 'applied', label: 'Pending' },
   { key: 'drawn', label: 'Drawn' },
-  { key: 'not_drawn', label: 'Rejected' },
+  { key: 'not_drawn', label: 'Unsuccessful' },
 ]
 
 const speciesLabel = (slug: string) =>
@@ -283,7 +283,7 @@ export default function ApplicationsPage() {
                                     </button>
                                     <button onClick={() => updateStatus(app.id, 'not_drawn')} disabled={isUpdating}
                                       className="text-xs bg-elevated hover:bg-strong disabled:opacity-50 text-secondary rounded px-3 py-1.5 transition-colors inline-flex items-center gap-1">
-                                      <XIcon className="h-3 w-3" /> Rejected
+                                      <XIcon className="h-3 w-3" /> Unsuccessful
                                     </button>
                                   </div>
                                 )}

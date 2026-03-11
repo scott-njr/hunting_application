@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   // Enrich issues with email from members and display_name from user_profile
   const issueUserIds = [...new Set((data ?? []).map(i => i.user_id))]
@@ -146,7 +146,7 @@ export async function PATCH(req: NextRequest) {
     .update(update)
     .eq('id', issueId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   return NextResponse.json({ ok: true })
 }

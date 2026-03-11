@@ -7,7 +7,6 @@ import {
   ArrowLeft, CheckCircle, AlertTriangle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Navbar } from '@/components/layout/navbar'
 import { TierCards } from '@/components/pricing/tier-cards'
 import { MODULE_TIER_RANK, MODULE_TIER_LABELS, type ModuleTier } from '@/lib/modules'
 
@@ -82,14 +81,9 @@ export default function SubscriptionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-dvh bg-base text-primary">
-        <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-16">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 w-48 bg-elevated rounded" />
-            <div className="h-40 bg-elevated rounded-lg" />
-          </div>
-        </div>
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 w-48 bg-elevated rounded" />
+        <div className="h-40 bg-elevated rounded-lg" />
       </div>
     )
   }
@@ -100,12 +94,9 @@ export default function SubscriptionsPage() {
   const isPaid = subState.hasActiveSub
 
   return (
-    <div className="min-h-dvh bg-base text-primary">
-      <Navbar />
-
-      <main className="max-w-3xl mx-auto px-4 py-12">
+    <div>
         <Link
-          href="/"
+          href="/home"
           className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-secondary transition-colors mb-6"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -212,7 +203,6 @@ export default function SubscriptionsPage() {
           </Link>
           {' · '}Prices in USD.
         </p>
-      </main>
     </div>
   )
 }

@@ -100,6 +100,7 @@ export default function AdminIssuesPage() {
   const [triageSuccess, setTriageSuccess] = useState<string | null>(null)
   const [fixingInGithub, setFixingInGithub] = useState<string | null>(null)
   const [fixTriggered, setFixTriggered] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Stats & changelog state
   const [stats, setStats] = useState<Stats | null>(null)
@@ -159,28 +160,33 @@ export default function AdminIssuesPage() {
 
   async function triageIssue(issueId: string) {
     setTriaging(issueId)
-    const res = await fetch('/api/admin/issues/triage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ issueId }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setIssues(prev => prev.map(i =>
-        i.id === issueId ? {
-          ...i,
-          severity: data.severity,
-          ai_proposed_fix: data.proposedFix || null,
-          ai_classified_at: data.ai_classified_at,
-          github_issue_url: data.githubIssueUrl || i.github_issue_url,
-          admin_notes: data.reasoning ? `AI Reasoning: ${data.reasoning}` : i.admin_notes,
-        } : i
-      ))
-      setTriageSuccess(issueId)
-      setTimeout(() => setTriageSuccess(null), 3000)
-    } else {
-      const err = await res.json()
-      alert(`Triage failed: ${err.error ?? 'Unknown error'}`)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/issues/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issueId }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setIssues(prev => prev.map(i =>
+          i.id === issueId ? {
+            ...i,
+            severity: data.severity,
+            ai_proposed_fix: data.proposedFix || null,
+            ai_classified_at: data.ai_classified_at,
+            github_issue_url: data.githubIssueUrl || i.github_issue_url,
+            admin_notes: data.reasoning ? `AI Reasoning: ${data.reasoning}` : i.admin_notes,
+          } : i
+        ))
+        setTriageSuccess(issueId)
+        setTimeout(() => setTriageSuccess(null), 3000)
+      } else {
+        const err = await res.json()
+        setError(`Triage failed: ${err.error ?? 'Unknown error'}`)
+      }
+    } catch {
+      setError('Triage failed: network error')
     }
     setTriaging(null)
   }
@@ -227,10 +233,11 @@ export default function AdminIssuesPage() {
 
   async function triggerAutoFix(issue: Issue) {
     if (!issue.ai_proposed_fix || !issue.severity) {
-      alert('Triage the issue first — need a proposed fix and severity.')
+      setError('Triage the issue first — need a proposed fix and severity.')
       return
     }
     setFixingInGithub(issue.id)
+    setError(null)
     try {
       const res = await fetch(`/api/admin/issues/auto-fix`, {
         method: 'POST',
@@ -250,10 +257,10 @@ export default function AdminIssuesPage() {
         setTimeout(() => setFixTriggered(null), 5000)
       } else {
         const err = await res.json()
-        alert(`Failed to trigger fix: ${err.error ?? 'Unknown error'}`)
+        setError(`Failed to trigger fix: ${err.error ?? 'Unknown error'}`)
       }
     } catch {
-      alert('Failed to trigger auto-fix workflow')
+      setError('Failed to trigger auto-fix workflow')
     }
     setFixingInGithub(null)
   }
@@ -434,6 +441,13 @@ export default function AdminIssuesPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-lg border border-red-500/30 bg-red-950/30 text-red-400 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 ml-3 text-xs font-medium">Dismiss</button>
+        </div>
+      )}
+
       <div className="space-y-2">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
@@ -493,9 +507,9 @@ export default function AdminIssuesPage() {
 
                   {/* AI Triage Section */}
                   <div className="rounded border border-subtle bg-base p-3 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs text-muted uppercase tracking-wider">AI Triage</p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 ml-auto">
                         {issue.ai_classified_at && issue.severity && (
                           <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded', SEVERITY_COLORS[issue.severity])}>
                             {issue.severity}

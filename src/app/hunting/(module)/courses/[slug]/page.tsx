@@ -123,7 +123,7 @@ export default async function CourseDetailPage({
       {!canAccess ? (
         <div className="bg-surface border border-subtle rounded-xl p-8 text-center">
           <Lock className="h-6 w-6 text-muted mx-auto mb-3" />
-          <p className="text-primary font-medium mb-1">This lesson requires {MODULE_TIER_LABELS[(course.tier_required === 'elite' ? 'pro' : course.tier_required) as 'free' | 'basic' | 'pro'] ?? course.tier_required}</p>
+          <p className="text-primary font-medium mb-1">This lesson requires {MODULE_TIER_LABELS[course.tier_required] ?? course.tier_required}</p>
           <p className="text-muted text-sm mb-4">Upgrade your membership to access this content.</p>
           <Link
             href="/pricing"

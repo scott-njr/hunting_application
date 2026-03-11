@@ -21,7 +21,10 @@ export async function GET(req: Request) {
     .order('created_at', { ascending: true })
     .limit(100)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[messages GET] fetch error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   // Mark unread messages as read
   await supabase
@@ -76,6 +79,9 @@ export async function POST(req: Request) {
     .select('id, sender_id, recipient_id, content, read_at, created_at')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[messages POST] insert error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
   return NextResponse.json({ message: data })
 }

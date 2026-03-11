@@ -70,10 +70,10 @@ export function createNav2Page(config: Nav2PageConfig) {
             <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
           </div>
 
-          <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
             <div className="flex items-center gap-3 mb-2">
               <HeroIcon className={`h-7 w-7 ${hero.colorClass}`} />
-              <h1 className="text-4xl sm:text-5xl font-bold text-primary">{hero.title}</h1>
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-primary">{hero.title}</h1>
             </div>
             <p className={`text-sm font-semibold uppercase tracking-wide ${hero.colorClass} mb-4`}>{hero.tagline}</p>
             <p className="text-secondary text-lg max-w-2xl mb-0">
@@ -82,7 +82,7 @@ export function createNav2Page(config: Nav2PageConfig) {
           </div>
 
         {/* About the Module */}
-        <div className="relative max-w-7xl mx-auto px-8 py-16">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16">
           <h2 className="text-2xl font-bold text-primary mb-3">{about.heading}</h2>
           {about.paragraphs.map((para, i) => (
             <p
@@ -101,7 +101,7 @@ export function createNav2Page(config: Nav2PageConfig) {
         </section>
 
         {/* Features grid */}
-        <section className="max-w-7xl mx-auto px-8 pb-16">
+        <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
           <h2 className="text-xl font-bold text-primary mb-6">{featuresHeading}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
             {features.map(({ icon: FIcon, title, description }) => (
@@ -113,7 +113,9 @@ export function createNav2Page(config: Nav2PageConfig) {
             ))}
           </div>
 
-          <ModuleCta moduleHref={cta.href} moduleName={cta.name} />
+          {!cta.inlineInAbout && (
+            <ModuleCta moduleHref={cta.href} moduleName={cta.name} />
+          )}
         </section>
 
         </main>

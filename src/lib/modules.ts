@@ -11,8 +11,8 @@ export const MODULE_TIER_RANK: Record<ModuleTier, number> = {
 
 export const MODULE_TIER_LABELS: Record<ModuleTier, string> = {
   free: 'Free',
-  basic: 'Pro',
-  pro: 'Pro+',
+  basic: 'Basic',
+  pro: 'Pro',
 }
 
 // AI query quota per module tier per month

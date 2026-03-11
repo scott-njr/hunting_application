@@ -63,7 +63,7 @@ export default function ContactPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <MessageSquare className="h-7 w-7 text-accent" />
             <h1 className="text-4xl sm:text-5xl font-bold text-primary">Contact Us</h1>

@@ -69,7 +69,7 @@ export default function NewsletterPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <Mail className="h-7 w-7 text-accent" />
             <h1 className="text-4xl sm:text-5xl font-bold text-primary">Newsletter</h1>
@@ -81,7 +81,7 @@ export default function NewsletterPage() {
         </div>
 
       {/* About */}
-      <div className="relative max-w-7xl mx-auto px-8 py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <h2 className="text-2xl font-bold text-primary mb-3">What&apos;s in the Newsletter?</h2>
         <p className="text-secondary text-sm leading-relaxed mb-4">
           The Praevius newsletter is a weekly digest built for people who take the outdoors seriously. We cut through the noise and deliver the information that actually matters — upcoming deadlines, strategy insights, new gear worth looking at, and the best content from our community.
@@ -96,7 +96,7 @@ export default function NewsletterPage() {
       </section>
 
       {/* Features grid */}
-      <section className="max-w-7xl mx-auto px-8 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
         <h2 className="text-xl font-bold text-primary mb-6">What You&apos;ll Get</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
           {features.map(({ icon: FIcon, title, description }) => (
@@ -110,7 +110,7 @@ export default function NewsletterPage() {
 
         <div className="text-center">
           <AuthCtaButton view="signup" className="btn-primary inline-flex items-center gap-2 text-sm rounded-full px-8 py-2.5 font-semibold">
-            <Mail className="h-4 w-4" /> Subscribe Now
+            <Mail className="h-4 w-4" /> Join Praevius
           </AuthCtaButton>
           <p className="text-muted text-xs mt-3">Free for all members. One email per week, unsubscribe anytime.</p>
         </div>

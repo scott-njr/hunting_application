@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
   if (uploadErr) {
     console.error('[profile-photos] upload error:', uploadErr)
-    return NextResponse.json({ error: uploadErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
 
   const { data: { publicUrl } } = admin.storage
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
   if (dbErr) {
     console.error('[profile-photos] db error:', dbErr)
-    return NextResponse.json({ error: dbErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
 
   return NextResponse.json({ photo_urls: updatedPhotos })
@@ -109,7 +109,7 @@ export async function DELETE(request: Request) {
 
   if (dbErr) {
     console.error('[profile-photos] delete db error:', dbErr)
-    return NextResponse.json({ error: dbErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
 
   return NextResponse.json({ photo_urls: updatedPhotos })
