@@ -164,7 +164,6 @@ type HuntPlan = {
   emergency_contact_name: string | null
   emergency_contact_phone: string | null
   print_recipients: unknown
-  ai_recommendations: unknown | null
   gear_list: unknown | null
   created_at: string
 }

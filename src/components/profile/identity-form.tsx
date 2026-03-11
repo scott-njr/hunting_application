@@ -138,7 +138,7 @@ export default function IdentityForm() {
       first_name: form.first_name || null,
       last_name: form.last_name || null,
       display_name: form.display_name || null,
-      user_name: form.user_name || null,
+      user_name: form.user_name || undefined,
       date_of_birth: form.date_of_birth || null,
       gender: (form.gender || null) as 'male' | 'female' | null,
       phone: form.phone || null,

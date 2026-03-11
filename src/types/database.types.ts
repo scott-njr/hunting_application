@@ -56,7 +56,7 @@ export type Database = {
           first_name: string | null
           last_name: string | null
           display_name: string | null
-          user_name: string | null
+          user_name: string
           gender: 'male' | 'female' | null
           date_of_birth: string | null
           avatar_url: string | null
@@ -65,11 +65,8 @@ export type Database = {
           city: string | null
           state: string | null
           country: string | null
-          nearest_airport: string | null
-          nearest_airport_name: string | null
           photo_urls: string[]
           physical_condition: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
-          training_interests: string[]
           social_facebook: string | null
           social_instagram: string | null
           social_x: string | null
@@ -82,7 +79,7 @@ export type Database = {
           first_name?: string | null
           last_name?: string | null
           display_name?: string | null
-          user_name?: string | null
+          user_name?: string
           gender?: 'male' | 'female' | null
           date_of_birth?: string | null
           avatar_url?: string | null
@@ -91,11 +88,8 @@ export type Database = {
           city?: string | null
           state?: string | null
           country?: string | null
-          nearest_airport?: string | null
-          nearest_airport_name?: string | null
           photo_urls?: string[]
           physical_condition?: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
-          training_interests?: string[]
           social_facebook?: string | null
           social_instagram?: string | null
           social_x?: string | null
@@ -108,7 +102,7 @@ export type Database = {
           first_name?: string | null
           last_name?: string | null
           display_name?: string | null
-          user_name?: string | null
+          user_name?: string
           gender?: 'male' | 'female' | null
           date_of_birth?: string | null
           avatar_url?: string | null
@@ -117,11 +111,8 @@ export type Database = {
           city?: string | null
           state?: string | null
           country?: string | null
-          nearest_airport?: string | null
-          nearest_airport_name?: string | null
           photo_urls?: string[]
           physical_condition?: 'light' | 'moderate' | 'strenuous' | 'extreme' | null
-          training_interests?: string[]
           social_facebook?: string | null
           social_instagram?: string | null
           social_x?: string | null
@@ -398,8 +389,6 @@ export type Database = {
           fly_or_drive: 'fly' | 'drive' | null
           base_camp: string | null
           base_camp_state: string | null
-          checklist: Json
-          ai_recommendations: Json | null
           gear_list: Json
           notes: string | null
           emergency_contact_name: string | null
@@ -428,8 +417,6 @@ export type Database = {
           fly_or_drive?: 'fly' | 'drive' | null
           base_camp?: string | null
           base_camp_state?: string | null
-          checklist?: Json
-          ai_recommendations?: Json | null
           gear_list?: Json
           notes?: string | null
           emergency_contact_name?: string | null
@@ -458,8 +445,6 @@ export type Database = {
           fly_or_drive?: 'fly' | 'drive' | null
           base_camp?: string | null
           base_camp_state?: string | null
-          checklist?: Json
-          ai_recommendations?: Json | null
           gear_list?: Json
           notes?: string | null
           emergency_contact_name?: string | null
@@ -480,7 +465,7 @@ export type Database = {
           email: string | null
           role: 'owner' | 'collaborator' | 'viewer'
           tag_status: 'pending' | 'applied' | 'drawn' | 'not_drawn'
-          points_contributed: number | null
+
           is_scout_user: boolean
           added_at: string
           updated_at: string
@@ -494,7 +479,7 @@ export type Database = {
           email?: string | null
           role?: 'owner' | 'collaborator' | 'viewer'
           tag_status?: 'pending' | 'applied' | 'drawn' | 'not_drawn'
-          points_contributed?: number | null
+
           is_scout_user?: boolean
           added_at?: string
           updated_at?: string
@@ -508,7 +493,7 @@ export type Database = {
           email?: string | null
           role?: 'owner' | 'collaborator' | 'viewer'
           tag_status?: 'pending' | 'applied' | 'drawn' | 'not_drawn'
-          points_contributed?: number | null
+
           is_scout_user?: boolean
           added_at?: string
           updated_at?: string
@@ -900,7 +885,7 @@ export type Database = {
           title: string
           description: string
           page_url: string | null
-          status: 'open' | 'in_progress' | 'resolved' | 'wont_fix'
+          status: 'open' | 'in_progress' | 'resolved' | 'closed' | 'wont_fix'
           admin_notes: string | null
           resolution: string | null
           resolved_at: string | null
@@ -923,7 +908,7 @@ export type Database = {
           title: string
           description: string
           page_url?: string | null
-          status?: 'open' | 'in_progress' | 'resolved' | 'wont_fix'
+          status?: 'open' | 'in_progress' | 'resolved' | 'closed' | 'wont_fix'
           admin_notes?: string | null
           resolution?: string | null
           resolved_at?: string | null
@@ -944,7 +929,7 @@ export type Database = {
           title?: string
           description?: string
           page_url?: string | null
-          status?: 'open' | 'in_progress' | 'resolved' | 'wont_fix'
+          status?: 'open' | 'in_progress' | 'resolved' | 'closed' | 'wont_fix'
           admin_notes?: string | null
           resolution?: string | null
           resolved_at?: string | null
@@ -1332,6 +1317,107 @@ export type Database = {
           placement?: number
           points?: number
           created_at?: string
+        }
+        Relationships: []
+      }
+      fitness_shared_items: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string
+          item_type: 'run_session' | 'strength_session' | 'meal'
+          item_snapshot: Json
+          source_plan_id: string | null
+          message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          recipient_id: string
+          item_type: 'run_session' | 'strength_session' | 'meal'
+          item_snapshot: Json
+          source_plan_id?: string | null
+          message?: string | null
+          created_at?: string
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
+      fitness_challenges: {
+        Row: {
+          id: string
+          challenger_id: string
+          challenged_id: string
+          item_type: 'run_session' | 'strength_session'
+          item_snapshot: Json
+          status: 'pending' | 'accepted' | 'declined' | 'completed'
+          scoring_type: 'time' | 'reps'
+          message: string | null
+          created_at: string
+          accepted_at: string | null
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          challenger_id: string
+          challenged_id: string
+          item_type: 'run_session' | 'strength_session'
+          item_snapshot: Json
+          status?: 'pending' | 'accepted' | 'declined' | 'completed'
+          scoring_type: 'time' | 'reps'
+          message?: string | null
+          created_at?: string
+          accepted_at?: string | null
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          challenger_id?: string
+          challenged_id?: string
+          item_type?: 'run_session' | 'strength_session'
+          item_snapshot?: Json
+          status?: 'pending' | 'accepted' | 'declined' | 'completed'
+          scoring_type?: 'time' | 'reps'
+          message?: string | null
+          created_at?: string
+          accepted_at?: string | null
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      fitness_challenge_submissions: {
+        Row: {
+          id: string
+          challenge_id: string
+          user_id: string
+          score_value: number
+          score_display: string
+          scaling: 'rx' | 'scaled' | 'beginner'
+          notes: string | null
+          submitted_at: string
+        }
+        Insert: {
+          id?: string
+          challenge_id: string
+          user_id: string
+          score_value: number
+          score_display: string
+          scaling?: 'rx' | 'scaled' | 'beginner'
+          notes?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          id?: string
+          challenge_id?: string
+          user_id?: string
+          score_value?: number
+          score_display?: string
+          scaling?: 'rx' | 'scaled' | 'beginner'
+          notes?: string | null
+          submitted_at?: string
         }
         Relationships: []
       }
