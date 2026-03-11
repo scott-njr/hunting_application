@@ -74,7 +74,7 @@ jobs:
 
             After applying the fix, run `npm run build` to verify the build passes.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          allowed_tools: "Bash(npm run build),Bash(npm test),Edit,Read,Glob,Grep,Write"
+          claude_args: "--allowedTools 'Bash(npm run build:*)' 'Bash(npm test:*)' 'Edit' 'Read' 'Glob' 'Grep' 'Write'"
 
       - name: Check for changes
         id: changes
