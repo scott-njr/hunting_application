@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getUserModuleSubscriptions, getUserHighestTier, type ModuleSlug } from '@/lib/modules'
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
-import { ModuleHeader } from '@/components/layout/module-header'
+import { Navbar } from '@/components/layout/navbar'
 
 export default async function HomeLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -23,7 +23,7 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="min-h-dvh bg-base text-primary flex flex-col">
-      <ModuleHeader userId={user.id} email={user.email ?? ''} messagesHref="/home/messages" />
+      <Navbar showHamburger />
       <div className="flex flex-1 min-h-0">
         <DashboardSidebar
           subscribedModules={subscribedModules}

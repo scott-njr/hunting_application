@@ -6,7 +6,7 @@ let cacheUid: string | null = null
 
 /**
  * Fetches and caches the count of incoming pending friend requests.
- * Used by Navbar and MobileTopBar to show notification badges.
+ * Used by Navbar to show notification badges.
  */
 export function usePendingFriendCount(userId: string | null | undefined, enabled = true) {
   const [count, setCount] = useState(cacheUid === userId ? cachedCount : 0)

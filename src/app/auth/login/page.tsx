@@ -6,9 +6,14 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 
+function safeRedirect(path: string | null): string {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/home'
+  return path
+}
+
 function LoginForm() {
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') ?? '/home'
+  const redirectTo = safeRedirect(searchParams.get('redirectTo'))
   const urlError = searchParams.get('error')
 
   const [email, setEmail] = useState('')

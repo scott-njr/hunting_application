@@ -140,7 +140,7 @@ export default async function DrawResearchAIPage() {
               href="/pricing?upgrade=pro"
               className="ml-4 shrink-0 btn-primary font-semibold rounded px-3 py-1 text-xs transition-colors"
             >
-              Upgrade for unlimited
+              Upgrade for more queries
             </Link>
           )}
         </div>

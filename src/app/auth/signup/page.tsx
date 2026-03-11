@@ -6,9 +6,14 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 
+function safeRedirect(path: string | null): string {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/home'
+  return path
+}
+
 function SignupForm() {
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') ?? '/home'
+  const redirectTo = safeRedirect(searchParams.get('redirectTo'))
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -46,8 +51,8 @@ function SignupForm() {
 
     // If email confirmation is disabled, session is active immediately
     const supabase2 = createClient()
-    const { data: { session } } = await supabase2.auth.getSession()
-    if (session) {
+    const { data: { user: newUser } } = await supabase2.auth.getUser()
+    if (newUser) {
       window.location.href = redirectTo
       return
     }

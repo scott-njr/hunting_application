@@ -1,63 +1,17 @@
 import type { Metadata } from 'next'
-import { Navbar } from '@/components/layout/navbar'
-import { Nav2 } from '@/components/layout/nav2'
 import Image from 'next/image'
 import {
   Dumbbell, Heart, Route, Users,
   Brain, Timer, UtensilsCrossed, Activity,
 } from 'lucide-react'
-import { ModuleCta } from '@/components/ui/module-cta'
+import { createNav2Page } from '@/lib/factories/create-nav2-page'
 import { WowPreview } from '@/components/fitness/wow-preview'
-import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Fitness Module — AI Coaching & Plans',
   description: 'AI run coaching, strength programming, meal planning, baseline testing, and weekly challenges — all personalized to your goals and built for outdoor performance.',
   alternates: { canonical: '/fitness' },
 }
-
-const features = [
-  {
-    icon: Activity,
-    title: 'AI Run Coach',
-    description: 'Get a personalized 8-week running program matched to your fitness level and goals. Log sessions, track pace improvements, and adjust your plan as you progress.',
-  },
-  {
-    icon: Dumbbell,
-    title: 'AI Strength Coach',
-    description: 'Custom 8-week strength programs built around your available equipment and target goals. Session logging, progressive overload, and AI-powered plan adjustments.',
-  },
-  {
-    icon: UtensilsCrossed,
-    title: 'AI Meal Prep',
-    description: '7-day meal plans with macros, grocery lists, and cost estimates. Swap individual meals, adjust for dietary preferences, and regenerate plans as needed.',
-  },
-  {
-    icon: Heart,
-    title: 'Baseline Fitness Test',
-    description: 'Military PT-style assessments — 2-mile run, pushups, situps, pullups. Track progress over time with charts and see where you stand.',
-  },
-  {
-    icon: Brain,
-    title: 'My Plan Hub',
-    description: 'One daily snapshot showing today\'s meals and this week\'s workouts across all your active plans. Everything you need to execute, in one place.',
-  },
-  {
-    icon: Route,
-    title: 'Workout of the Week',
-    description: 'AI-generated weekly challenges with three scaling levels. Post your score, compete on leaderboards, and hold each other accountable.',
-  },
-  {
-    icon: Timer,
-    title: 'Plan Adjustments',
-    description: 'Plans not working? Tell the AI what changed — injury, schedule shift, new equipment — and get an adjusted program without starting over.',
-  },
-  {
-    icon: Users,
-    title: 'Community & Progress',
-    description: 'Share progress updates, gear reviews, and training tips with a fitness-focused community. Module-specific feed keeps content relevant.',
-  },
-]
 
 const showcases = [
   {
@@ -86,57 +40,13 @@ const showcases = [
   },
 ]
 
-export default function FitnessPage() {
+function FitnessExtraContent() {
   return (
-    <div className="min-h-dvh bg-base text-primary">
-      <Navbar />
-      <Nav2 />
-      <main>
-
-      {/* Hero with background image */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="/images/exploring/bear_lake.JPG"
-            alt="Mountain lake trailhead"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
-          <div className="flex items-center gap-3 mb-2">
-            <Dumbbell className="h-7 w-7 text-green-400" />
-            <h1 className="text-4xl sm:text-5xl font-bold text-primary">Fitness — AI Coaching & Meal Plans</h1>
-          </div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-green-400 mb-4">Built for Real Life</p>
-          <p className="text-secondary text-lg max-w-2xl mb-0">
-            AI-powered run coaching, strength programming, meal planning, and baseline testing — personalized to your goals and built for people who perform outdoors.
-          </p>
-        </div>
-
-      {/* About the Module */}
-      <div className="relative max-w-7xl mx-auto px-8 py-16">
-        <h2 className="text-2xl font-bold text-primary mb-3">What is the Fitness Module?</h2>
-        <p className="text-secondary text-sm leading-relaxed mb-4">
-          The Fitness module isn&apos;t another gym app with cookie-cutter programs. It&apos;s a full AI coaching platform that builds personalized run plans, strength programs, and meal plans around your specific goals — whether that&apos;s crushing a mountain hunt at 10,000 feet, finishing a ruck event, or just being harder to kill in everyday life.
-        </p>
-        <p className="text-secondary text-sm leading-relaxed mb-4">
-          Start with a baseline fitness test to see where you stand. Then let the AI coaches build your programs: an 8-week running plan with progressive mileage, a strength program matched to your equipment and goals, and a 7-day meal plan with macros, grocery lists, and per-meal swaps. Everything lands in your My Plan hub — one daily view showing exactly what to eat and what to train.
-        </p>
-        <p className="text-secondary text-sm leading-relaxed">
-          Plans aren&apos;t static. When life changes — an injury, a schedule shift, new equipment — tell the AI and it adjusts your program without starting over. Weekly community challenges keep you competitive, and the module-specific feed lets you share progress with people who are actually training, not just talking about it.
-        </p>
-        <ModuleCta moduleHref="/fitness/my-plan" moduleName="Fitness" inline />
-      </div>
-
+    <>
       {/* This Week's Challenge */}
       <div className="relative max-w-7xl mx-auto px-8 pb-8">
         <WowPreview />
       </div>
-      </section>
 
       {/* Feature Showcases with Screenshots */}
       <section className="max-w-7xl mx-auto px-8 py-16">
@@ -167,25 +77,39 @@ export default function FitnessPage() {
           ))}
         </div>
       </section>
-
-      {/* Features grid */}
-      <section className="max-w-7xl mx-auto px-8 pb-16">
-        <h2 className="text-xl font-bold text-primary mb-6">Everything Inside</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-          {features.map(({ icon: FIcon, title, description }) => (
-            <div key={title} className="glass-card border border-subtle rounded-lg p-5">
-              <FIcon className="h-5 w-5 text-green-400 mb-2" />
-              <h3 className="text-primary font-semibold text-sm mb-1">{title}</h3>
-              <p className="text-muted text-xs">{description}</p>
-            </div>
-          ))}
-        </div>
-
-        <ModuleCta moduleHref="/fitness/my-plan" moduleName="Fitness" />
-      </section>
-
-      </main>
-      <PublicFooter />
-    </div>
+    </>
   )
 }
+
+export default createNav2Page({
+  hero: {
+    icon: Dumbbell,
+    colorClass: 'text-green-400',
+    title: 'Fitness — AI Coaching & Meal Plans',
+    tagline: 'Built for Real Life',
+    description: 'AI-powered run coaching, strength programming, meal planning, and baseline testing — personalized to your goals and built for people who perform outdoors.',
+    image: '/images/exploring/bear_lake.JPG',
+    imageAlt: 'Mountain lake trailhead',
+  },
+  about: {
+    heading: 'What is the Fitness Module?',
+    paragraphs: [
+      'The Fitness module isn\u2019t another gym app with cookie-cutter programs. It\u2019s a full AI coaching platform that builds personalized run plans, strength programs, and meal plans around your specific goals — whether that\u2019s crushing a mountain hunt at 10,000 feet, finishing a ruck event, or just being harder to kill in everyday life.',
+      'Start with a baseline fitness test to see where you stand. Then let the AI coaches build your programs: an 8-week running plan with progressive mileage, a strength program matched to your equipment and goals, and a 7-day meal plan with macros, grocery lists, and per-meal swaps. Everything lands in your My Plan hub — one daily view showing exactly what to eat and what to train.',
+      'Plans aren\u2019t static. When life changes — an injury, a schedule shift, new equipment — tell the AI and it adjusts your program without starting over. Weekly community challenges keep you competitive, and the module-specific feed lets you share progress with people who are actually training, not just talking about it.',
+    ],
+  },
+  features: [
+    { icon: Activity, title: 'AI Run Coach', description: 'Get a personalized 8-week running program matched to your fitness level and goals. Log sessions, track pace improvements, and adjust your plan as you progress.' },
+    { icon: Dumbbell, title: 'AI Strength Coach', description: 'Custom 8-week strength programs built around your available equipment and target goals. Session logging, progressive overload, and AI-powered plan adjustments.' },
+    { icon: UtensilsCrossed, title: 'AI Meal Prep', description: '7-day meal plans with macros, grocery lists, and cost estimates. Swap individual meals, adjust for dietary preferences, and regenerate plans as needed.' },
+    { icon: Heart, title: 'Baseline Fitness Test', description: 'Military PT-style assessments — 2-mile run, pushups, situps, pullups. Track progress over time with charts and see where you stand.' },
+    { icon: Brain, title: 'My Plan Hub', description: 'One daily snapshot showing today\'s meals and this week\'s workouts across all your active plans. Everything you need to execute, in one place.' },
+    { icon: Route, title: 'Workout of the Week', description: 'AI-generated weekly challenges with three scaling levels. Post your score, compete on leaderboards, and hold each other accountable.' },
+    { icon: Timer, title: 'Plan Adjustments', description: 'Plans not working? Tell the AI what changed — injury, schedule shift, new equipment — and get an adjusted program without starting over.' },
+    { icon: Users, title: 'Community & Progress', description: 'Share progress updates, gear reviews, and training tips with a fitness-focused community. Module-specific feed keeps content relevant.' },
+  ],
+  cta: { href: '/fitness/my-plan', name: 'Fitness', inlineInAbout: true },
+  featuresHeading: 'Everything Inside',
+  extraContent: <FitnessExtraContent />,
+})

@@ -41,7 +41,6 @@ export function AdminSidebar({ memberName, memberEmail, memberTier }: AdminSideb
 
   return (
     <SidebarShell
-      showSocial={true}
       onRouteChange={handleRouteChange}
       renderContent={(closeMobile) => (
         <>

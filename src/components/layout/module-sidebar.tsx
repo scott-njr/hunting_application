@@ -160,7 +160,6 @@ export function ModuleSidebar({ moduleSlug, moduleTier, memberName, memberEmail 
 
   return (
     <SidebarShell
-      messagesHref={`/${moduleSlug}/community/messages`}
       renderContent={(closeMobile) => (
         <>
           <div className="px-4 pt-4 pb-3 border-b border-subtle">

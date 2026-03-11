@@ -587,7 +587,7 @@ function HuntsInner() {
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setSaving(false); return }
 
     const stateLabel = US_STATES.find(s => s.value === form.state)?.label ?? form.state
 
@@ -624,7 +624,7 @@ function HuntsInner() {
 
     // Save confirmed Scout members
     if (plan && members.length > 0) {
-      await supabase.from('hunting_plan_members').insert(
+      const { error: memberError } = await supabase.from('hunting_plan_members').insert(
         members.map(m => ({
           hunt_plan_id: plan.id,
           user_id: m.user_id,
@@ -634,6 +634,7 @@ function HuntsInner() {
           is_scout_user: true,
         }))
       )
+      if (memberError) console.error('[Hunts] Failed to save members:', memberError.message)
     }
 
     setSaving(false)

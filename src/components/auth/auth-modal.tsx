@@ -102,8 +102,8 @@ export function AuthModal({ isOpen, onClose, defaultView, redirectTo }: AuthModa
 
     // If email confirmation is disabled, session is active immediately
     const supabase2 = createClient()
-    const { data: { session } } = await supabase2.auth.getSession()
-    if (session) {
+    const { data: { user: newUser } } = await supabase2.auth.getUser()
+    if (newUser) {
       window.location.href = redirectTo
       return
     }

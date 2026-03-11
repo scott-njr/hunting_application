@@ -4,16 +4,13 @@ import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock'
-import { MobileTopBar } from '@/components/layout/mobile-top-bar'
 
 interface SidebarShellProps {
   renderContent: (closeMobile: () => void) => React.ReactNode
-  showSocial?: boolean
-  messagesHref?: string
   onRouteChange?: () => void
 }
 
-export function SidebarShell({ renderContent, showSocial = true, messagesHref, onRouteChange }: SidebarShellProps) {
+export function SidebarShell({ renderContent, onRouteChange }: SidebarShellProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -22,6 +19,13 @@ export function SidebarShell({ renderContent, showSocial = true, messagesHref, o
     onRouteChange?.()
   }, [pathname, onRouteChange])
 
+  // Listen for hamburger menu event from Navbar
+  useEffect(() => {
+    const handler = () => setMobileOpen(true)
+    window.addEventListener('open-mobile-menu', handler)
+    return () => window.removeEventListener('open-mobile-menu', handler)
+  }, [])
+
   useBodyScrollLock(mobileOpen)
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
@@ -29,12 +33,6 @@ export function SidebarShell({ renderContent, showSocial = true, messagesHref, o
 
   return (
     <>
-      <MobileTopBar
-        onMenuOpen={() => setMobileOpen(true)}
-        showSocial={showSocial}
-        messagesHref={messagesHref}
-      />
-
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -55,7 +53,7 @@ export function SidebarShell({ renderContent, showSocial = true, messagesHref, o
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:sticky lg:top-0 lg:shrink-0 sidebar-surface flex-col lg:h-[calc(100dvh-3rem)]">
+      <aside className="hidden lg:flex lg:w-64 lg:sticky lg:top-14 lg:shrink-0 sidebar-surface flex-col lg:h-[calc(100dvh-3.5rem)]">
         {content}
       </aside>
     </>

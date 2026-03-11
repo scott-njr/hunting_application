@@ -25,7 +25,6 @@ export function DashboardSidebar({ memberName, memberEmail, memberTier }: Dashbo
 
   return (
     <SidebarShell
-      messagesHref="/home/messages"
       renderContent={(closeMobile) => (
         <>
           <div className="px-4 pt-4 pb-3 border-b border-subtle">

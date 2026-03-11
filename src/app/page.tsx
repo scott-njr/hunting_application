@@ -38,7 +38,7 @@ const modules = [
   {
     icon: Target,
     name: 'Archery',
-    tagline: 'Shoot with Confidence',
+    tagline: 'Aim True. Shoot Often.',
     description:
       'Courses, community, and training plans for bowhunters and archers — from form fundamentals to field accuracy.',
     status: 'featured' as const,

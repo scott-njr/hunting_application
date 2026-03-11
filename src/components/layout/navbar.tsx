@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Users, Mail } from 'lucide-react'
+import { Users, Mail, Menu } from 'lucide-react'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { AccountDropdown } from '@/components/layout/account-dropdown'
 import { useAuthCached } from '@/lib/use-auth-cached'
@@ -9,7 +9,11 @@ import { useAuthModal } from '@/components/auth/auth-modal-provider'
 import { useSignOut } from '@/hooks/use-sign-out'
 import { usePendingFriendCount, resetPendingFriendCache } from '@/hooks/use-pending-friend-count'
 
-export function Navbar() {
+interface NavbarProps {
+  showHamburger?: boolean
+}
+
+export function Navbar({ showHamburger }: NavbarProps) {
   const { user, loading } = useAuthCached()
   const { openAuthModal } = useAuthModal()
   const pendingCount = usePendingFriendCount(user?.id)
@@ -22,10 +26,22 @@ export function Navbar() {
 
   return (
     <header className="border-b border-subtle bg-overlay backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="hover:opacity-80 transition-opacity">
-          <PraeviusWordmark size="sm" />
-        </Link>
+      <div className={`${showHamburger ? '' : 'max-w-7xl mx-auto '}px-4 h-14 flex items-center justify-between`}>
+        <div className="flex items-center gap-2">
+          {showHamburger && (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-menu'))}
+              className="lg:hidden p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <PraeviusWordmark size="sm" />
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           {loading ? (
             <div className="w-16 h-8" />

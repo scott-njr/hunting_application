@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ModuleSidebar } from '@/components/layout/module-sidebar'
-import { ModuleHeader } from '@/components/layout/module-header'
+import { Navbar } from '@/components/layout/navbar'
 import { getUserModuleTier } from '@/lib/modules'
 import type { ModuleSlug } from '@/lib/modules'
 
@@ -25,7 +25,7 @@ export function createModuleLayout(moduleSlug: ModuleSlug) {
 
     return (
       <div className="min-h-dvh bg-base text-primary flex flex-col">
-        <ModuleHeader userId={user.id} email={user.email ?? ''} />
+        <Navbar showHamburger />
         <div className="flex flex-1 min-h-0">
           <ModuleSidebar
             moduleSlug={moduleSlug}
