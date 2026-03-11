@@ -130,7 +130,7 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <LayoutDashboard className="h-7 w-7 text-accent" />
             <h1 className="text-4xl sm:text-5xl font-bold text-primary">Command Center</h1>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
         </div>
 
         {/* About */}
-        <div className="relative max-w-7xl mx-auto px-8 py-16">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16">
           <h2 className="text-2xl font-bold text-primary mb-3">Everything in One Place</h2>
           <p className="text-secondary text-sm leading-relaxed mb-4">
             The Command Center is your central hub for the entire Lead the Wild platform. Instead of jumping between separate apps for hunting, fitness, medical training, and more — everything lives here. See your weekly schedule, track progress across modules, manage AI-powered coaching plans, and stay connected with your community.
@@ -159,7 +159,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Dashboard Features */}
-      <section className="max-w-7xl mx-auto px-8 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
         <h2 className="text-xl font-bold text-primary mb-6">What You Get</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
           {dashboardFeatures.map(({ icon: FIcon, title, description }) => (
@@ -173,7 +173,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Module Grid */}
-      <section className="max-w-7xl mx-auto px-8 pb-16 border-t border-subtle pt-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-16 border-t border-subtle pt-16">
         <h2 className="text-xl font-bold text-primary mb-2">Available Modules</h2>
         <p className="text-secondary text-sm mb-8">
           Each module adds specialized tools and content to your command center. Subscribe to the ones that match your interests.

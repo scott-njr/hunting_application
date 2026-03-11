@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const nav2Links = [
-  { label: 'Command Center', href: '/dashboard' },
+  { label: 'Command Center', href: '/home' },
   { label: 'Hunting', href: '/hunting' },
   { label: 'Archery', href: '/archery' },
   { label: 'Fishing', href: '/fishing' },
@@ -26,7 +26,7 @@ export function Nav2() {
             <li key={label}>
               <Link
                 href={href}
-                className="text-xs font-medium text-muted hover:text-primary px-2 py-1.5 rounded-md hover:bg-elevated/60 transition-colors whitespace-nowrap tracking-wide uppercase"
+                className="text-xs font-medium text-muted hover:text-primary px-2 py-2.5 rounded-md hover:bg-elevated/60 transition-colors whitespace-nowrap tracking-wide uppercase"
               >
                 {label}
               </Link>

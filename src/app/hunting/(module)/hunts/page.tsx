@@ -13,6 +13,7 @@ import { LocationPickerMap } from '@/components/ui/location-picker-map'
 import { LocationScoutMap, type ExistingPin } from '@/components/ui/location-scout-map'
 import { AIProgressModal } from '@/components/ui/ai-progress-modal'
 import { ShareHuntModal } from '@/components/hunts/share-hunt-modal'
+import NextLink from 'next/link'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,6 @@ type HuntPlan = {
   emergency_contact_name: string | null
   emergency_contact_phone: string | null
   print_recipients: unknown
-  ai_recommendations: unknown | null
   gear_list: unknown | null
   created_at: string
 }
@@ -1127,9 +1127,9 @@ function HuntsInner() {
                 ) : friends.length === 0 ? (
                   <div className="bg-elevated border border-subtle rounded px-4 py-3 text-center">
                     <p className="text-muted text-xs">No confirmed friends yet.</p>
-                    <a href="/hunting/community" className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover mt-1 transition-colors">
+                    <NextLink href="/hunting/community" className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover mt-1 transition-colors">
                       <Link className="h-3 w-3" /> Build your circle in Community
-                    </a>
+                    </NextLink>
                   </div>
                 ) : (
                   <div>
@@ -1870,14 +1870,14 @@ function HuntsInner() {
                             </span>
                           )}
                         </div>
-                        <a href="/hunting/gear" className="text-xs text-muted hover:text-accent-hover transition-colors">
+                        <NextLink href="/hunting/gear" className="text-xs text-muted hover:text-accent-hover transition-colors">
                           Manage Gear →
-                        </a>
+                        </NextLink>
                       </div>
                       {userGear.length === 0 && gearLoaded ? (
                         <p className="text-muted text-xs">
                           No gear in your inventory.{' '}
-                          <a href="/hunting/gear" className="text-muted hover:text-primary underline">Add gear</a>{' '}
+                          <NextLink href="/hunting/gear" className="text-muted hover:text-primary underline">Add gear</NextLink>{' '}
                           to build a packing list.
                         </p>
                       ) : !gearLoaded ? (

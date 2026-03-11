@@ -222,7 +222,7 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
 
                 {/* Shared date grid */}
                 {uniformDates && (
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs mb-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs mb-3">
                     <div><p className="text-muted mb-0.5">Opens</p><p className="text-secondary">{primary.open_date ?? '—'}</p></div>
                     <div><p className="text-muted mb-0.5">Deadline</p><p className="text-primary font-medium">{primary.deadline ?? '—'}</p></div>
                     <div><p className="text-muted mb-0.5">Results</p><p className="text-secondary">{primary.results_date ?? '—'}</p></div>

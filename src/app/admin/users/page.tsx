@@ -145,7 +145,7 @@ export default function AdminUsersPage() {
                       <button
                         onClick={() => updateUser(user.id, 'is_admin', !user.is_admin)}
                         className={cn(
-                          'p-1.5 rounded transition-colors',
+                          'p-1.5 min-h-[44px] min-w-[44px] rounded transition-colors',
                           user.is_admin
                             ? 'text-accent bg-accent/10 hover:bg-accent/20'
                             : 'text-muted hover:text-secondary hover:bg-elevated'
@@ -172,14 +172,14 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="p-1.5 rounded text-secondary hover:text-primary hover:bg-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded text-secondary hover:text-primary hover:bg-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="p-1.5 rounded text-secondary hover:text-primary hover:bg-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded text-secondary hover:text-primary hover:bg-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

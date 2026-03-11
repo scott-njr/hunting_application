@@ -15,6 +15,8 @@ import { ModuleSwitcher } from '@/components/layout/module-switcher'
 import { SidebarShell } from '@/components/layout/sidebar-shell'
 import { SidebarFooter } from '@/components/layout/sidebar-footer'
 import { SidebarDrawerHeader } from '@/components/layout/sidebar-drawer-header'
+import { useAuthCached } from '@/lib/use-auth-cached'
+import { useUnreadMessageCount } from '@/hooks/use-unread-message-count'
 
 type NavItem = {
   href: string
@@ -156,6 +158,8 @@ interface ModuleSidebarProps {
 
 export function ModuleSidebar({ moduleSlug, moduleTier, memberName, memberEmail }: ModuleSidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuthCached()
+  const unreadMessages = useUnreadMessageCount(user?.id)
   const navSections = MODULE_NAV[moduleSlug] ?? []
 
   return (
@@ -204,6 +208,7 @@ export function ModuleSidebar({ moduleSlug, moduleTier, memberName, memberEmail 
                             {children.map(child => {
                               const childActive = child.exact ? pathname === child.href : pathname.startsWith(child.href)
                               const ChildIcon = child.icon
+                              const showMessageBadge = child.label === 'Messages' && unreadMessages > 0
                               return (
                                 <Link
                                   key={child.href}
@@ -216,6 +221,11 @@ export function ModuleSidebar({ moduleSlug, moduleTier, memberName, memberEmail 
                                 >
                                   <ChildIcon className="h-3.5 w-3.5 flex-shrink-0" />
                                   {child.label}
+                                  {showMessageBadge && (
+                                    <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+                                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                                    </span>
+                                  )}
                                 </Link>
                               )
                             })}

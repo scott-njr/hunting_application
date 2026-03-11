@@ -44,12 +44,12 @@ function FitnessExtraContent() {
   return (
     <>
       {/* This Week's Challenge */}
-      <div className="relative max-w-7xl mx-auto px-8 pb-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pb-8">
         <WowPreview />
       </div>
 
       {/* Feature Showcases with Screenshots */}
-      <section className="max-w-7xl mx-auto px-8 py-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <h2 className="text-2xl font-bold text-primary mb-10">See It in Action</h2>
         <div className="space-y-16">
           {showcases.map(({ title, description, image, alt }, i) => (

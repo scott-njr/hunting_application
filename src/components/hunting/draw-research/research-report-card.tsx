@@ -76,8 +76,8 @@ export function ResearchReportCard({
         {confirmDelete ? (
           <div className="flex items-center gap-2 text-xs">
             <span className="text-secondary">Delete this report?</span>
-            <button onClick={onDelete} className="text-red-400 hover:text-red-300 font-medium p-1">Yes</button>
-            <button onClick={() => setConfirmDelete(false)} className="text-muted hover:text-secondary p-1">No</button>
+            <button onClick={onDelete} className="text-red-400 hover:text-red-300 font-medium p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">Yes</button>
+            <button onClick={() => setConfirmDelete(false)} className="text-muted hover:text-secondary p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">No</button>
           </div>
         ) : (
           <button

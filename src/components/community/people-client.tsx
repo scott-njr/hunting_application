@@ -110,7 +110,8 @@ export function PeopleClient({
   async function removeFriend(friendshipId: string) {
     setFriendActionLoading(friendshipId)
     try {
-      await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
+      if (!res.ok) { setFriendError('Failed to remove friend'); return }
       setFriends(prev => prev.filter(f => f.friendship_id !== friendshipId))
     } finally { setFriendActionLoading(null) }
   }
@@ -133,8 +134,8 @@ export function PeopleClient({
                 <div key={f.friendship_id} className="flex items-center justify-between">
                   <p className="text-xs text-primary">{displayLabel(f)}</p>
                   <div className="flex gap-1">
-                    <button onClick={() => respond(f.friendship_id, 'accept')} disabled={friendActionLoading === f.friendship_id} className="text-accent-hover disabled:opacity-50 transition-colors" aria-label="Accept friend request"><Check className="w-4 h-4" /></button>
-                    <button onClick={() => respond(f.friendship_id, 'decline')} disabled={friendActionLoading === f.friendship_id} className="text-muted hover:text-red-400 disabled:opacity-50 transition-colors" aria-label="Decline friend request"><X className="w-4 h-4" /></button>
+                    <button onClick={() => respond(f.friendship_id, 'accept')} disabled={friendActionLoading === f.friendship_id} className="p-2 text-accent-hover disabled:opacity-50 transition-colors" aria-label="Accept friend request"><Check className="w-4 h-4" /></button>
+                    <button onClick={() => respond(f.friendship_id, 'decline')} disabled={friendActionLoading === f.friendship_id} className="p-2 text-muted hover:text-red-400 disabled:opacity-50 transition-colors" aria-label="Decline friend request"><X className="w-4 h-4" /></button>
                   </div>
                 </div>
               ))}

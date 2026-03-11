@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { Calendar } from 'lucide-react'
 import { Database } from '@/types/database.types'
 import { DeadlinesClient } from '@/components/dashboard/deadlines-client'
@@ -71,7 +72,7 @@ export default async function DeadlinesPage() {
       <p className="text-secondary text-sm mb-6">
         Draw application windows, requirements, and dates.
         Click &quot;I Applied&quot; after you apply to move it to{' '}
-        <a href="/hunting/applications" className="text-secondary hover:text-primary underline">Applications</a>.
+        <Link href="/hunting/applications" className="text-secondary hover:text-primary underline">Applications</Link>.
       </p>
 
       <DeadlinesClient
@@ -82,7 +83,6 @@ export default async function DeadlinesPage() {
       />
 
       <p className="text-muted text-xs mt-6">
-        New Mexico coming soon.
         Always verify dates and requirements directly with the state agency before applying.
       </p>
     </div>

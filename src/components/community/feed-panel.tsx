@@ -184,6 +184,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
     setCommentsLoading(postId)
     try {
       const res = await fetch(`/api/community/posts/${postId}/comments`)
+      if (!res.ok) { setPostComments(prev => ({ ...prev, [postId]: [] })); return }
       const data = await res.json()
       setPostComments(prev => ({ ...prev, [postId]: data.comments ?? [] }))
     } finally { setCommentsLoading(null) }
@@ -324,7 +325,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
               <div key={post.id} className="bg-elevated border border-subtle rounded-lg">
                 <div className="p-4">
                   <div className="flex items-start gap-3">
-                    <Link href={`/${module}/profile/${post.user_id}`} className="shrink-0">
+                    <Link href={`/home/profile/${post.user_id}`} className="shrink-0">
                       {post.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={post.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -336,7 +337,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                     </Link>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <Link href={`/${module}/profile/${post.user_id}`} className="text-primary text-sm font-medium hover:text-accent-hover transition-colors">{post.display_name ?? 'Member'}</Link>
+                        <Link href={`/home/profile/${post.user_id}`} className="text-primary text-sm font-medium hover:text-accent-hover transition-colors">{post.display_name ?? 'Member'}</Link>
                         {post.user_name && <span className="text-muted text-xs">@{post.user_name}</span>}
                         <span className={cn('flex items-center gap-1 text-xs px-1.5 py-0.5 rounded', ALL_POST_TYPE_COLORS[post.post_type] ?? 'text-secondary bg-elevated')}>
                           <Icon className="w-3 h-3" />
@@ -374,12 +375,12 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
 
                 {/* Actions */}
                 <div className="px-4 pb-3 flex items-center gap-4 border-t border-subtle pt-2.5">
-                  <button onClick={() => toggleLike(post.id)} className={cn('flex items-center gap-1.5 text-xs transition-colors', post.liked_by_me ? 'text-accent-hover' : 'text-muted hover:text-secondary')}>
+                  <button onClick={() => toggleLike(post.id)} className={cn('flex items-center gap-1.5 text-xs min-h-[44px] transition-colors', post.liked_by_me ? 'text-accent-hover' : 'text-muted hover:text-secondary')}>
                     <ThumbsUp className={cn('w-3.5 h-3.5', post.liked_by_me && 'fill-current')} />
                     <span>{post.liked_by_me ? 'Liked' : 'Like'}</span>
                     {post.reaction_count > 0 && <span className={cn('font-semibold', post.liked_by_me ? 'text-accent-hover' : 'text-secondary')}>· {post.reaction_count}</span>}
                   </button>
-                  <button onClick={() => toggleComments(post.id)} className={cn('flex items-center gap-1.5 text-xs transition-colors', isExpanded ? 'text-secondary' : 'text-muted hover:text-secondary')}>
+                  <button onClick={() => toggleComments(post.id)} className={cn('flex items-center gap-1.5 text-xs min-h-[44px] transition-colors', isExpanded ? 'text-secondary' : 'text-muted hover:text-secondary')}>
                     <MessageCircle className="w-3.5 h-3.5" />
                     <span>{post.comment_count > 0 ? `${post.comment_count} comment${post.comment_count === 1 ? '' : 's'}` : 'Comment'}</span>
                   </button>
@@ -396,7 +397,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                       <div className="space-y-3">
                         {comments.map(c => (
                           <div key={c.id} className="flex items-start gap-2">
-                            <Link href={`/${module}/profile/${c.user_id}`} className="shrink-0 mt-0.5">
+                            <Link href={`/home/profile/${c.user_id}`} className="shrink-0 mt-0.5">
                               {c.avatar_url ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={c.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
@@ -408,7 +409,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                             </Link>
                             <div className="flex-1 min-w-0 bg-elevated/50 rounded-lg px-3 py-2">
                               <div className="flex items-center justify-between gap-2 mb-0.5">
-                                <Link href={`/${module}/profile/${c.user_id}`} className="text-xs font-medium text-primary hover:text-accent-hover transition-colors">{c.display_name ?? 'Member'}</Link>
+                                <Link href={`/home/profile/${c.user_id}`} className="text-xs font-medium text-primary hover:text-accent-hover transition-colors">{c.display_name ?? 'Member'}</Link>
                                 {c.user_name && <span className="text-muted text-[10px]">@{c.user_name}</span>}
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span className="text-muted text-xs">{timeAgo(c.created_at)}</span>

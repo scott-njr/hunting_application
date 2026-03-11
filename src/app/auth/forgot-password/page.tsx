@@ -108,7 +108,7 @@ export default function ForgotPasswordPage() {
           <Link href="/" className="hover:opacity-80 transition-opacity mb-8 inline-block">
             <PraeviusWordmark />
           </Link>
-          <div className="glass-card rounded-lg p-8">
+          <div className="glass-card rounded-lg p-5 sm:p-8">
             <div className="text-3xl mb-3">✓</div>
             <h2 className="text-primary font-semibold text-lg mb-2">Check your email</h2>
             <p className="text-secondary text-sm">
@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
 
-        <div className="glass-card rounded-lg p-8">
+        <div className="glass-card rounded-lg p-5 sm:p-8">
           <h1 className="text-xl font-semibold text-primary mb-1">Reset your password</h1>
           <p className="text-muted text-sm mb-6">We&apos;ll send a reset link to your email.</p>
 
@@ -180,7 +180,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <p className="text-muted text-sm text-center mt-6">
-            <Link href="/auth/login" className="text-accent-hover hover:text-accent-hover">
+            <Link href="/auth/login" className="text-accent hover:text-accent-hover">
               Back to sign in
             </Link>
           </p>

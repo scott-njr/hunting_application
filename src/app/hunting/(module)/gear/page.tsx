@@ -210,7 +210,7 @@ export default function GearPage() {
 
       {!loading && (
         <div className="flex items-center gap-4 mb-6 bg-elevated border border-subtle rounded-lg px-4 py-3">
-          <div className="flex-1 bg-elevated rounded-full h-2 overflow-hidden"><div className={`${barColor} h-2 rounded-full transition-all duration-300`} style={{ width: `${totalPct}%` }} /></div>
+          <div className="flex-1 bg-base rounded-full h-2 overflow-hidden"><div className={`${barColor} h-2 rounded-full transition-all duration-300`} style={{ width: `${totalPct}%` }} /></div>
           <span className={`text-sm font-semibold shrink-0 ${textColor}`}>{totalOwned} / {totalItems}</span>
           {totalNeeded > 0 && <span className={`text-xs shrink-0 ${textColor}`}>{totalNeeded} to get</span>}
         </div>

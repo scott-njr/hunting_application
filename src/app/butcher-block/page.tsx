@@ -37,5 +37,5 @@ export default createNav2Page({
     { icon: ClipboardList, title: 'Processing Checklists', description: 'Printable checklists for field processing, home butchering, and taking your game to a processor — nothing gets missed.' },
     { icon: BookOpen, title: 'Courses', description: 'Video courses on game processing from field to freezer — taught by professional butchers and experienced hunters.' },
   ],
-  cta: { href: '/butcher-block', name: 'Butcher Block' },
+  cta: { href: '/butcher-block', name: 'Butcher Block', inlineInAbout: false },
 })

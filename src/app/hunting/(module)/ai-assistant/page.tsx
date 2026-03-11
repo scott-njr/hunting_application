@@ -117,7 +117,7 @@ export default async function DrawResearchAIPage() {
     <div>
       <div className="flex items-center gap-3 mb-1">
         <Sparkles className="h-5 w-5 text-accent" />
-        <h1 className="text-2xl font-bold text-primary">Draw Research AI</h1>
+        <h1 className="text-2xl font-bold text-primary">Draw Research</h1>
       </div>
       <p className="text-secondary text-sm mb-6">
         Get AI-powered unit recommendations based on your profile, preference points, and priorities.

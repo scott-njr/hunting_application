@@ -17,11 +17,14 @@ export async function GET(req: Request) {
     .from('issue_reports')
     .select('id, module, category, title, description, page_url, status, resolution, resolved_at, created_at, updated_at')
     .eq('user_id', user.id)
-    .eq('module', issueModule)
+    .eq('module', issueModule as 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness')
     .order('created_at', { ascending: false })
     .limit(50)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   return NextResponse.json({ issues: issues ?? [] })
 }
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const { category, title, description, page_url, module: issueModule } = body
-  const safeModule = String(issueModule ?? 'hunting').trim()
+  const safeModule = String(issueModule ?? 'hunting').trim() as 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
 
   // Validate category
   if (!VALID_CATEGORIES.includes(category)) {
@@ -73,7 +76,10 @@ export async function POST(req: Request) {
     .select('id, module, category, title, description, page_url, status, created_at')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   return NextResponse.json({ issue })
 }

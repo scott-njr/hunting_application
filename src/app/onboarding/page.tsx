@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
+import { TacticalSelect } from '@/components/ui/tactical-select'
 import { TierCards } from '@/components/pricing/tier-cards'
 import {
   ChevronRight, ChevronLeft, User, CreditCard,
@@ -179,7 +180,7 @@ export default function OnboardingPage() {
 
         {/* Step 1: Profile Setup */}
         {step === 1 && (
-          <div className="glass-card rounded-lg p-8 space-y-6">
+          <div className="glass-card rounded-lg p-5 sm:p-8 space-y-6">
             {/* First & Last Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -265,16 +266,14 @@ export default function OnboardingPage() {
               <label className="block text-primary font-medium text-sm mb-2">
                 Home State <span className="text-red-400">*</span>
               </label>
-              <select
+              <TacticalSelect
                 value={residentialState}
-                onChange={e => setResidentialState(e.target.value)}
-                className="w-full input-field text-sm"
-              >
-                <option value="">Select your state</option>
-                {US_STATES.map(s => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
+                onChange={setResidentialState}
+                options={[
+                  { value: '', label: 'Select your state' },
+                  ...US_STATES,
+                ]}
+              />
             </div>
 
             {/* Experience Level */}

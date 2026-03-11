@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Sign In — Lead the Wild',
-  description: 'Sign in or create your Lead the Wild account to access AI coaching, courses, community, and field tools across all modules.',
+  title: 'Account',
+  description: 'Sign in or create your free Lead the Wild account.',
+  robots: { index: false, follow: false },
 }
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {

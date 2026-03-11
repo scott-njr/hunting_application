@@ -72,6 +72,8 @@ export default function AdminAILogsPage() {
   const [featureFilter, setFeatureFilter] = useState('all')
   const [successFilter, setSuccessFilter] = useState('all')
   const [creatingIssue, setCreatingIssue] = useState<string | null>(null)
+  const [issueSuccess, setIssueSuccess] = useState<string | null>(null)
+  const [issueError, setIssueError] = useState<string | null>(null)
   const limit = 50
 
   useEffect(() => {
@@ -134,15 +136,22 @@ export default function AdminAILogsPage() {
     })
 
     if (res.ok) {
-      alert('Issue created successfully')
+      setIssueSuccess(log.id)
+      setTimeout(() => setIssueSuccess(null), 3000)
     } else {
-      alert('Failed to create issue')
+      setIssueError('Failed to create issue')
     }
     setCreatingIssue(null)
   }
 
   return (
     <div>
+      {issueError && (
+        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
+          <span>{issueError}</span>
+          <button onClick={() => setIssueError(null)} className="text-red-400 hover:text-red-300 text-xs ml-4">Dismiss</button>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">AI Logs</h1>
@@ -289,6 +298,7 @@ export default function AdminAILogsPage() {
                       {creatingIssue === log.id ? 'Creating...' : 'Create Issue'}
                     </button>
                     <span className="text-muted text-xs">ID: {log.id.slice(0, 8)}...</span>
+                    {issueSuccess === log.id && <span className="text-green-400 text-xs">Issue created</span>}
                   </div>
                 </div>
               )}

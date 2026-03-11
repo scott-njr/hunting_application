@@ -18,8 +18,9 @@ export async function DELETE(
     .from('social_friendships')
     .delete()
     .eq('id', id)
+    .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Failed to remove friendship' }, { status: 500 })
 
   return NextResponse.json({ success: true })
 }

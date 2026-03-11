@@ -51,6 +51,24 @@ If `$ARGUMENTS` is empty, audit all pages under `src/app/`.
 
 ### 2. Discover pages and components
 
+**Mandatory file checklist — ALWAYS check these files first (ensures consistent coverage):**
+- `src/app/page.tsx` — landing page (footer, CTAs, module grid)
+- `src/app/newsletter/page.tsx` — CTA label vs actual behavior
+- `src/app/blog/page.tsx` — placeholder content expectations
+- `src/app/about/page.tsx` — metadata titles
+- `src/app/spearfishing/page.tsx` — hero image relevance
+- `src/components/layout/nav2.tsx` — "Command Center" label
+- `src/components/layout/dashboard-sidebar.tsx` — "Overview" label (should match Nav2)
+- `src/components/layout/public-footer.tsx` — footer link consistency
+- `src/app/onboarding/page.tsx` — selection colors, placeholder text
+- `src/app/auth/signup/page.tsx` — confirmation checkmark style
+- `src/app/auth/forgot-password/page.tsx` — confirmation checkmark style
+- `src/app/hunting/(module)/gear/page.tsx` — progress bar contrast, subtitle
+- `src/app/hunting/(module)/applications/page.tsx` — rejection note accuracy
+- `src/app/hunting/(module)/ai-assistant/page.tsx` — heading vs sidebar naming
+- `src/app/account/subscriptions/page.tsx` — hardcoded prices
+- `src/lib/factories/create-nav2-page.tsx` — Nav2 factory heading conventions
+
 Glob for `src/app/**/page.tsx` (and layout files if relevant). For each page, also identify imported components from `src/components/` that render visible text or UI.
 
 Note: Module profile pages are re-exports (`export { default } from '@/components/profile/profile-page'`). Audit the shared component, not each re-export.

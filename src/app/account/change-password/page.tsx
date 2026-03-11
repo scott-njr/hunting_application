@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/navbar'
 import { ArrowLeft, CheckCircle, KeyRound } from 'lucide-react'
 
 export default function ChangePasswordPage() {
@@ -43,10 +42,8 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-base text-primary">
-      <Navbar />
-      <div className="max-w-md mx-auto px-4 py-12">
-        <Link href="/account/profile" className="flex items-center gap-1.5 text-muted text-xs hover:text-secondary transition-colors mb-6">
+    <div className="max-w-md mx-auto">
+        <Link href="/home/profile" className="flex items-center gap-1.5 text-muted text-xs hover:text-secondary transition-colors mb-6">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Profile
         </Link>
 
@@ -99,7 +96,6 @@ export default function ChangePasswordPage() {
             </form>
           </div>
         )}
-      </div>
     </div>
   )
 }

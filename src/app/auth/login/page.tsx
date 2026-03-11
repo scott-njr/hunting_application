@@ -5,11 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
-
-function safeRedirect(path: string | null): string {
-  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/home'
-  return path
-}
+import { safeRedirect } from '@/lib/safe-redirect'
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -40,7 +36,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="glass-card rounded-lg p-8">
+    <div className="glass-card rounded-lg p-5 sm:p-8">
       <h1 className="text-xl font-semibold text-primary mb-6">Sign in to your account</h1>
 
       {(error || urlError) && (
@@ -81,7 +77,7 @@ function LoginForm() {
         <Link href="/auth/forgot-password" className="text-muted hover:text-secondary">
           Forgot password?
         </Link>
-        <Link href={`/auth/signup${redirectTo !== '/home' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="text-accent-hover hover:text-accent-hover">
+        <Link href={`/auth/signup${redirectTo !== '/home' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="text-accent hover:text-accent-hover">
           Create free account
         </Link>
       </div>
@@ -99,7 +95,7 @@ export default function LoginPage() {
           </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
-        <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm">Loading...</div>}>
+        <Suspense fallback={<div className="glass-card rounded-lg p-5 sm:p-8 text-secondary text-sm">Loading...</div>}>
           <LoginForm />
         </Suspense>
       </div>

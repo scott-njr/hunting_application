@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description: 'Structured paths, seasoned mentors, and a community built around hunting, firearms, fitness, and life. AI-powered draw strategy, field map, and expedition planning.',
   alternates: { canonical: '/' },
 }
+import { PublicFooter } from '@/components/layout/public-footer'
 import { Navbar } from '@/components/layout/navbar'
 import { Nav2 } from '@/components/layout/nav2'
 import { RotatingPhotoStrip } from '@/components/ui/rotating-photo-strip'
@@ -22,7 +23,7 @@ import {
 const modules = [
   {
     icon: Crosshair,
-    name: 'Hunt',
+    name: 'Hunting',
     tagline: 'Plan Smarter. Hunt Better.',
     description:
       'AI-powered draw strategy, deadline tracking, field map, and expedition planning — whether it\'s your first tag or your twentieth.',
@@ -43,7 +44,7 @@ const modules = [
       'Courses, community, and training plans for bowhunters and archers — from form fundamentals to field accuracy.',
     status: 'featured' as const,
     href: null,
-    cta: 'Coming Soon',
+    cta: 'Get Started',
     accent: 'text-teal-400',
     iconBg: 'bg-teal-900/20',
     border: 'border-subtle',
@@ -368,7 +369,7 @@ export default function LandingPage() {
                 Live Now
               </span>
             </div>
-            <h3 className="text-primary font-bold text-lg mb-0.5">Hunt</h3>
+            <h3 className="text-primary font-bold text-lg mb-0.5">Hunting</h3>
             <p className="text-xs font-medium uppercase tracking-wide text-amber-400">Plan Smarter. Hunt Better.</p>
           </div>
           <div className="px-6 py-5">
@@ -513,7 +514,7 @@ export default function LandingPage() {
           <div className="topo-texture" />
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-accent-dim rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative px-8 py-10 md:px-12 md:py-12">
+          <div className="relative px-4 py-8 sm:px-8 sm:py-10 md:px-12 md:py-12">
             <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-2">
               The Praevius Promise — Across Every Module
             </p>
@@ -539,11 +540,11 @@ export default function LandingPage() {
               <AuthCta
                 authedHref="/home"
                 authedLabel="Go to Command Center"
-                className="bg-white hover:bg-white text-black font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
+                className="bg-white hover:bg-gray-100 text-black font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
               >
                 <AuthCtaButton
                   view="signup"
-                  className="bg-white hover:bg-white text-black font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
+                  className="bg-white hover:bg-gray-100 text-black font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
                 >
                   Get Started
                 </AuthCtaButton>
@@ -561,18 +562,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p className="text-secondary font-bold tracking-wide mb-0.5">LEAD THE WILD</p>
-        <p className="text-muted italic mb-3">by Praevius</p>
-        <p className="mb-2">
-          <a href="/changelog" className="text-secondary hover:text-primary transition-colors underline underline-offset-2">Changelog</a>
-        </p>
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-        <p className="mt-1 max-w-md mx-auto">
-          Lead the Wild provides guidance and tools only. Always verify requirements
-          and regulations through official sources.
-        </p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

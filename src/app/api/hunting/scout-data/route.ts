@@ -51,11 +51,12 @@ export async function POST(req: NextRequest) {
     const { location_id } = await req.json()
     if (!location_id) return NextResponse.json({ error: 'location_id required' }, { status: 400 })
 
-    // Fetch location — only lat/lng are used for scouting
+    // Fetch location — only lat/lng are used for scouting. Filter by user ownership via hunt plan.
     const { data: loc, error: locErr } = await supabase
       .from('hunting_locations')
-      .select('*')
+      .select('*, hunting_plans!inner(user_id)')
       .eq('id', location_id)
+      .eq('hunting_plans.user_id', user.id)
       .single()
 
     if (locErr || !loc) return NextResponse.json({ error: 'Location not found' }, { status: 404 })

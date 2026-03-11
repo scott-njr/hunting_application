@@ -70,7 +70,7 @@ export default function BlogPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <BookOpen className="h-7 w-7 text-accent" />
             <h1 className="text-4xl sm:text-5xl font-bold text-primary">Blog</h1>
@@ -82,7 +82,7 @@ export default function BlogPage() {
         </div>
 
       {/* About */}
-      <div className="relative max-w-7xl mx-auto px-8 py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <h2 className="text-2xl font-bold text-primary mb-3">What You&apos;ll Find Here</h2>
         <p className="text-secondary text-sm leading-relaxed mb-4">
           The Praevius blog is where real-world experience meets actionable advice. No fluff, no clickbait — just genuine field knowledge from hunters, anglers, and outdoor athletes who have been there. Every article is written or reviewed by someone who has actually done what they&apos;re writing about.
@@ -97,7 +97,7 @@ export default function BlogPage() {
       </section>
 
       {/* Categories grid */}
-      <section className="max-w-7xl mx-auto px-8 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
         <h2 className="text-xl font-bold text-primary mb-6">Content Categories</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
           {categories.map(({ icon: FIcon, title, description }) => (

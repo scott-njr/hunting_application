@@ -8,7 +8,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const postType = searchParams.get('type')
-  const postModule = searchParams.get('module') ?? 'hunting'
+  const postModule = (searchParams.get('module') ?? 'hunting') as 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
 
   let query = supabase
     .from('social_posts')
@@ -22,7 +22,10 @@ export async function GET(req: Request) {
   }
 
   const { data: posts, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[community/posts GET] fetch error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
   if (!posts || posts.length === 0) return NextResponse.json({ posts: [] })
 
   const postIds = posts.map(p => p.id)
@@ -77,7 +80,7 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const { post_type, entity_name, content, module: postModule } = body
-  const safeModule = String(postModule ?? 'hunting').trim()
+  const safeModule = String(postModule ?? 'hunting').trim() as 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
 
   const trimmedContent = String(content ?? '').trim()
   if (!trimmedContent) {
@@ -106,7 +109,10 @@ export async function POST(req: Request) {
     .select('id, user_id, post_type, entity_name, content, module, created_at')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[community/posts POST] insert error:', error.message)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   const { data: profile } = await supabase
     .from('user_profile')

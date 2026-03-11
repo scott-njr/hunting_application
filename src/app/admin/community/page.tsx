@@ -39,6 +39,7 @@ export default function AdminCommunityPage() {
   const [moduleFilter, setModuleFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -81,8 +82,7 @@ export default function AdminCommunityPage() {
   }, [moduleFilter])
 
   async function deletePost(postId: string) {
-    if (!confirm('Delete this post? This cannot be undone.')) return
-
+    setConfirmDelete(null)
     setDeleting(postId)
     const supabase = createClient()
 
@@ -160,14 +160,32 @@ export default function AdminCommunityPage() {
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
-                  <button
-                    onClick={() => deletePost(post.id)}
-                    disabled={deleting === post.id}
-                    className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    title="Delete post"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {confirmDelete === post.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => deletePost(post.id)}
+                        disabled={deleting === post.id}
+                        className="text-[10px] font-semibold text-red-400 bg-red-500/15 hover:bg-red-500/25 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                      >
+                        {deleting === post.id ? 'Deleting...' : 'Confirm'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="text-[10px] text-muted hover:text-secondary px-2 py-1 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(post.id)}
+                      disabled={deleting === post.id}
+                      className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      title="Delete post"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

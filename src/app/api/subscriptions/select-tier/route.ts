@@ -2,7 +2,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import type { ModuleSlug, ModuleTier } from '@/lib/modules'
-import { ALL_MODULES, MODULE_TIER_RANK } from '@/lib/modules'
+import { ALL_MODULES } from '@/lib/modules'
 
 // Manual tier selection — will be replaced by Stripe checkout when payments are wired.
 
@@ -48,32 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('[select-tier] upsert error:', error.message)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    // 2. Sync global tier to max of all active module subscriptions
-    const { data: allSubs, error: fetchError } = await admin
-      .from('module_subscriptions')
-      .select('tier')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-
-    if (fetchError) {
-      console.error('[select-tier] fetch subs error:', fetchError.message)
-    }
-
-    const maxTier = (allSubs ?? []).reduce((best, row) => {
-      const rank = MODULE_TIER_RANK[row.tier as ModuleTier] ?? 0
-      return rank > MODULE_TIER_RANK[best as ModuleTier] ? row.tier : best
-    }, 'free' as string)
-
-    const { error: memberError } = await admin
-      .from('members')
-      .update({ membership_tier: maxTier, membership_status: 'active' })
-      .eq('id', user.id)
-
-    if (memberError) {
-      console.error('[select-tier] members sync error:', memberError.message)
+      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true, module: moduleSlug, tier })

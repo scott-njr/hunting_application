@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { getFitnessProfileContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
-import type { Json } from '@/types/database.types'
+import { getCurrentWeek, getPassedSessionNumbers } from '@/lib/fitness/date-helpers'
 
 export async function POST(
   req: NextRequest,
@@ -47,8 +47,47 @@ export async function POST(
     : 'meal_plan_generator' as const
 
   const profileContext = await getFitnessProfileContext(supabase, user.id)
-  const currentPlan = JSON.stringify(plan.plan_data, null, 2)
+  const planData = plan.plan_data as Record<string, unknown>
+  const currentPlan = JSON.stringify(planData, null, 2)
   const config = plan.config as Record<string, unknown>
+
+  // For workout plans, determine current week so AI only adjusts remaining weeks
+  const currentWeek = plan.plan_type !== 'meal'
+    ? getCurrentWeek(plan.started_at, plan.weeks_total)
+    : 0
+
+  // Find sessions in the current week that must be preserved:
+  // 1. Sessions the user has logged (completed)
+  // 2. Sessions whose scheduled day has already passed (even if not completed)
+  let frozenSessionNumbers: number[] = []
+  if (currentWeek >= 1 && plan.plan_type !== 'meal') {
+    const { data: logs } = await supabase
+      .from('fitness_plan_workout_logs')
+      .select('session_number')
+      .eq('plan_id', planId)
+      .eq('week_number', currentWeek)
+
+    const loggedSessions = (logs ?? []).map(l => l.session_number)
+    const daysPerWeek = (config.daysPerWeek as number) ?? 3
+    const passedSessions = getPassedSessionNumbers(daysPerWeek)
+
+    // Merge logged + passed, deduplicate
+    frozenSessionNumbers = [...new Set([...loggedSessions, ...passedSessions])].sort((a, b) => a - b)
+  }
+
+  let weekContext = ''
+  if (plan.plan_type !== 'meal' && (currentWeek > 1 || frozenSessionNumbers.length > 0)) {
+    const parts: string[] = []
+    if (currentWeek > 1) {
+      parts.push(`Keep weeks 1 through ${currentWeek - 1} EXACTLY as they are — those are already completed.`)
+    }
+    if (frozenSessionNumbers.length > 0) {
+      parts.push(`In week ${currentWeek}, sessions ${frozenSessionNumbers.join(', ')} have already passed — keep those EXACTLY as they are. Only modify the remaining sessions in week ${currentWeek} and all sessions in weeks ${currentWeek + 1} through ${plan.weeks_total}.`)
+    } else {
+      parts.push(`Apply the feedback to week ${currentWeek} through ${plan.weeks_total}.`)
+    }
+    weekContext = `\n\nIMPORTANT: The user is currently on week ${currentWeek} of ${plan.weeks_total}. ${parts.join(' ')}`
+  }
 
   const basePrompt = plan.plan_type === 'meal'
     ? `Adjust this existing 7-day meal plan based on user feedback.
@@ -76,7 +115,7 @@ User config:
 - Days per week: ${config.daysPerWeek}
 ${config.notes ? `- Notes: ${config.notes}` : ''}
 
-User feedback: "${feedback}"
+User feedback: "${feedback}"${weekContext}
 
 Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted plan using the exact same structure as the current plan. Apply the user's feedback while maintaining progressive overload and safety. Keep all fields (goal_summary, weeks, sessions, etc).`
 
@@ -110,20 +149,48 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
     }, { status: 500 })
   }
 
-  const { error } = await supabase
-    .from('fitness_training_plans')
-    .update({
-      plan_data: parsed as unknown as Json,
-      goal: (parsed.goal_summary as string) ?? plan.goal,
-    })
-    .eq('id', planId)
+  // For workout plans, preserve completed weeks and sessions in case AI modified them
+  if (plan.plan_type !== 'meal' && (currentWeek > 1 || frozenSessionNumbers.length > 0)) {
+    const originalWeeks = (planData.weeks ?? []) as Array<Record<string, unknown>>
+    const adjustedWeeks = (parsed.weeks ?? []) as Array<Record<string, unknown>>
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Replace weeks before current week with originals (already completed)
+    for (let i = 0; i < currentWeek - 1 && i < originalWeeks.length; i++) {
+      if (adjustedWeeks[i]) {
+        adjustedWeeks[i] = originalWeeks[i]
+      }
+    }
 
+    // Within the current week, preserve completed sessions
+    if (frozenSessionNumbers.length > 0) {
+      const weekIdx = currentWeek - 1
+      const origWeek = originalWeeks[weekIdx] as Record<string, unknown> | undefined
+      const adjWeek = adjustedWeeks[weekIdx] as Record<string, unknown> | undefined
+      if (origWeek && adjWeek) {
+        const origSessions = (origWeek.sessions ?? []) as Array<Record<string, unknown>>
+        const adjSessions = (adjWeek.sessions ?? []) as Array<Record<string, unknown>>
+        for (const sessNum of frozenSessionNumbers) {
+          const idx = sessNum - 1
+          if (origSessions[idx] && adjSessions[idx]) {
+            adjSessions[idx] = origSessions[idx]
+          }
+        }
+        adjWeek.sessions = adjSessions
+      }
+    }
+
+    parsed.weeks = adjustedWeeks
+  }
+
+  // Increment AI quota (the generation costs regardless of accept/reject)
   await supabase.rpc('increment_module_ai_queries', {
     user_id_param: user.id,
     module_slug_param: 'fitness',
   })
 
-  return NextResponse.json({ success: true })
+  // Return draft for user preview — not saved until accepted
+  return NextResponse.json({
+    draft: parsed,
+    goal: (parsed.goal_summary as string) ?? plan.goal,
+  })
 }

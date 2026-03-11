@@ -5,11 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
-
-function safeRedirect(path: string | null): string {
-  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/home'
-  return path
-}
+import { safeRedirect } from '@/lib/safe-redirect'
 
 function SignupForm() {
   const searchParams = useSearchParams()
@@ -64,7 +60,7 @@ function SignupForm() {
 
   if (emailSent) {
     return (
-      <div className="glass-card rounded-lg p-8 text-center">
+      <div className="glass-card rounded-lg p-5 sm:p-8 text-center">
         <div className="text-4xl mb-4">✓</div>
         <h2 className="text-primary text-xl font-semibold mb-2">Check your email</h2>
         <p className="text-secondary text-sm">
@@ -75,7 +71,7 @@ function SignupForm() {
           Didn&apos;t receive it? Check your spam folder.
         </p>
         <div className="mt-6 pt-4 border-t border-subtle flex justify-center gap-4 text-xs">
-          <Link href="/auth/login" className="text-accent-hover hover:text-accent-hover">Back to sign in</Link>
+          <Link href="/auth/login" className="text-accent hover:text-accent-hover">Back to sign in</Link>
           <span className="text-muted">·</span>
           <Link href="/auth/signup" className="text-muted hover:text-secondary">Try again</Link>
         </div>
@@ -84,7 +80,7 @@ function SignupForm() {
   }
 
   return (
-    <div className="glass-card rounded-lg p-8">
+    <div className="glass-card rounded-lg p-5 sm:p-8">
       <h1 className="text-xl font-semibold text-primary mb-1">Create your free account</h1>
       <p className="text-muted text-sm mb-6">No credit card. No commitment.</p>
 
@@ -156,7 +152,7 @@ function SignupForm() {
 
       <p className="text-muted text-sm text-center mt-6">
         Already have an account?{' '}
-        <Link href={`/auth/login${redirectTo !== '/home' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="text-accent-hover hover:text-accent-hover">
+        <Link href={`/auth/login${redirectTo !== '/home' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="text-accent hover:text-accent-hover">
           Sign in
         </Link>
       </p>
@@ -174,7 +170,7 @@ export default function SignupPage() {
           </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
-        <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm">Loading...</div>}>
+        <Suspense fallback={<div className="glass-card rounded-lg p-5 sm:p-8 text-secondary text-sm">Loading...</div>}>
           <SignupForm />
         </Suspense>
       </div>

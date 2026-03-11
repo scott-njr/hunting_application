@@ -21,7 +21,7 @@ export function SharePlanButton({ planId }: { planId: string }) {
   useEffect(() => {
     if (!open) return
     fetch('/api/friends')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) return { friends: [] }; return r.json() })
       .then(d => setFriends(d.friends ?? []))
   }, [open])
 

@@ -37,5 +37,5 @@ export default createNav2Page({
     { icon: Brain, title: 'Decision Frameworks', description: 'Structured thinking tools for field decisions — shoot or pass, approach strategy, risk assessment, and ethical judgment calls.' },
     { icon: Users, title: 'Accountability Partners', description: 'Pair up with others who are training their mindset. Set goals, check in weekly, and push each other to grow.' },
   ],
-  cta: { href: '/mindset', name: 'Mindset' },
+  cta: { href: '/mindset', name: 'Mindset', inlineInAbout: false },
 })

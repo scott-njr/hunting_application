@@ -68,7 +68,7 @@ export default function AboutPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-base/80 via-base/70 to-base" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex items-center gap-3 mb-2">
             <Mountain className="h-7 w-7 text-accent" />
             <h1 className="text-4xl sm:text-5xl font-bold text-primary">About Us</h1>
@@ -80,7 +80,7 @@ export default function AboutPage() {
         </div>
 
       {/* About */}
-      <div className="relative max-w-7xl mx-auto px-8 py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <h2 className="text-2xl font-bold text-primary mb-3">Why Praevius Exists</h2>
         <p className="text-secondary text-sm leading-relaxed mb-4">
           Praevius was born out of frustration. We spent years bouncing between forums, spreadsheets, YouTube videos, and scattered apps trying to piece together the tools and knowledge we needed to hunt smarter, train harder, and stay prepared. Nothing connected the dots. So we built something that does.
@@ -95,7 +95,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values grid */}
-      <section className="max-w-7xl mx-auto px-8 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
         <h2 className="text-xl font-bold text-primary mb-6">What We Stand For</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
           {values.map(({ icon: FIcon, title, description }) => (

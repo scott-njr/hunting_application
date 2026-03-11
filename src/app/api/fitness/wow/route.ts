@@ -24,7 +24,10 @@ export async function GET() {
     .eq('week_start', weekStart)
     .maybeSingle()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
 
   // Fall back to the most recent workout if none generated yet this week
   if (!data) {
@@ -36,7 +39,10 @@ export async function GET() {
       .limit(1)
       .maybeSingle()
 
-    if (latestError) return NextResponse.json({ error: latestError.message }, { status: 500 })
+    if (latestError) {
+      console.error(latestError)
+      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    }
 
     return NextResponse.json({ workout: latest })
   }

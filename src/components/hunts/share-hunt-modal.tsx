@@ -134,7 +134,7 @@ export function ShareHuntModal({ open, onClose, huntId, huntTitle, existingRecip
             <h3 className="text-primary font-semibold text-sm">Share Hunt Plan</h3>
             <p className="text-muted text-xs mt-0.5">{huntTitle}</p>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-primary transition-colors p-1">
+          <button onClick={onClose} className="text-muted hover:text-primary transition-colors p-2">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -188,7 +188,7 @@ export function ShareHuntModal({ open, onClose, huntId, huntTitle, existingRecip
                   <div key={r.email} className="flex items-center gap-2 bg-elevated border border-subtle rounded px-3 py-2">
                     <Mail className="h-3 w-3 text-muted shrink-0" />
                     <span className="text-primary text-xs flex-1 truncate">{r.email}</span>
-                    <button onClick={() => removeRecipient(r.email)} className="text-muted hover:text-red-400 transition-colors p-0.5">
+                    <button onClick={() => removeRecipient(r.email)} className="text-muted hover:text-red-400 transition-colors p-2">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>

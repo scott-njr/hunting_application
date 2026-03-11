@@ -127,7 +127,7 @@ export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownPro
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-elevated border border-default rounded-lg shadow-xl z-[60] overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-elevated border border-default rounded-lg shadow-xl z-[60] overflow-hidden">
           {/* Profile card */}
           <div className="px-4 py-3 border-b border-subtle">
             <div className="flex items-center gap-3">

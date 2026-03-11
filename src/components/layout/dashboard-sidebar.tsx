@@ -45,7 +45,7 @@ export function DashboardSidebar({ memberName, memberEmail, memberTier }: Dashbo
                   className={cn('nav-link', pathname === '/home' && 'nav-link-active')}
                 >
                   <Home className="h-4 w-4 flex-shrink-0" />
-                  Overview
+                  Command Center
                 </Link>
               </div>
             </div>

@@ -12,7 +12,7 @@ export async function GET() {
     .not('release_tag', 'is', null)
     .order('resolved_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
 
   // Group by release_tag
   const releaseMap = new Map<string, typeof issues>()

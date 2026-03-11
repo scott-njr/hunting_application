@@ -27,17 +27,7 @@ export async function POST() {
 
     if (subError) {
       console.error('[cancel-all] subscription update error:', subError.message)
-      return NextResponse.json({ error: subError.message }, { status: 500 })
-    }
-
-    // Sync global tier
-    const { error: memberError } = await admin
-      .from('members')
-      .update({ membership_tier: 'free', membership_status: 'cancelled' })
-      .eq('id', user.id)
-
-    if (memberError) {
-      console.error('[cancel-all] members sync error:', memberError.message)
+      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true })

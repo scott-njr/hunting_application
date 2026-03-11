@@ -25,8 +25,8 @@ Duplicated components create maintenance nightmares. When a bug is found (e.g., 
 Search for these common duplication signals across `src/components/` and `src/app/`:
 
 - **Identical class strings**: Find components with the same long Tailwind class strings (>30 chars) appearing in multiple files
-- **Identical JSX structures**: Find the same HTML/JSX element tree repeated across files (e.g., mobile top bars, header layouts, card patterns, empty states)
-- **Identical state + effect patterns**: Find the same `useState` + `useEffect` combination doing the same thing in multiple components (e.g., fetching friend counts, handling mobile menu state)
+- **Identical JSX structures**: Find the same HTML/JSX element tree repeated across files (e.g., card patterns, empty states, modal layouts)
+- **Identical state + effect patterns**: Find the same `useState` + `useEffect` combination doing the same thing in multiple components (e.g., fetching data, handling toggle state)
 - **Identical API fetch patterns**: Find the same `fetch('/api/...')` call with the same response handling in multiple components
 
 ### 2. Compare each pair
@@ -52,15 +52,15 @@ For each pair of suspected duplicates:
 ### Findings
 | Component Pattern | Files | Severity | Differences | Recommendation |
 |------------------|-------|----------|-------------|----------------|
-| Mobile top bar | module-sidebar.tsx, dashboard-sidebar.tsx | CRITICAL | messagesHref | Extract MobileTopBar component |
+| Example pattern | file-a.tsx, file-b.tsx | HIGH | href prop | Extract shared component with prop |
 | ... | ... | ... | ... | ... |
 
 ### Duplicates Found
-1. **[CRITICAL]** Mobile Top Bar
-   - `src/components/layout/module-sidebar.tsx` lines XX-YY
-   - `src/components/layout/dashboard-sidebar.tsx` lines XX-YY
-   - Differences: `messagesHref` value
-   - Fix: Extract to `src/components/layout/mobile-top-bar.tsx` with `messagesHref` prop
+1. **[HIGH]** Example Pattern
+   - `src/components/example/file-a.tsx` lines XX-YY
+   - `src/components/example/file-b.tsx` lines XX-YY
+   - Differences: `href` value
+   - Fix: Extract to shared component with configurable prop
 
 ### Summary
 - Component groups scanned: X

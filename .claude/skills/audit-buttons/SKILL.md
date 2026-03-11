@@ -28,6 +28,30 @@ If `$ARGUMENTS` is "all" or empty, audit all page files:
 
 ### 2. For each file, extract all interactive elements
 
+**Mandatory file checklist — ALWAYS read these files first (ensures consistent coverage):**
+- `src/components/community/feed-panel.tsx` — profile links, like/comment handlers
+- `src/components/community/people-client.tsx` — friend management
+- `src/components/community/people-sidebar.tsx` — friend management sidebar
+- `src/components/dashboard/community-client.tsx` — dashboard community panel
+- `src/app/home/friends/page.tsx` — search, request, remove friends
+- `src/components/pricing/tier-cards.tsx` — tier selection buttons
+- `src/app/account/subscriptions/page.tsx` — cancel subscription
+- `src/app/onboarding/page.tsx` — onboarding form + finish
+- `src/app/admin/users/page.tsx` — admin user toggles
+- `src/app/admin/issues/page.tsx` — admin issue management
+- `src/app/admin/deploys/page.tsx` — admin deploy management
+- `src/app/admin/ai-logs/page.tsx` — admin AI logs
+- `src/app/admin/community/page.tsx` — admin community management
+- `src/components/hunts/share-hunt-modal.tsx` — hunt sharing modal
+- `src/components/fitness/coach/share-plan-button.tsx` — plan sharing
+- `src/components/fitness/coach/challenges-inbox.tsx` — challenge responses
+- `src/components/layout/navbar.tsx` — top nav interactive elements
+- `src/components/layout/account-dropdown.tsx` — account dropdown links
+- `src/components/layout/module-sidebar.tsx` — sidebar nav links
+- `src/components/layout/dashboard-sidebar.tsx` — dashboard sidebar links
+- `src/components/layout/nav2.tsx` — Nav2 bar links
+- `src/components/layout/public-footer.tsx` — footer links
+
 Scan the JSX for:
 - **`<Link href="...">`** — Next.js client-side navigation
 - **`<a href="...">`** — Standard links

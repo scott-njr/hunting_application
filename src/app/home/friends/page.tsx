@@ -126,7 +126,8 @@ export default function FriendsPage() {
   async function removeFriend(friendshipId: string) {
     setActionLoading(friendshipId)
     try {
-      await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
+      if (!res.ok) { setError('Failed to remove friend'); return }
       setFriends(prev => prev.filter(f => f.friendship_id !== friendshipId))
     } finally { setActionLoading(null) }
   }
