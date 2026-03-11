@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarCheck, Activity, Dumbbell, UtensilsCrossed, Flame, Target, AlertTriangle, Calendar } from 'lucide-react'
+import { CalendarCheck, Activity, Dumbbell, UtensilsCrossed, Flame, Target, AlertTriangle, Calendar, Trophy } from 'lucide-react'
 import { PlanTableView } from '@/components/fitness/coach/plan-table-view'
 import { StartNewPlanButton } from '@/components/fitness/coach/start-new-plan-button'
 import { AdjustPlanButton } from '@/components/fitness/coach/adjust-plan-button'
@@ -83,6 +83,43 @@ export default async function MyPlanPage() {
   const mealPlan = mealResult.data
 
   const hasAnyPlan = runPlan || strengthPlan || mealPlan
+
+  // Fetch leaderboard: try calculated points first, fall back to raw submissions
+  const [{ data: leaderboardPoints }, { data: allSubmissions }] = await Promise.all([
+    supabase.from('fitness_leaderboard_points').select('user_id, points'),
+    supabase.from('fitness_workout_submissions').select('user_id'),
+  ])
+
+  let myRank: number | null = null
+  let myTotalPoints = 0
+  let totalParticipants = 0
+
+  if (leaderboardPoints && leaderboardPoints.length > 0) {
+    const userTotals: Record<string, number> = {}
+    for (const row of leaderboardPoints) {
+      userTotals[row.user_id] = (userTotals[row.user_id] ?? 0) + row.points
+    }
+    const sorted = Object.entries(userTotals).sort((a, b) => b[1] - a[1])
+    totalParticipants = sorted.length
+    const myIdx = sorted.findIndex(([uid]) => uid === user.id)
+    if (myIdx !== -1) {
+      myRank = myIdx + 1
+      myTotalPoints = sorted[myIdx][1]
+    }
+  } else if (allSubmissions && allSubmissions.length > 0) {
+    // Points not yet calculated — rank by submission count
+    const userCounts: Record<string, number> = {}
+    for (const row of allSubmissions) {
+      userCounts[row.user_id] = (userCounts[row.user_id] ?? 0) + 1
+    }
+    const sorted = Object.entries(userCounts).sort((a, b) => b[1] - a[1])
+    totalParticipants = sorted.length
+    const myIdx = sorted.findIndex(([uid]) => uid === user.id)
+    if (myIdx !== -1) {
+      myRank = myIdx + 1
+      myTotalPoints = sorted[myIdx][1]
+    }
+  }
 
   // Fetch logs for all active plans (including notes + dates for table view)
   const planIds = [runPlan?.id, strengthPlan?.id, mealPlan?.id].filter(Boolean) as string[]
@@ -284,8 +321,9 @@ export default async function MyPlanPage() {
             ]}
           />
 
-          {/* ── Today ── */}
-          <div className="rounded-lg border border-accent/30 bg-surface p-5 space-y-4">
+          {/* ── Today + Leaderboard ── */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg border border-accent/30 bg-surface p-5 space-y-4">
             {/* Date + Stats row */}
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2">
@@ -378,7 +416,26 @@ export default async function MyPlanPage() {
                   </Link>
                 )}
               </div>
-            )}
+              )}
+            </div>
+
+            {/* Leaderboard Rank Card */}
+            <Link href="/fitness/community/leaderboard" className="rounded-lg border border-accent/30 bg-surface p-5 flex flex-col items-center justify-center text-center hover:border-accent transition-colors">
+              <Trophy className={`h-8 w-8 mb-2 ${myRank !== null && myRank <= 3 ? 'text-amber-400' : 'text-accent'}`} />
+              <span className="text-muted text-[10px] uppercase tracking-wider mb-1">Leaderboard</span>
+              {myRank !== null ? (
+                <>
+                  <span className="text-3xl font-bold text-primary">#{myRank}</span>
+                  <span className="text-muted text-xs mt-0.5">of {totalParticipants}</span>
+                  <div className="mt-3 pt-3 border-t border-subtle w-full">
+                    <span className="text-accent font-bold text-lg">{myTotalPoints}</span>
+                    <span className="text-muted text-xs ml-1">pts</span>
+                  </div>
+                </>
+              ) : (
+                <span className="text-muted text-xs mt-1">Complete a weekly challenge to get ranked</span>
+              )}
+            </Link>
           </div>
 
           {/* ── Plan Cards with Adjust/New buttons ── */}
