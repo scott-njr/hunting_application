@@ -3,6 +3,21 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { calculateWeeklyPoints } from '@/lib/fitness/leaderboard-points'
 
+function computeAgeGroup(dob: string | null): string | null {
+  if (!dob) return null
+  const birth = new Date(dob)
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const monthDiff = now.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--
+  if (age >= 56) return '56+'
+  if (age >= 46) return '46-55'
+  if (age >= 36) return '36-45'
+  if (age >= 26) return '26-35'
+  if (age >= 18) return '18-25'
+  return null
+}
+
 function getCurrentMonday(): string {
   const now = new Date()
   const day = now.getDay()
@@ -26,7 +41,7 @@ export async function GET(req: NextRequest) {
   let resolvedWorkoutId = workoutId
   if (!resolvedWorkoutId) {
     const { data: workout } = await supabase
-      .from('weekly_workouts')
+      .from('fitness_weekly_workouts')
       .select('id')
       .eq('week_start', getCurrentMonday())
       .maybeSingle()
@@ -37,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   // Fetch the workout to determine scoring type
   const { data: workout } = await supabase
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('workout_details')
     .eq('id', resolvedWorkoutId)
     .single()
@@ -47,40 +62,41 @@ export async function GET(req: NextRequest) {
 
   // Fetch submissions with correct sort direction
   const { data: submissions, error } = await supabase
-    .from('workout_submissions')
+    .from('fitness_workout_submissions')
     .select('*')
     .eq('workout_id', resolvedWorkoutId)
     .order('score_value', { ascending })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Enrich with user display names, date_of_birth, and fitness_level
+  // Enrich with user display names, age_group, and fitness_level
   const userIds = [...new Set((submissions ?? []).map(s => s.user_id))]
-  const [{ data: profiles }, { data: members }] = await Promise.all([
+  const [{ data: profiles }, { data: fitnessProfiles }] = await Promise.all([
     supabase
-      .from('hunter_profiles')
-      .select('id, display_name, avatar_url, date_of_birth, gender')
+      .from('user_profile')
+      .select('id, display_name, user_name, avatar_url, date_of_birth, gender')
       .in('id', userIds),
     supabase
-      .from('members')
+      .from('fitness_profile')
       .select('id, fitness_level')
       .in('id', userIds),
   ])
 
   const profileMap = new Map((profiles ?? []).map(p => [p.id, p]))
-  const memberMap = new Map((members ?? []).map(m => [m.id, m]))
+  const fitnessMap = new Map((fitnessProfiles ?? []).map(f => [f.id, f]))
 
   const enriched = (submissions ?? []).map((s, i) => {
     const profile = profileMap.get(s.user_id)
-    const member = memberMap.get(s.user_id)
+    const fitProfile = fitnessMap.get(s.user_id)
     return {
       ...s,
       rank: i + 1,
       display_name: profile?.display_name ?? 'Anonymous',
+      user_name: profile?.user_name ?? null,
       avatar_url: profile?.avatar_url ?? null,
-      date_of_birth: profile?.date_of_birth ?? null,
+      age_group: computeAgeGroup(profile?.date_of_birth ?? null),
       gender: profile?.gender ?? null,
-      fitness_level: member?.fitness_level ?? null,
+      fitness_level: fitProfile?.fitness_level ?? null,
       is_mine: s.user_id === user.id,
     }
   })
@@ -110,7 +126,7 @@ export async function POST(req: NextRequest) {
 
   // Upsert submission (one per user per workout)
   const { data: submission, error } = await admin
-    .from('workout_submissions')
+    .from('fitness_workout_submissions')
     .upsert({
       workout_id,
       user_id: user.id,
@@ -126,7 +142,7 @@ export async function POST(req: NextRequest) {
 
   // Fetch workout title for the community post
   const { data: workout } = await admin
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('title')
     .eq('id', workout_id)
     .single()
@@ -136,7 +152,7 @@ export async function POST(req: NextRequest) {
 
   // Auto-post to fitness community feed with metadata
   const { data: post } = await admin
-    .from('community_posts')
+    .from('social_posts')
     .insert({
       user_id: user.id,
       post_type: 'wow_result' as const,
@@ -156,7 +172,7 @@ export async function POST(req: NextRequest) {
   // Link community post back to submission
   if (post) {
     await admin
-      .from('workout_submissions')
+      .from('fitness_workout_submissions')
       .update({ community_post_id: post.id })
       .eq('id', submission.id)
   }

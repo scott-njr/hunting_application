@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 const DEG = Math.PI / 180
 
 /**
- * GET /api/journal/terrain?lat=X&lng=Y
+ * GET /api/hunting/field-map/terrain?lat=X&lng=Y
  *
  * Fetches elevation from USGS 3DEP and computes slope/aspect
  * from a 3-point gradient (~50m offset grid).
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       slopeAspectDeg: Math.round(slopeAspectDeg),
     })
   } catch (err) {
-    console.error('[journal/terrain] fetch failed:', err)
+    console.error('[hunting/field-map/terrain] fetch failed:', err)
     return NextResponse.json({
       elevationFt: 5000,
       slopeDeg: 10,

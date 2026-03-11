@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const newStatus = action === 'accept' ? 'accepted' : 'declined'
 
   const { data, error } = await supabase
-    .from('friendships')
+    .from('social_friendships')
     .update({ status: newStatus })
     .eq('id', friendship_id)
     .eq('recipient_id', user.id)

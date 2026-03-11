@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   ChevronDown, ChevronUp, ExternalLink, CheckCircle2, AlertTriangle,
@@ -88,12 +89,12 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSavingApply(false); return }
 
-    await supabase
-      .from('hunt_applications')
+    const { error: upsertError } = await supabase
+      .from('hunting_applications')
       .upsert({
         user_id: user.id,
         state: d.state_code,
-        state_name: d.draw_states.state_name,
+        state_name: d.hunting_draw_states.state_name,
         species: d.species,
         season: d.seasons[0] ?? 'general',
         year: d.year,
@@ -105,6 +106,7 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
         date_applied: new Date().toISOString().split('T')[0],
       }, { onConflict: 'user_id,state,species,season,year', ignoreDuplicates: true })
 
+    if (upsertError) { console.error('[Deadlines] Save failed:', upsertError.message); setSavingApply(false); return }
     setApplied(prev => new Set(prev).add(appliedKey(d)))
     setSavingApply(false)
     setApplyingRowId(null)
@@ -116,14 +118,15 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase
-      .from('hunt_applications')
+    const { error: deleteError } = await supabase
+      .from('hunting_applications')
       .delete()
       .eq('user_id', user.id)
       .eq('state', d.state_code)
       .eq('species', d.species)
       .eq('year', d.year)
 
+    if (deleteError) { console.error('[Deadlines] Delete failed:', deleteError.message); return }
     setApplied(prev => {
       const next = new Set(prev)
       next.delete(appliedKey(d))
@@ -160,9 +163,9 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
         <div className="mb-4 rounded-lg border border-default bg-elevated/50 px-4 py-3 text-sm">
           <p className="text-secondary">
             Showing all available draws.{' '}
-            <a href="/hunting/profile" className="text-accent-hover hover:underline">
+            <Link href="/hunting/profile" className="text-accent-hover hover:underline">
               Set your species and state interests in your profile
-            </a>{' '}
+            </Link>{' '}
             to filter to what&apos;s relevant to you.
           </p>
         </div>
@@ -173,13 +176,13 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
         <div className="glass-card px-6 py-10 text-center">
           <p className="text-secondary text-sm mb-2">No draws found matching your profile interests yet.</p>
           <p className="text-muted text-xs mb-4">More states are coming soon.</p>
-          <a href="/hunting/profile" className="text-accent-hover hover:underline text-sm">Update your interests →</a>
+          <Link href="/hunting/profile" className="text-accent-hover hover:underline text-sm">Update your interests →</Link>
         </div>
       )}
 
       <div className="space-y-3">
         {groups.map((group) => {
-          const state = group[0].draw_states
+          const state = group[0].hunting_draw_states
           const cardKey = `${state.state_code}-${group[0].year}`
           const isOpen = expanded === cardKey
           const members = applyMembers[cardKey] ?? []
@@ -370,7 +373,7 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
                                           onChange={e => setHuntCodes(h => ({ ...h, first: e.target.value }))}
                                           placeholder="e.g. 310-20"
                                           autoFocus
-                                          className="input-field w-28 !py-1.5 !px-2.5 !text-xs"
+                                          className="input-field w-28 py-1.5 px-2.5 text-[16px] sm:text-xs"
                                         />
                                       </div>
                                       <div className="flex flex-col gap-1">
@@ -380,7 +383,7 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
                                           value={huntCodes.second}
                                           onChange={e => setHuntCodes(h => ({ ...h, second: e.target.value }))}
                                           placeholder="optional"
-                                          className="input-field w-24 !py-1.5 !px-2.5 !text-xs"
+                                          className="input-field w-24 py-1.5 px-2.5 text-[16px] sm:text-xs"
                                         />
                                       </div>
                                       <div className="flex flex-col gap-1">
@@ -390,13 +393,13 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
                                           value={huntCodes.third}
                                           onChange={e => setHuntCodes(h => ({ ...h, third: e.target.value }))}
                                           placeholder="optional"
-                                          className="input-field w-24 !py-1.5 !px-2.5 !text-xs"
+                                          className="input-field w-24 py-1.5 px-2.5 text-[16px] sm:text-xs"
                                         />
                                       </div>
                                       <button
                                         onClick={() => saveApplication(d)}
                                         disabled={!huntCodes.first.trim() || savingApply}
-                                        className="btn-primary !text-xs !px-3 !py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="btn-primary text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         {savingApply ? 'Saving…' : 'Save'}
                                       </button>
@@ -473,11 +476,11 @@ export function DeadlinesClient({ draws, hasInterests, appliedKeys, pointsMap }:
                       {members.map(m => (
                         <div key={m.id} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
                           <input type="text" value={m.name} onChange={e => updateMember(cardKey, m.id, 'name', e.target.value)}
-                            placeholder="Name" className="input-field !py-1.5 !px-2.5 !text-xs" />
+                            placeholder="Name" className="input-field py-1.5 px-2.5 text-[16px] sm:text-xs" />
                           <input type="text" value={m.phone} onChange={e => updateMember(cardKey, m.id, 'phone', e.target.value)}
-                            placeholder="Phone (optional)" className="input-field !py-1.5 !px-2.5 !text-xs" />
+                            placeholder="Phone (optional)" className="input-field py-1.5 px-2.5 text-[16px] sm:text-xs" />
                           <input type="text" value={m.email} onChange={e => updateMember(cardKey, m.id, 'email', e.target.value)}
-                            placeholder="Email (optional)" className="input-field !py-1.5 !px-2.5 !text-xs" />
+                            placeholder="Email (optional)" className="input-field py-1.5 px-2.5 text-[16px] sm:text-xs" />
                           <button type="button" onClick={() => removeMember(cardKey, m.id)}
                             className="text-muted hover:text-red-400 transition-colors p-1">
                             <Trash2 className="h-3.5 w-3.5" />

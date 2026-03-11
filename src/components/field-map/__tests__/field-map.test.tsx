@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => {
     tileLayerCalls: [] as Array<[string, Record<string, unknown>]>,
     markerCalls: [] as Array<[number[], { icon: unknown }]>,
     divIconCalls: [] as Array<Record<string, unknown>>,
-    onHandlers: {} as Record<string, Function>,
+    onHandlers: {} as Record<string, (...args: unknown[]) => unknown>,
     removeCalled: false,
     invalidateSizeCalled: false,
     layerGroupAddToCalled: false,
@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => {
     popupSetLatLng: null as [number, number] | null,
     popupContent: null as string | null,
     popupOpened: false,
-    popupOnHandlers: {} as Record<string, Function>,
+    popupOnHandlers: {} as Record<string, (...args: unknown[]) => unknown>,
     popupElement: null as HTMLElement | null,
     popupClosed: false,
   }
@@ -54,7 +54,7 @@ vi.mock('leaflet/dist/leaflet.css', () => ({}))
 vi.mock('leaflet', () => {
   const mockMap = {
     setView() { return mockMap },
-    on(event: string, handler: Function) {
+    on(event: string, handler: (...args: unknown[]) => unknown) {
       mocks.state.onHandlers[event] = handler
       return mockMap
     },
@@ -73,7 +73,7 @@ vi.mock('leaflet', () => {
   }
 
   const L = {
-    map(_container: HTMLElement, _opts?: unknown) {
+    map() {
       mocks.state.mapCalls++
       return mockMap
     },
@@ -82,7 +82,7 @@ vi.mock('leaflet', () => {
       const tl = { addTo() { return tl }, bringToFront() {} }
       return tl
     },
-    layerGroup(_layers?: unknown, _opts?: unknown) {
+    layerGroup() {
       const lg = {
         addTo() {
           mocks.state.layerGroupAddToCalled = true
@@ -94,7 +94,7 @@ vi.mock('leaflet', () => {
       }
       return lg
     },
-    polygon(_latlngs: unknown, _opts?: unknown) {
+    polygon() {
       return { addTo() {} }
     },
     divIcon(opts: Record<string, unknown>) {
@@ -136,7 +136,7 @@ vi.mock('leaflet', () => {
           }
           return p
         },
-        on(event: string, handler: Function) {
+        on(event: string, handler: (...args: unknown[]) => unknown) {
           mocks.state.popupOnHandlers[event] = handler
           return p
         },
@@ -274,7 +274,7 @@ describe('FieldMap', () => {
       (c.html as string).includes('data-pin="buck"')
     )
     expect(buckIcon).toBeDefined()
-    expect(buckIcon!.className).toBe('journal-pin-icon')
+    expect(buckIcon!.className).toBe('field-map-pin-icon')
   })
 
   it('applies selected style (larger icon) to the selected pin', () => {
@@ -327,7 +327,7 @@ describe('FieldMap', () => {
     act(() => { vi.advanceTimersByTime(500) })
 
     expect(mocks.state.popupCalls[0]).toEqual(
-      expect.objectContaining({ className: 'journal-quickpin-popup' })
+      expect.objectContaining({ className: 'field-map-quickpin-popup' })
     )
     vi.useRealTimers()
   })

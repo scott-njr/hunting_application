@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Shield, ShieldOff, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 interface AdminUser {
   id: string
   email: string
-  full_name: string | null
+  display_name: string | null
   is_admin: boolean
   onboarding_completed: boolean
   created_at: string
@@ -26,33 +26,40 @@ export default function AdminUsersPage() {
 
   const limit = 25
 
-  const loadUsers = useCallback(async () => {
-    setLoading(true)
-    const params = new URLSearchParams({ page: String(page) })
-    if (search) params.set('search', search)
+  useEffect(() => {
+    let cancelled = false
+    async function loadUsers() {
+      setLoading(true)
+      const params = new URLSearchParams({ page: String(page) })
+      if (search) params.set('search', search)
 
-    const res = await fetch(`/api/admin/users?${params}`)
-    if (res.ok) {
-      const data = await res.json()
-      setUsers(data.users)
-      setTotal(data.total)
+      const res = await fetch(`/api/admin/users?${params}`)
+      if (!cancelled && res.ok) {
+        const data = await res.json()
+        setUsers(data.users)
+        setTotal(data.total)
+      }
+      if (!cancelled) setLoading(false)
     }
-    setLoading(false)
+    loadUsers()
+    return () => { cancelled = true }
   }, [page, search])
-
-  useEffect(() => { loadUsers() }, [loadUsers])
 
   async function updateUser(userId: string, field: string, value: string | boolean) {
     setUpdating(userId)
-    const res = await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, field, value }),
-    })
-    if (res.ok) {
-      setUsers(prev => prev.map(u =>
-        u.id === userId ? { ...u, [field]: value } : u
-      ))
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, field, value }),
+      })
+      if (res.ok) {
+        setUsers(prev => prev.map(u =>
+          u.id === userId ? { ...u, [field]: value } : u
+        ))
+      }
+    } catch {
+      // Network error — no update applied
     }
     setUpdating(null)
   }
@@ -116,7 +123,7 @@ export default function AdminUsersPage() {
                     onClick={() => router.push(`/admin/users/${user.id}`)}
                   >
                     <td className="px-4 py-3">
-                      <p className="text-primary font-medium truncate max-w-[200px]">{user.full_name || '—'}</p>
+                      <p className="text-primary font-medium truncate max-w-[200px]">{user.display_name || '—'}</p>
                       <p className="text-muted text-xs truncate max-w-[200px]">{user.email}</p>
                     </td>
                     <td className="px-4 py-3">

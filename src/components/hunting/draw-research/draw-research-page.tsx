@@ -50,7 +50,7 @@ export function DrawResearchPage({
     setError(null)
 
     try {
-      const res = await fetch('/api/hunts/unit-scout', {
+      const res = await fetch('/api/hunting/unit-scout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ wizardInputs: inputs }),
@@ -102,7 +102,7 @@ export function DrawResearchPage({
 
   // ── Delete report ──
   async function deleteReport(reportId: string) {
-    await fetch('/api/hunts/unit-scout', {
+    await fetch('/api/hunting/unit-scout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reportId, rankings: undefined, sharedWith: undefined }),
@@ -124,7 +124,7 @@ export function DrawResearchPage({
     setActiveReport(prev => prev ? { ...prev, userRankings: rankings } : null)
     setReports(prev => prev.map(r => r.id === activeReport.id ? { ...r, userRankings: rankings } : r))
 
-    await fetch('/api/hunts/unit-scout', {
+    await fetch('/api/hunting/unit-scout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reportId: activeReport.id, rankings }),
@@ -137,7 +137,7 @@ export function DrawResearchPage({
     setChatLoading(true)
 
     try {
-      const res = await fetch('/api/hunts/unit-scout', {
+      const res = await fetch('/api/hunting/unit-scout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -169,7 +169,7 @@ export function DrawResearchPage({
   async function handleShare(friendIds: string[]) {
     if (!activeReport) return
 
-    await fetch('/api/hunts/unit-scout', {
+    await fetch('/api/hunting/unit-scout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reportId: activeReport.id, sharedWith: friendIds }),
@@ -202,7 +202,7 @@ export function DrawResearchPage({
       r.id === activeReport.id ? { ...r, status: 'final' } : r
     ))
 
-    await fetch('/api/hunts/unit-scout', {
+    await fetch('/api/hunting/unit-scout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

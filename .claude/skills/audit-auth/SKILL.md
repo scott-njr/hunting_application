@@ -159,7 +159,7 @@ Print results in this format:
 ### API Routes
 | Endpoint | Auth Check | Service Role | Status |
 |----------|-----------|-------------|--------|
-| GET /api/journal/conditions | getUser() + 401 | No | SECURE |
+| GET /api/hunting/field-map/conditions | getUser() + 401 | No | SECURE |
 | ... | ... | ... | ... |
 
 ### Redirect Chain

@@ -11,7 +11,7 @@ const GITHUB_REPO = 'scott-njr/hunting_application'
  * Returns true if valid or if no secret is configured (dev/testing).
  */
 function verifySignature(payload: string, signature: string | null): boolean {
-  if (!GITHUB_WEBHOOK_SECRET) return true // skip verification if secret not set
+  if (!GITHUB_WEBHOOK_SECRET) return false // reject if secret not configured
   if (!signature) return false
 
   const expected = 'sha256=' + crypto

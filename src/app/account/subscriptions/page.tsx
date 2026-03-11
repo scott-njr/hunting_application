@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -30,7 +30,7 @@ export default function SubscriptionsPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
 
-  function loadSubscriptions() {
+  const loadSubscriptions = useCallback(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
@@ -56,9 +56,9 @@ export default function SubscriptionsPage() {
           setLoading(false)
         })
     })
-  }
+  }, [router])
 
-  useEffect(() => { loadSubscriptions() }, [router])
+  useEffect(() => { loadSubscriptions() }, [loadSubscriptions])
 
   async function handleCancelSubscription() {
     setCancelling(true)
@@ -210,7 +210,7 @@ export default function SubscriptionsPage() {
           <Link href="/pricing" className="hover:text-secondary transition-colors underline">
             Compare all plans
           </Link>
-          {' · '}Stripe billing coming soon. Prices in USD.
+          {' · '}Prices in USD.
         </p>
       </main>
     </div>

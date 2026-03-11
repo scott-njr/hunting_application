@@ -12,7 +12,7 @@ const PUBLIC_MODULE_ROOTS = ['/hunting', '/archery', '/firearms', '/fishing', '/
 const MODULE_PREFIXES = ['/hunting/', '/archery/', '/firearms/', '/fishing/', '/fitness/', '/medical/']
 
 // Routes that skip the onboarding check (user is authenticated but hasn't completed onboarding)
-const ONBOARDING_EXEMPT = ['/onboarding', '/auth/login', '/auth/signup', '/auth/callback', '/api/subscriptions/select-tier']
+const ONBOARDING_EXEMPT = ['/onboarding', '/set-username', '/auth/login', '/auth/signup', '/auth/callback', '/api/subscriptions/select-tier', '/api/users/check-username']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -108,10 +108,23 @@ export async function middleware(request: NextRequest) {
     if (memberOnboarding && !memberOnboarding.onboarding_completed) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
+
+    // Check if user needs to set a username (skip for /set-username itself)
+    if (pathname !== '/set-username') {
+      const { data: profileCheck } = await supabaseOnboarding
+        .from('user_profile')
+        .select('user_name')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profileCheck?.user_name) {
+        return NextResponse.redirect(new URL('/set-username', request.url))
+      }
+    }
   }
 
   // Admin routes require is_admin = true
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const supabaseAdmin = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

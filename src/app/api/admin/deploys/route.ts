@@ -1,26 +1,13 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyAdmin } from '@/lib/admin-utils'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return member?.is_admin ? user : null
-}
-
 /** GET — Fetch deploy queue (triaged issues) + deploy history */
-export async function GET(req: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_req: NextRequest) {
   const adminUser = await verifyAdmin()
   if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -30,14 +17,29 @@ export async function GET(req: NextRequest) {
   )
 
   // Fetch triaged issues (severity is set, not yet resolved)
-  const { data: queue } = await admin
+  const { data: rawQueue } = await admin
     .from('issue_reports')
-    .select('*, members!issue_reports_user_id_members_fkey(email, full_name)')
+    .select('*')
     .not('severity', 'is', null)
     .in('status', ['open', 'in_progress'])
     .order('severity', { ascending: true }) // easy first
     .order('created_at', { ascending: false })
     .limit(50)
+
+  // Enrich queue with email and display_name
+  const queueUserIds = [...new Set((rawQueue ?? []).map(i => i.user_id))]
+  const [{ data: queueMembers }, { data: queueProfiles }] = queueUserIds.length > 0
+    ? await Promise.all([
+        admin.from('members').select('id, email').in('id', queueUserIds),
+        admin.from('user_profile').select('id, display_name').in('id', queueUserIds),
+      ])
+    : [{ data: [] }, { data: [] }]
+  const queueEmailMap = new Map((queueMembers ?? []).map(m => [m.id, m.email]))
+  const queueProfileMap = new Map((queueProfiles ?? []).map(p => [p.id, p.display_name]))
+  const queue = (rawQueue ?? []).map(i => ({
+    ...i,
+    members: { email: queueEmailMap.get(i.user_id) ?? '', display_name: queueProfileMap.get(i.user_id) ?? null },
+  }))
 
   // Fetch recent deploy history
   const { data: history } = await admin

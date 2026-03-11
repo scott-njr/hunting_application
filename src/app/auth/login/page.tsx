@@ -6,9 +6,14 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 
+function safeRedirect(path: string | null): string {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/home'
+  return path
+}
+
 function LoginForm() {
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') ?? '/home'
+  const redirectTo = safeRedirect(searchParams.get('redirectTo'))
   const urlError = searchParams.get('error')
 
   const [email, setEmail] = useState('')
@@ -86,12 +91,12 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center px-4">
+    <div className="min-h-dvh bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
         <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm">Loading...</div>}>

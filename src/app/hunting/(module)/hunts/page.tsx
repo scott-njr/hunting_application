@@ -362,7 +362,7 @@ function HuntsInner() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/login'); return }
     const { data } = await supabase
-      .from('hunt_plans')
+      .from('hunting_plans')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -378,7 +378,7 @@ function HuntsInner() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { data } = await supabase
-        .from('journal_pins')
+        .from('hunting_field_map_pins')
         .select('id, pin_type, lat, lng, label, color')
         .eq('user_id', user.id)
       if (data) setFieldMapPins(data as ExistingPin[])
@@ -452,7 +452,7 @@ function HuntsInner() {
 
       // Dedup: check if pin already exists nearby for this user
       const { data: existing, error: dedupErr } = await supabase
-        .from('journal_pins')
+        .from('hunting_field_map_pins')
         .select('id')
         .eq('user_id', user.id)
         .gte('lat', poi.lat - 0.0014)
@@ -478,13 +478,14 @@ function HuntsInner() {
           metadata: { scout_type: poi.type },
         }
 
-        let { error: insertErr } = await supabase.from('journal_pins').insert(pinData)
+        let { error: insertErr } = await supabase.from('hunting_field_map_pins').insert(pinData)
 
         // If source_hunt_plan_id column doesn't exist yet (migration not applied), retry without it
         if (insertErr && insertErr.message.includes('source_hunt_plan_id')) {
           console.warn('[field-map] source_hunt_plan_id column not found, inserting without it')
-          const { source_hunt_plan_id: _, ...pinDataWithout } = pinData
-          const retry = await supabase.from('journal_pins').insert(pinDataWithout)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { source_hunt_plan_id: _sourceId, ...pinDataWithout } = pinData
+          const retry = await supabase.from('hunting_field_map_pins').insert(pinDataWithout)
           insertErr = retry.error
         }
 
@@ -586,14 +587,14 @@ function HuntsInner() {
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setSaving(false); return }
 
     const stateLabel = US_STATES.find(s => s.value === form.state)?.label ?? form.state
 
     type HuntType = 'group_draw' | 'otc' | 'out_of_state' | 'in_state' | 'solo'
 
     const { data: plan, error } = await supabase
-      .from('hunt_plans')
+      .from('hunting_plans')
       .insert({
         user_id: user.id,
         title: form.title,
@@ -623,7 +624,7 @@ function HuntsInner() {
 
     // Save confirmed Scout members
     if (plan && members.length > 0) {
-      await supabase.from('hunt_members').insert(
+      const { error: memberError } = await supabase.from('hunting_plan_members').insert(
         members.map(m => ({
           hunt_plan_id: plan.id,
           user_id: m.user_id,
@@ -633,6 +634,7 @@ function HuntsInner() {
           is_scout_user: true,
         }))
       )
+      if (memberError) console.error('[Hunts] Failed to save members:', memberError.message)
     }
 
     setSaving(false)
@@ -647,7 +649,7 @@ function HuntsInner() {
     if (huntMembers[huntId]) return // already cached
     const supabase = createClient()
     const { data } = await supabase
-      .from('hunt_members')
+      .from('hunting_plan_members')
       .select('id, display_name, email, role, is_scout_user, added_at, updated_at')
       .eq('hunt_plan_id', huntId)
       .order('updated_at', { ascending: false })
@@ -659,7 +661,7 @@ function HuntsInner() {
     setSaving(true); setSaveError(null)
     const supabase = createClient()
     const stateLabel = US_STATES.find(s => s.value === form.state)?.label ?? form.state
-    const { error } = await supabase.from('hunt_plans').update({
+    const { error } = await supabase.from('hunting_plans').update({
       title: form.title,
       state: form.state,
       state_name: stateLabel,
@@ -681,7 +683,7 @@ function HuntsInner() {
     if (huntLocations[huntId]) return // already cached
     const supabase = createClient()
     const { data } = await supabase
-      .from('hunt_locations')
+      .from('hunting_locations')
       .select('*')
       .eq('hunt_plan_id', huntId)
       .order('created_at')
@@ -693,7 +695,7 @@ function HuntsInner() {
     setLocationSaveError(null)
     const supabase = createClient()
     const { data, error } = await supabase
-      .from('hunt_locations')
+      .from('hunting_locations')
       .insert({
         hunt_plan_id: huntId,
         label: newLocLabel.trim() || 'Location',
@@ -730,7 +732,7 @@ function HuntsInner() {
 
   async function deleteHuntLocation(locationId: string, huntId: string) {
     const supabase = createClient()
-    await supabase.from('hunt_locations').delete().eq('id', locationId)
+    await supabase.from('hunting_locations').delete().eq('id', locationId)
     setHuntLocations(prev => ({
       ...prev,
       [huntId]: (prev[huntId] ?? []).filter(l => l.id !== locationId),
@@ -742,7 +744,7 @@ function HuntsInner() {
     setLocationSaveError(null)
     const supabase = createClient()
     const { error } = await supabase
-      .from('hunt_locations')
+      .from('hunting_locations')
       .update({
         label: editLocLabel.trim() || 'Location',
         description: editLocDesc.trim() || null,
@@ -780,7 +782,7 @@ function HuntsInner() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { data } = await supabase
-      .from('gear_items')
+      .from('hunting_gear_items')
       .select('id, name, category, brand')
       .eq('user_id', user.id)
       .order('category')
@@ -809,7 +811,7 @@ function HuntsInner() {
     setSavingGear(huntId)
     const supabase = createClient()
     await supabase
-      .from('hunt_plans')
+      .from('hunting_plans')
       .update({ gear_list: huntGearList[huntId] ?? [] })
       .eq('id', huntId)
     setSavingGear(null)
@@ -828,9 +830,9 @@ function HuntsInner() {
     const supabase = createClient()
 
     if (!keepPins) {
-      // Delete journal pins sourced from this hunt plan
+      // Delete field map pins sourced from this hunt plan
       await supabase
-        .from('journal_pins')
+        .from('hunting_field_map_pins')
         .delete()
         .eq('source_hunt_plan_id', huntId)
     } else {
@@ -838,8 +840,8 @@ function HuntsInner() {
       // No action needed — the FK is ON DELETE SET NULL
     }
 
-    // Delete the hunt plan (cascades to hunt_locations and hunt_members)
-    await supabase.from('hunt_plans').delete().eq('id', huntId)
+    // Delete the hunt plan (cascades to hunting_locations and hunting_plan_members)
+    await supabase.from('hunting_plans').delete().eq('id', huntId)
 
     // Update local state
     setHunts(prev => prev.filter(h => h.id !== huntId))
@@ -861,7 +863,7 @@ function HuntsInner() {
   async function updateHuntStatus(huntId: string, newStatus: string) {
     const supabase = createClient()
     const { error } = await supabase
-      .from('hunt_plans')
+      .from('hunting_plans')
       .update({ status: newStatus as 'planning' | 'applied' | 'booked' | 'completed' | 'cancelled' })
       .eq('id', huntId)
     if (!error) {
@@ -883,7 +885,7 @@ function HuntsInner() {
     setScoutStep('Asking Claude for intel…')
 
     try {
-      const res = await fetch('/api/hunts/scout-data', {
+      const res = await fetch('/api/hunting/scout-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ location_id: loc.id }),
@@ -939,7 +941,7 @@ function HuntsInner() {
     }
   }
 
-  const inputClass = "bg-elevated border border-default text-primary rounded px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent-ring placeholder:text-muted w-full"
+  const inputClass = "bg-elevated border border-default text-primary rounded px-3 py-2 text-base focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent-ring placeholder:text-muted w-full"
   const canProceed = form.hunt_type !== ''
   const canSave = !!(form.title && form.state && form.species)
 

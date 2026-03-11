@@ -26,14 +26,14 @@ export default async function WeeklyChallengePage() {
 
   // Fetch current week's workout, fall back to most recent
   let { data: workoutRow } = await supabase
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('*')
     .eq('week_start', weekStart)
     .maybeSingle()
 
   if (!workoutRow) {
     const { data: latest } = await supabase
-      .from('weekly_workouts')
+      .from('fitness_weekly_workouts')
       .select('*')
       .order('week_start', { ascending: false })
       .limit(1)
@@ -45,7 +45,7 @@ export default async function WeeklyChallengePage() {
   let existing: { scaling: string; score_value: number; score_display: string; notes: string | null } | null = null
   if (workoutRow) {
     const { data: sub } = await supabase
-      .from('workout_submissions')
+      .from('fitness_workout_submissions')
       .select('scaling, score_value, score_display, notes')
       .eq('user_id', user.id)
       .eq('workout_id', workoutRow.id)

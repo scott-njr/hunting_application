@@ -164,7 +164,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('*')
     .eq('user_id', user.id)
     .eq('plan_type', planType as PlanType)
@@ -174,7 +174,7 @@ export async function GET(req: NextRequest) {
   if (!plan) return NextResponse.json({ plan: null, logs: [] })
 
   const { data: logs } = await supabase
-    .from('plan_workout_logs')
+    .from('fitness_plan_workout_logs')
     .select('*')
     .eq('plan_id', plan.id)
     .order('completed_at', { ascending: true })
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
 
   // Abandon any existing active plan of this type
   await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .update({ status: 'abandoned' as const })
     .eq('user_id', user.id)
     .eq('plan_type', plan_type)
@@ -279,7 +279,7 @@ export async function POST(req: NextRequest) {
 
   // Insert plan
   const { data: plan, error } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .insert({
       user_id: user.id,
       plan_type: plan_type as PlanType,
@@ -312,7 +312,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .update({ status: 'abandoned' as const })
     .eq('user_id', user.id)
     .eq('plan_type', planType as PlanType)

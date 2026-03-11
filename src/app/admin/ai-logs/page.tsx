@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TacticalSelect } from '@/components/ui/tactical-select'
@@ -74,24 +74,27 @@ export default function AdminAILogsPage() {
   const [creatingIssue, setCreatingIssue] = useState<string | null>(null)
   const limit = 50
 
-  const loadLogs = useCallback(async () => {
-    setLoading(true)
-    const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-    if (moduleFilter !== 'all') params.set('module', moduleFilter)
-    if (featureFilter !== 'all') params.set('feature', featureFilter)
-    if (successFilter !== 'all') params.set('success', successFilter)
+  useEffect(() => {
+    let cancelled = false
+    async function loadLogs() {
+      setLoading(true)
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      if (moduleFilter !== 'all') params.set('module', moduleFilter)
+      if (featureFilter !== 'all') params.set('feature', featureFilter)
+      if (successFilter !== 'all') params.set('success', successFilter)
 
-    const res = await fetch(`/api/admin/ai-logs?${params}`)
-    if (res.ok) {
-      const data = await res.json()
-      setLogs(data.logs)
-      setTotal(data.total)
-      if (data.features) setFeatures(data.features)
+      const res = await fetch(`/api/admin/ai-logs?${params}`)
+      if (!cancelled && res.ok) {
+        const data = await res.json()
+        setLogs(data.logs)
+        setTotal(data.total)
+        if (data.features) setFeatures(data.features)
+      }
+      if (!cancelled) setLoading(false)
     }
-    setLoading(false)
+    loadLogs()
+    return () => { cancelled = true }
   }, [page, moduleFilter, featureFilter, successFilter])
-
-  useEffect(() => { loadLogs() }, [loadLogs])
 
   const totalPages = Math.ceil(total / limit)
 

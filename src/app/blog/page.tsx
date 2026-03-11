@@ -6,13 +6,14 @@ import {
   BookOpen, Crosshair, Wrench, Map, Users,
   TrendingUp,
 } from 'lucide-react'
-import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { AuthCtaButton } from '@/components/ui/auth-cta-button'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'Field reports, gear reviews, draw strategy breakdowns, scouting intel, and community stories from hunters and outdoor athletes who actually do this.',
+  alternates: { canonical: '/blog' },
 }
 
 const categories = [
@@ -117,9 +118,7 @@ export default function BlogPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

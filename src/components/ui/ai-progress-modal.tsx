@@ -19,9 +19,11 @@ export function AIProgressModal({ open, featureLabel, steps }: AIProgressModalPr
   // Open → start progress
   useEffect(() => {
     if (open) {
-      setProgress(0)
-      setStepIndex(0)
-      setVisible(true)
+      queueMicrotask(() => {
+        setProgress(0)
+        setStepIndex(0)
+        setVisible(true)
+      })
 
       // Progress: fast at first, slows as it approaches 90%
       intervalRef.current = setInterval(() => {
@@ -50,7 +52,7 @@ export function AIProgressModal({ open, featureLabel, steps }: AIProgressModalPr
     if (!open && visible) {
       if (intervalRef.current) clearInterval(intervalRef.current)
       if (stepIntervalRef.current) clearInterval(stepIntervalRef.current)
-      setProgress(100)
+      queueMicrotask(() => setProgress(100))
       const timeout = setTimeout(() => setVisible(false), 600)
       return () => clearTimeout(timeout)
     }

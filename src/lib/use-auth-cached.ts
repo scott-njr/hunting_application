@@ -38,8 +38,10 @@ export function useAuthCached() {
   useEffect(() => {
     if (checkedRef.current && cacheResolved) {
       // Cache was cleared (sign out) — sync local state
-      setUser(cachedUser)
-      setLoading(false)
+      queueMicrotask(() => {
+        setUser(cachedUser)
+        setLoading(false)
+      })
       return
     }
     checkedRef.current = true

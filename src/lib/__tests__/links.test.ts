@@ -56,7 +56,7 @@ const VALID_ROUTES = new Set([
   '/api/friends/respond',
   '/api/users/find',
   '/api/messages',
-  '/api/hunts/scout-data',
+  '/api/hunting/scout-data',
   '/api/community/posts',
 ])
 
@@ -221,7 +221,7 @@ describe('Link href validation', () => {
 
   it.each(
     ALL_LINKS.map(l => [l.href, l.source] as const)
-  )('"%s" (from %s) resolves to a valid route', (href, _source) => {
+  )('"%s" (from %s) resolves to a valid route', (href) => {
     expect(isValidRoute(href)).toBe(true)
   })
 
@@ -244,7 +244,7 @@ describe('Link href validation', () => {
 describe('Router.push targets', () => {
   it.each(
     ROUTER_PUSH_TARGETS.map(l => [l.href, l.source] as const)
-  )('router.push("%s") (from %s) resolves to a valid route', (href, _source) => {
+  )('router.push("%s") (from %s) resolves to a valid route', (href) => {
     expect(isValidRoute(href)).toBe(true)
   })
 })
@@ -270,8 +270,6 @@ describe('Redirect destinations', () => {
 })
 
 describe('Module navigation consistency', () => {
-  const MODULE_SLUGS = ['hunting', 'firearms', 'medical', 'fishing', 'fitness'] as const
-
   it('all module root routes exist or are planned', () => {
     // Active + coming soon modules should have routes
     const activeModules = ['hunting', 'firearms', 'medical']

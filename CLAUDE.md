@@ -100,7 +100,7 @@ Layered guardrails system for all AI interactions:
 ### Data Architecture — Medallion Pattern
 All raw external data sources follow **medallion architecture** (Bronze → Silver → Gold):
 - **Bronze**: Raw data stored as-is for auditability and reprocessing. Never transformed, never deleted.
-- **Silver**: Cleaned/parsed data ready for application use (e.g., parsed JSON plans in `training_plans.plan_data`)
+- **Silver**: Cleaned/parsed data ready for application use (e.g., parsed JSON plans in `fitness_training_plans.plan_data`)
 - **Gold**: Aggregated/derived data for dashboards and analytics
 
 Current bronze tables:
@@ -109,7 +109,7 @@ Current bronze tables:
 
 ### Community System
 Community feeds are **module-specific** — each module has its own isolated feed.
-- `community_posts` table has a `module` column (default: `'hunting'`)
+- `social_posts` table has a `module` column (default: `'hunting'`)
 - `FeedPanel` component accepts a `module` prop to filter posts
 - Post types: `discussion`, `unit_review`, `hunt_report`, `guide_review`
 - API: `/api/community/posts` accepts `?module=` query param on GET, `module` field in POST body
@@ -124,9 +124,9 @@ Map-first field map at `/hunting/field-map` using Leaflet.js:
 - Map tiles: USGS free (topo/satellite/hybrid) + BLM land boundaries overlay
 
 ### Key API Routes
-- `/api/hunts/scout-data` — AI scout reports via `aiCall()` with Claude claude-sonnet-4-6
-- `/api/journal/conditions` — Open-Meteo weather + moon phase for pin auto-stamping
-- `/api/journal/terrain` — USGS 3DEP elevation for thermal slope/aspect calculation
+- `/api/hunting/scout-data` — AI scout reports via `aiCall()` with Claude claude-sonnet-4-6
+- `/api/hunting/field-map/conditions` — Open-Meteo weather + moon phase for pin auto-stamping
+- `/api/hunting/field-map/terrain` — USGS 3DEP elevation for thermal slope/aspect calculation
 - `/api/community/posts` — Module-scoped community feed CRUD
 - `/api/contact` — Rate-limited contact form via Resend
 
@@ -144,17 +144,19 @@ Map-first field map at `/hunting/field-map` using Leaflet.js:
 ## Database
 
 - **Types file**: `src/types/database.types.ts` — manually maintained. Use `{ [_ in never]: never }` for empty Update types
-- **Migrations**: `supabase/migrations/0001_*.sql` through `0055_*.sql` — next migration is `0056`
+- **Migrations**: `supabase/migrations/0001_*.sql` through `0061_*.sql` — next migration is `0062`
 - **Key schema notes**:
-  - `hunter_profiles` uses `id = auth.uid()` as PK (no separate user_id)
+  - Profile tables split into three: `user_profile` (shared), `hunting_profile` (hunting-specific), `fitness_profile` (fitness-specific)
+  - `user_profile` uses `id = auth.uid()` as PK; `hunting_profile` and `fitness_profile` FK → `user_profile.id`
+  - Profile column names: `email` (was backup_email), `city` (was home_city), `state` (was residency_state), `country` (new), `created_on`/`updated_on` (was created_at/updated_at)
   - `my_friends` view has `security_invoker=true` — must have `Relationships: []` in database.types.ts
-  - `journal_pins` stores pin_type, lat/lng, label, notes, metadata JSONB, and auto-stamped weather conditions
-  - `community_posts` has a `module` column for module-scoped feeds
+  - `hunting_field_map_pins` stores pin_type, lat/lng, label, notes, metadata JSONB, and auto-stamped weather conditions
+  - `social_posts` has a `module` column for module-scoped feeds
   - Most tables use `ON DELETE CASCADE` from `auth.users` — deleting a user cascades all data
 
 ## Testing
 
-Vitest + jsdom. Setup at `src/test/setup.ts` (includes ResizeObserver polyfill for Leaflet tests). Tests live alongside source in `__tests__/` directories. 227 tests passing across 7 test files.
+Vitest + jsdom. Setup at `src/test/setup.ts` (includes ResizeObserver polyfill for Leaflet tests). Tests live alongside source in `__tests__/` directories. 273 tests passing across 8 test files.
 
 ## Key Gotchas
 

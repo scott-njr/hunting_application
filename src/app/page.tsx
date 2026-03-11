@@ -5,6 +5,7 @@ import Image from 'next/image'
 export const metadata: Metadata = {
   title: 'Praevius — Lead the Wild',
   description: 'Structured paths, seasoned mentors, and a community built around hunting, firearms, fitness, and life. AI-powered draw strategy, field map, and expedition planning.',
+  alternates: { canonical: '/' },
 }
 import { Navbar } from '@/components/layout/navbar'
 import { Nav2 } from '@/components/layout/nav2'
@@ -37,7 +38,7 @@ const modules = [
   {
     icon: Target,
     name: 'Archery',
-    tagline: 'Shoot with Confidence',
+    tagline: 'Aim True. Shoot Often.',
     description:
       'Courses, community, and training plans for bowhunters and archers — from form fundamentals to field accuracy.',
     status: 'featured' as const,

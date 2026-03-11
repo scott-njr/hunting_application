@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ALL_MODULES, MODULE_TIER_LABELS, type ModuleSlug, type ModuleTier } from '@/lib/modules'
 import { Crosshair, Target, Shield, Heart, Fish, Dumbbell } from 'lucide-react'

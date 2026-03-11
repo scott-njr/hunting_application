@@ -16,6 +16,7 @@ type Post = {
   content: string
   created_at: string
   display_name: string | null
+  user_name: string | null
   avatar_url: string | null
   comment_count: number
   reaction_count: number
@@ -30,6 +31,7 @@ type Comment = {
   content: string
   created_at: string
   display_name: string | null
+  user_name: string | null
   avatar_url: string | null
 }
 
@@ -165,12 +167,16 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
   }
 
   async function toggleLike(postId: string) {
-    const res = await fetch(`/api/community/posts/${postId}/react`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, liked_by_me: data.liked, reaction_count: data.reaction_count } : p
-    ))
+    try {
+      const res = await fetch(`/api/community/posts/${postId}/react`, { method: 'POST' })
+      if (!res.ok) return
+      const data = await res.json()
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, liked_by_me: data.liked, reaction_count: data.reaction_count } : p
+      ))
+    } catch {
+      // Network error — silently fail, user can retry
+    }
   }
 
   async function loadComments(postId: string) {
@@ -208,10 +214,14 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
   }
 
   async function deleteComment(postId: string, commentId: string) {
-    const res = await fetch(`/api/community/posts/${postId}/comments?comment_id=${commentId}`, { method: 'DELETE' })
-    if (!res.ok) return
-    setPostComments(prev => ({ ...prev, [postId]: (prev[postId] ?? []).filter(c => c.id !== commentId) }))
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, comment_count: Math.max(0, p.comment_count - 1) } : p))
+    try {
+      const res = await fetch(`/api/community/posts/${postId}/comments?comment_id=${commentId}`, { method: 'DELETE' })
+      if (!res.ok) return
+      setPostComments(prev => ({ ...prev, [postId]: (prev[postId] ?? []).filter(c => c.id !== commentId) }))
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, comment_count: Math.max(0, p.comment_count - 1) } : p))
+    } catch {
+      // Network error — silently fail, user can retry
+    }
   }
 
   return (
@@ -327,6 +337,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <Link href={`/${module}/profile/${post.user_id}`} className="text-primary text-sm font-medium hover:text-accent-hover transition-colors">{post.display_name ?? 'Member'}</Link>
+                        {post.user_name && <span className="text-muted text-xs">@{post.user_name}</span>}
                         <span className={cn('flex items-center gap-1 text-xs px-1.5 py-0.5 rounded', ALL_POST_TYPE_COLORS[post.post_type] ?? 'text-secondary bg-elevated')}>
                           <Icon className="w-3 h-3" />
                           {ALL_POST_TYPE_LABELS[post.post_type] ?? post.post_type}
@@ -398,6 +409,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                             <div className="flex-1 min-w-0 bg-elevated/50 rounded-lg px-3 py-2">
                               <div className="flex items-center justify-between gap-2 mb-0.5">
                                 <Link href={`/${module}/profile/${c.user_id}`} className="text-xs font-medium text-primary hover:text-accent-hover transition-colors">{c.display_name ?? 'Member'}</Link>
+                                {c.user_name && <span className="text-muted text-[10px]">@{c.user_name}</span>}
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span className="text-muted text-xs">{timeAgo(c.created_at)}</span>
                                   {c.user_id === currentUserId && (

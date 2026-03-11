@@ -4,10 +4,12 @@ import { Navbar } from '@/components/layout/navbar'
 import { Nav2 } from '@/components/layout/nav2'
 import { CheckCircle, X } from 'lucide-react'
 import { TierCards } from '@/components/pricing/tier-cards'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Pricing — Plans & Features',
   description: 'Free, Pro, and Pro+ plans for each Lead the Wild module. AI coaching, courses, community, field tools, and more. Subscribe per module — only pay for what you use.',
+  alternates: { canonical: '/pricing' },
 }
 
 const tierNames = ['Free', 'Pro', 'Pro+']
@@ -105,9 +107,7 @@ export default function PricingPage() {
         </p>
       </main>
 
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

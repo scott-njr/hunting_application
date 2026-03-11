@@ -1,60 +1,47 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Users, Mail } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Users, Mail, Menu } from 'lucide-react'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { AccountDropdown } from '@/components/layout/account-dropdown'
-import { useAuthCached, clearAuthCache } from '@/lib/use-auth-cached'
+import { useAuthCached } from '@/lib/use-auth-cached'
 import { useAuthModal } from '@/components/auth/auth-modal-provider'
+import { useSignOut } from '@/hooks/use-sign-out'
+import { usePendingFriendCount, resetPendingFriendCache } from '@/hooks/use-pending-friend-count'
 
-// Cache pending count across mounts so nav doesn't flash
-let cachedPendingCount = 0
-let cacheUid: string | null = null
+interface NavbarProps {
+  showHamburger?: boolean
+}
 
-export function Navbar() {
-  const router = useRouter()
+export function Navbar({ showHamburger }: NavbarProps) {
   const { user, loading } = useAuthCached()
   const { openAuthModal } = useAuthModal()
-  const [pendingCount, setPendingCount] = useState(cacheUid === user?.id ? cachedPendingCount : 0)
-  const fetchedRef = useRef(false)
+  const pendingCount = usePendingFriendCount(user?.id)
 
-  // Fetch pending incoming friend request count
-  useEffect(() => {
-    if (!user || (fetchedRef.current && cacheUid === user.id)) return
-    fetchedRef.current = true
-    cacheUid = user.id
-
-    fetch('/api/friends')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!data?.friends) return
-        const count = (data.friends as Array<{ direction: string; status: string }>)
-          .filter(f => f.status === 'pending' && f.direction === 'received').length
-        cachedPendingCount = count
-        setPendingCount(count)
-      })
-      .catch(() => {})
-  }, [user])
-
+  const baseSignOut = useSignOut()
   async function handleSignOut() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    clearAuthCache()
-    cachedPendingCount = 0
-    cacheUid = null
-    router.push('/')
-    router.refresh()
+    resetPendingFriendCache()
+    await baseSignOut()
   }
 
   return (
     <header className="border-b border-subtle bg-overlay backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="hover:opacity-80 transition-opacity">
-          <PraeviusWordmark size="sm" />
-        </Link>
+      <div className={`${showHamburger ? '' : 'max-w-7xl mx-auto '}px-4 h-14 flex items-center justify-between`}>
+        <div className="flex items-center gap-2">
+          {showHamburger && (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-menu'))}
+              className="lg:hidden p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <PraeviusWordmark size="sm" />
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           {loading ? (
             <div className="w-16 h-8" />

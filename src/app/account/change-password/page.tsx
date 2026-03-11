@@ -43,7 +43,7 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base text-primary">
+    <div className="min-h-dvh bg-base text-primary">
       <Navbar />
       <div className="max-w-md mx-auto px-4 py-12">
         <Link href="/account/profile" className="flex items-center gap-1.5 text-muted text-xs hover:text-secondary transition-colors mb-6">

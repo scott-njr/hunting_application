@@ -1,4 +1,4 @@
-// SVG icon paths for each journal pin type
+// SVG icon paths for each field map pin type
 // Each is a 16x16 viewBox path drawn in white, rendered inside a colored pin marker
 
 const ICON_PATHS: Record<string, string> = {

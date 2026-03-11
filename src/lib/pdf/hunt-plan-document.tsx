@@ -273,6 +273,7 @@ export function HuntPlanDocument({ plan, members, locations, gearItems, ownerNam
                 {loc.description && <Text style={s.locDesc}>{loc.description}</Text>}
                 {loc.lat != null && loc.lng != null && (
                   <View style={{ marginBottom: 6 }}>
+                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
                     <Image src={staticMapUrl(loc.lat, loc.lng)} style={s.mapImage} />
                     <Text style={s.locCoords}>{loc.lat.toFixed(5)}°N, {loc.lng.toFixed(5)}°W</Text>
                     <Link src={`https://www.google.com/maps?q=${loc.lat},${loc.lng}`} style={{ fontSize: 8, color: sage }}>

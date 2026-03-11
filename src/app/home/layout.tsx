@@ -2,17 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getUserModuleSubscriptions, getUserHighestTier, type ModuleSlug } from '@/lib/modules'
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
-import { ModuleHeader } from '@/components/layout/module-header'
+import { Navbar } from '@/components/layout/navbar'
 
 export default async function HomeLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const [{ data: member }, subscriptions, memberTier] = await Promise.all([
+  const [{ data: profile }, subscriptions, memberTier] = await Promise.all([
     supabase
-      .from('members')
-      .select('full_name')
+      .from('user_profile')
+      .select('display_name')
       .eq('id', user.id)
       .maybeSingle(),
     getUserModuleSubscriptions(supabase, user.id),
@@ -23,11 +23,11 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="min-h-dvh bg-base text-primary flex flex-col">
-      <ModuleHeader userId={user.id} email={user.email ?? ''} messagesHref="/home/messages" />
+      <Navbar showHamburger />
       <div className="flex flex-1 min-h-0">
         <DashboardSidebar
           subscribedModules={subscribedModules}
-          memberName={member?.full_name ?? null}
+          memberName={profile?.display_name ?? null}
           memberEmail={user.email ?? ''}
           memberTier={memberTier}
         />

@@ -75,8 +75,10 @@ export function FieldMap({
   // Store latest callbacks in refs so map event handlers always see current values
   const onQuickPinRef = useRef(onQuickPin)
   const onPinSelectRef = useRef(onPinSelect)
-  onQuickPinRef.current = onQuickPin
-  onPinSelectRef.current = onPinSelect
+  useEffect(() => {
+    onQuickPinRef.current = onQuickPin
+    onPinSelectRef.current = onPinSelect
+  }, [onQuickPin, onPinSelect])
 
   // Init map once
   useEffect(() => {
@@ -119,7 +121,7 @@ export function FieldMap({
 
         const popup = L.popup({
           closeButton: true,
-          className: 'journal-quickpin-popup',
+          className: 'field-map-quickpin-popup',
           maxWidth: 320,
           minWidth: 260,
         })
@@ -248,7 +250,7 @@ export function FieldMap({
 
       const icon = L.divIcon({
         html: svgHtml,
-        className: 'journal-pin-icon',
+        className: 'field-map-pin-icon',
         iconSize: [size, Math.round(size * 1.35)],
         iconAnchor: [size / 2, Math.round(size * 1.35)],
         tooltipAnchor: [0, -Math.round(size * 1.35) + 4],
@@ -260,7 +262,7 @@ export function FieldMap({
         marker.bindTooltip(pin.label, {
           permanent: false,
           direction: 'top',
-          className: 'journal-pin-tooltip',
+          className: 'field-map-pin-tooltip',
         })
       }
 
@@ -301,11 +303,11 @@ export function FieldMap({
     <div className="absolute inset-0">
       <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
       <style dangerouslySetInnerHTML={{ __html: `
-        .journal-pin-icon {
+        .field-map-pin-icon {
           background: none !important;
           border: none !important;
         }
-        .journal-pin-tooltip {
+        .field-map-pin-tooltip {
           background: rgba(18, 18, 16, 0.9) !important;
           color: #f0ece4 !important;
           border: 1px solid rgba(200, 190, 170, 0.22) !important;
@@ -314,10 +316,10 @@ export function FieldMap({
           padding: 2px 6px !important;
           box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
         }
-        .journal-pin-tooltip::before {
+        .field-map-pin-tooltip::before {
           border-top-color: rgba(18, 18, 16, 0.9) !important;
         }
-        .journal-quickpin-popup .leaflet-popup-content-wrapper {
+        .field-map-quickpin-popup .leaflet-popup-content-wrapper {
           background: rgba(18, 18, 16, 0.95) !important;
           color: #f0ece4 !important;
           border: 1px solid rgba(200, 190, 170, 0.22) !important;
@@ -325,19 +327,19 @@ export function FieldMap({
           box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
           padding: 0 !important;
         }
-        .journal-quickpin-popup .leaflet-popup-content {
+        .field-map-quickpin-popup .leaflet-popup-content {
           margin: 10px 12px !important;
         }
-        .journal-quickpin-popup .leaflet-popup-tip {
+        .field-map-quickpin-popup .leaflet-popup-tip {
           background: rgba(18, 18, 16, 0.95) !important;
         }
-        .journal-quickpin-popup .leaflet-popup-close-button {
+        .field-map-quickpin-popup .leaflet-popup-close-button {
           color: #a09880 !important;
           font-size: 18px !important;
           top: 4px !important;
           right: 6px !important;
         }
-        .journal-quickpin-popup .leaflet-popup-close-button:hover {
+        .field-map-quickpin-popup .leaflet-popup-close-button:hover {
           color: #f0ece4 !important;
         }
       `}} />

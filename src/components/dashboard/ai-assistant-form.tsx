@@ -5,13 +5,17 @@ import { Bot } from 'lucide-react'
 import { TacticalSelect } from '@/components/ui/tactical-select'
 
 const STATE_OPTIONS = [
-  { value: 'CO', label: 'Colorado' },
-  { value: 'WY', label: 'Wyoming' },
-  { value: 'MT', label: 'Montana' },
-  { value: 'ID', label: 'Idaho' },
-  { value: 'NV', label: 'Nevada' },
-  { value: 'UT', label: 'Utah' },
   { value: 'AZ', label: 'Arizona' },
+  { value: 'CO', label: 'Colorado' },
+  { value: 'ID', label: 'Idaho' },
+  { value: 'MT', label: 'Montana' },
+  { value: 'NV', label: 'Nevada' },
+  { value: 'NM', label: 'New Mexico' },
+  { value: 'OR', label: 'Oregon' },
+  { value: 'SD', label: 'South Dakota' },
+  { value: 'UT', label: 'Utah' },
+  { value: 'WA', label: 'Washington' },
+  { value: 'WY', label: 'Wyoming' },
 ]
 
 const SPECIES_OPTIONS = [
@@ -27,7 +31,7 @@ const YEAR_OPTIONS = [
   { value: '2027', label: '2027' },
 ]
 
-export function AIAssistantForm({ isPersonalized }: { isPersonalized: boolean }) {
+export function AIAssistantForm() {
   const [state, setState] = useState('')
   const [species, setSpecies] = useState('')
   const [year, setYear] = useState('2026')

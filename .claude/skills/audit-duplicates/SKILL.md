@@ -50,8 +50,8 @@ creates a duplicate bronze record.
 ### Findings
 | File | Has aiCall | Has logBronze | logBronze Target | Status |
 |------|-----------|--------------|-----------------|--------|
-| src/app/api/hunts/scout-data/route.ts | YES | YES | AI response | DUPLICATE — remove logBronze |
-| src/app/api/journal/conditions/route.ts | NO | YES | Open-Meteo API | OK — non-AI external data |
+| src/app/api/hunting/scout-data/route.ts | YES | YES | AI response | DUPLICATE — remove logBronze |
+| src/app/api/hunting/field-map/conditions/route.ts | NO | YES | Open-Meteo API | OK — non-AI external data |
 | ... | ... | ... | ... | ... |
 
 ### Duplicates Found

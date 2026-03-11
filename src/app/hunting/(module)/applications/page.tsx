@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import {
   ClipboardList, Check, X as XIcon, ArrowRight, Calendar, Tent, ChevronDown, ChevronUp,
 } from 'lucide-react'
@@ -66,28 +67,33 @@ export default function ApplicationsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
-  useEffect(() => { loadApplications() }, [])
-
-  async function loadApplications() {
-    setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const { data } = await supabase
-      .from('hunt_applications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('state_name')
-      .order('year', { ascending: false })
-      .order('species')
-    if (data) setApplications(data as HuntApplication[])
-    setLoading(false)
-  }
+  useEffect(() => {
+    let cancelled = false
+    async function loadApplications() {
+      queueMicrotask(() => setLoading(true))
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) { if (!cancelled) setLoading(false); return }
+      const { data } = await supabase
+        .from('hunting_applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('state_name')
+        .order('year', { ascending: false })
+        .order('species')
+      if (!cancelled) {
+        if (data) setApplications(data as HuntApplication[])
+        setLoading(false)
+      }
+    }
+    loadApplications()
+    return () => { cancelled = true }
+  }, [])
 
   async function updateStatus(appId: string, status: HuntApplication['status']) {
     setUpdatingId(appId)
     const supabase = createClient()
-    await supabase.from('hunt_applications').update({ status }).eq('id', appId)
+    await supabase.from('hunting_applications').update({ status }).eq('id', appId)
     setApplications(prev => prev.map(a => a.id === appId ? { ...a, status } : a))
     setUpdatingId(null)
   }
@@ -108,7 +114,7 @@ export default function ApplicationsPage() {
   function toggleGroup(key: string) {
     setExpandedGroups(prev => {
       const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
+      if (next.has(key)) { next.delete(key) } else { next.add(key) }
       return next
     })
   }
@@ -306,9 +312,9 @@ export default function ApplicationsPage() {
                                   </div>
                                 )}
                                 {app.status === 'hunt_started' && (
-                                  <a href="/hunting/hunts" className="text-xs text-muted hover:text-secondary transition-colors">
+                                  <Link href="/hunting/hunts" className="text-xs text-muted hover:text-secondary transition-colors">
                                     View in Hunts →
-                                  </a>
+                                  </Link>
                                 )}
                                 {app.status === 'withdrawn' && (
                                   <span className="text-xs text-muted">Withdrawn</span>
@@ -325,7 +331,7 @@ export default function ApplicationsPage() {
                   {group.apps.some(a => a.status === 'not_drawn') && (
                     <p className="text-muted text-xs mt-3">
                       Unsuccessful draws — your preference points may have increased. Update in{' '}
-                      <a href="/hunting/profile" className="text-muted hover:text-primary underline">My Profile</a>.
+                      <Link href="/hunting/profile" className="text-muted hover:text-primary underline">My Profile</Link>.
                     </p>
                   )}
                 </div>
@@ -365,7 +371,7 @@ export default function ApplicationsPage() {
       {applications.length > 0 && (
         <p className="text-muted text-xs mt-6">
           Track new applications from the{' '}
-          <a href="/hunting/deadlines" className="text-muted hover:text-primary underline">Deadlines</a> page.
+          <Link href="/hunting/deadlines" className="text-muted hover:text-primary underline">Deadlines</Link> page.
           Always verify results directly with the state agency.
         </p>
       )}

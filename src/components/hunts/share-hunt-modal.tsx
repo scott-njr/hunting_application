@@ -69,7 +69,7 @@ export function ShareHuntModal({ open, onClose, huntId, huntTitle, existingRecip
     setDownloading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/hunts/${huntId}/share`, {
+      const res = await fetch(`/api/hunting/${huntId}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'download' }),
@@ -105,7 +105,7 @@ export function ShareHuntModal({ open, onClose, huntId, huntTitle, existingRecip
     setError(null)
     setSuccess(null)
     try {
-      const res = await fetch(`/api/hunts/${huntId}/share`, {
+      const res = await fetch(`/api/hunting/${huntId}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'email', recipients: recipients.map(r => r.email) }),

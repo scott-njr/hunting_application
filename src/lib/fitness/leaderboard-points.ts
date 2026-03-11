@@ -28,7 +28,7 @@ export async function calculateWeeklyPoints(
 ): Promise<void> {
   // Fetch workout to get scoring type and week_start
   const { data: workout } = await admin
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('week_start, workout_details')
     .eq('id', workoutId)
     .single()
@@ -40,7 +40,7 @@ export async function calculateWeeklyPoints(
 
   // Fetch all submissions for this workout
   const { data: submissions } = await admin
-    .from('workout_submissions')
+    .from('fitness_workout_submissions')
     .select('id, user_id, scaling, score_value')
     .eq('workout_id', workoutId)
 
@@ -88,7 +88,7 @@ export async function calculateWeeklyPoints(
   // Upsert all points (one per user per workout)
   for (const record of pointsRecords) {
     await admin
-      .from('leaderboard_points')
+      .from('fitness_leaderboard_points')
       .upsert(record, { onConflict: 'workout_id,user_id' })
   }
 }

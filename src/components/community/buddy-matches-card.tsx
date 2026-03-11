@@ -123,6 +123,7 @@ export function BuddyMatchesCard({
                 <span className="text-primary text-xs font-medium truncate">
                   {match.display_name ?? 'Member'}
                 </span>
+                {match.user_name && <span className="text-muted text-[10px]">@{match.user_name}</span>}
                 {match.is_verified && <ShieldCheck className="h-3 w-3 text-accent-hover shrink-0" />}
                 {match.willing_to_mentor && (
                   <span className="text-[10px] text-amber-400 bg-amber-900/30 px-1.5 py-0.5 rounded shrink-0">Mentor</span>
@@ -136,8 +137,8 @@ export function BuddyMatchesCard({
                     {reason}
                   </span>
                 ))}
-                {match.home_state && (
-                  <span className="text-[10px] text-muted">{match.home_state}</span>
+                {match.state && (
+                  <span className="text-[10px] text-muted">{match.state}</span>
                 )}
               </div>
 

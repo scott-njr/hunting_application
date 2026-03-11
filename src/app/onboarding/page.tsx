@@ -2,84 +2,67 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { TierCards } from '@/components/pricing/tier-cards'
 import {
-  Crosshair, Fish, Shield, Dumbbell, Brain, Target,
   ChevronRight, ChevronLeft, User, CreditCard,
+  AtSign, Check, X, Loader2,
 } from 'lucide-react'
-
-const US_STATES = [
-  { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' },
-  { value: 'AZ', label: 'Arizona' }, { value: 'AR', label: 'Arkansas' },
-  { value: 'CA', label: 'California' }, { value: 'CO', label: 'Colorado' },
-  { value: 'CT', label: 'Connecticut' }, { value: 'DE', label: 'Delaware' },
-  { value: 'FL', label: 'Florida' }, { value: 'GA', label: 'Georgia' },
-  { value: 'HI', label: 'Hawaii' }, { value: 'ID', label: 'Idaho' },
-  { value: 'IL', label: 'Illinois' }, { value: 'IN', label: 'Indiana' },
-  { value: 'IA', label: 'Iowa' }, { value: 'KS', label: 'Kansas' },
-  { value: 'KY', label: 'Kentucky' }, { value: 'LA', label: 'Louisiana' },
-  { value: 'ME', label: 'Maine' }, { value: 'MD', label: 'Maryland' },
-  { value: 'MA', label: 'Massachusetts' }, { value: 'MI', label: 'Michigan' },
-  { value: 'MN', label: 'Minnesota' }, { value: 'MS', label: 'Mississippi' },
-  { value: 'MO', label: 'Missouri' }, { value: 'MT', label: 'Montana' },
-  { value: 'NE', label: 'Nebraska' }, { value: 'NV', label: 'Nevada' },
-  { value: 'NH', label: 'New Hampshire' }, { value: 'NJ', label: 'New Jersey' },
-  { value: 'NM', label: 'New Mexico' }, { value: 'NY', label: 'New York' },
-  { value: 'NC', label: 'North Carolina' }, { value: 'ND', label: 'North Dakota' },
-  { value: 'OH', label: 'Ohio' }, { value: 'OK', label: 'Oklahoma' },
-  { value: 'OR', label: 'Oregon' }, { value: 'PA', label: 'Pennsylvania' },
-  { value: 'RI', label: 'Rhode Island' }, { value: 'SC', label: 'South Carolina' },
-  { value: 'SD', label: 'South Dakota' }, { value: 'TN', label: 'Tennessee' },
-  { value: 'TX', label: 'Texas' }, { value: 'UT', label: 'Utah' },
-  { value: 'VT', label: 'Vermont' }, { value: 'VA', label: 'Virginia' },
-  { value: 'WA', label: 'Washington' }, { value: 'WV', label: 'West Virginia' },
-  { value: 'WI', label: 'Wisconsin' }, { value: 'WY', label: 'Wyoming' },
-]
-
-const EXPERIENCE_OPTIONS = [
-  { value: 'beginner', label: 'Beginner', desc: 'New to this — ready to learn' },
-  { value: 'intermediate', label: 'Intermediate', desc: 'Some experience — looking to level up' },
-  { value: 'expert', label: 'Expert', desc: 'Seasoned — here for community and tools' },
-] as const
-
-const INTEREST_OPTIONS = [
-  { value: 'hunting', label: 'Hunting', icon: Crosshair },
-  { value: 'archery', label: 'Archery', icon: Target },
-  { value: 'fishing', label: 'Fishing', icon: Fish },
-  { value: 'firearms', label: 'Firearms', icon: Shield },
-  { value: 'fitness', label: 'Fitness', icon: Dumbbell },
-  { value: 'mindset', label: 'Mindset', icon: Brain },
-] as const
-
-const FITNESS_OPTIONS = [
-  { value: 'just_starting', label: 'Just Starting Out', desc: 'Getting back into it or brand new' },
-  { value: 'moderately_active', label: 'Moderately Active', desc: 'Regular activity, room to grow' },
-  { value: 'very_active', label: 'Very Active', desc: 'Consistent training and outdoor activity' },
-  { value: 'competitive', label: 'Competitive / Athletic', desc: 'High-level fitness, pushing limits' },
-] as const
+import { US_STATES, EXPERIENCE_OPTIONS, FITNESS_OPTIONS } from '@/components/profile/profile-constants'
 
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [residentialState, setResidentialState] = useState('')
   const [experienceLevel, setExperienceLevel] = useState<string>('')
-  const [interests, setInterests] = useState<string[]>([])
   const [fitnessLevel, setFitnessLevel] = useState<string>('')
+  const [userName, setUserName] = useState('')
+  const [userNameChecking, setUserNameChecking] = useState(false)
+  const [userNameAvailable, setUserNameAvailable] = useState<boolean | null>(null)
+  const userNameDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function toggleInterest(value: string) {
-    setInterests(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    )
-  }
+  // Debounced username availability check
+  useEffect(() => {
+    queueMicrotask(() => setUserNameAvailable(null))
+    if (userName.length < 3) return
+    if (userNameDebounce.current) clearTimeout(userNameDebounce.current)
+    userNameDebounce.current = setTimeout(async () => {
+      setUserNameChecking(true)
+      try {
+        const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(userName)}`)
+        const data = await res.json()
+        setUserNameAvailable(data.available ?? false)
+      } catch {
+        setUserNameAvailable(null)
+      } finally {
+        setUserNameChecking(false)
+      }
+    }, 400)
+    return () => { if (userNameDebounce.current) clearTimeout(userNameDebounce.current) }
+  }, [userName])
 
   async function handleProfileSave() {
+    if (!firstName.trim()) {
+      setError('First name is required.')
+      return
+    }
     if (!displayName.trim()) {
       setError('Display name is required.')
+      return
+    }
+    if (!userName || userName.length < 3) {
+      setError('Username is required (minimum 3 characters).')
+      return
+    }
+    if (userNameAvailable === false) {
+      setError('That username is already taken. Please choose another.')
       return
     }
     if (!residentialState) {
@@ -94,21 +77,47 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/login'); return }
 
-    const { error: updateError } = await supabase
-      .from('members')
-      .update({
-        full_name: displayName.trim(),
-        residential_state: residentialState,
-        experience_level: (experienceLevel || null) as 'beginner' | 'intermediate' | 'expert' | null,
-        interests,
-        fitness_level: (fitnessLevel || null) as 'just_starting' | 'moderately_active' | 'very_active' | 'competitive' | null,
-      })
-      .eq('id', user.id)
+    // Upsert user_profile with display_name, user_name, and state
+    const { error: profileError } = await supabase
+      .from('user_profile')
+      .upsert({
+        id: user.id,
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        display_name: displayName.trim(),
+        user_name: userName,
+        state: residentialState,
+      }, { onConflict: 'id' })
 
-    if (updateError) {
-      setError('Something went wrong. Please try again.')
+    if (profileError) {
+      if (profileError.message.includes('user_name_unique') || profileError.message.includes('duplicate')) {
+        setError('That username was just taken. Try another.')
+        setUserNameAvailable(false)
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
       setLoading(false)
       return
+    }
+
+    // Upsert hunting_profile with experience_level (if set)
+    if (experienceLevel) {
+      await supabase
+        .from('hunting_profile')
+        .upsert({
+          id: user.id,
+          experience_level: experienceLevel as 'beginner' | 'intermediate' | 'experienced' | 'expert',
+        }, { onConflict: 'id' })
+    }
+
+    // Upsert fitness_profile with fitness_level (if set)
+    if (fitnessLevel) {
+      await supabase
+        .from('fitness_profile')
+        .upsert({
+          id: user.id,
+          fitness_level: fitnessLevel as 'just_starting' | 'moderately_active' | 'very_active' | 'competitive',
+        }, { onConflict: 'id' })
     }
 
     setLoading(false)
@@ -137,9 +146,9 @@ export default function OnboardingPage() {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <p className="text-secondary text-sm mt-2">
             {step === 1 ? 'Set up your profile' : 'Choose your plan'}
           </p>
@@ -171,6 +180,36 @@ export default function OnboardingPage() {
         {/* Step 1: Profile Setup */}
         {step === 1 && (
           <div className="glass-card rounded-lg p-8 space-y-6">
+            {/* First & Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-primary font-medium text-sm mb-2">
+                  First Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="John"
+                  className="w-full input-field text-sm"
+                  maxLength={50}
+                />
+              </div>
+              <div>
+                <label className="block text-primary font-medium text-sm mb-2">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Doe"
+                  className="w-full input-field text-sm"
+                  maxLength={50}
+                />
+              </div>
+            </div>
+
             {/* Display Name */}
             <div>
               <label className="block text-primary font-medium text-sm mb-2">
@@ -184,6 +223,41 @@ export default function OnboardingPage() {
                 className="w-full input-field text-sm"
                 maxLength={50}
               />
+            </div>
+
+            {/* Username */}
+            <div>
+              <label className="block text-primary font-medium text-sm mb-2">
+                Username <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                  <AtSign className="h-4 w-4" />
+                </span>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={e => setUserName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20))}
+                  className="w-full input-field text-sm pl-9 pr-10"
+                  placeholder="buckslayer42"
+                  maxLength={20}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {userNameChecking && <Loader2 className="h-4 w-4 text-muted animate-spin" />}
+                  {!userNameChecking && userNameAvailable === true && <Check className="h-4 w-4 text-green-400" />}
+                  {!userNameChecking && userNameAvailable === false && userName.length >= 3 && <X className="h-4 w-4 text-red-400" />}
+                </div>
+              </div>
+              {userName.length > 0 && userName.length < 3 && (
+                <p className="text-amber-400 text-xs mt-1">Minimum 3 characters</p>
+              )}
+              {!userNameChecking && userNameAvailable === false && userName.length >= 3 && (
+                <p className="text-red-400 text-xs mt-1">That username is already taken</p>
+              )}
+              {!userNameChecking && userNameAvailable === true && (
+                <p className="text-green-400 text-xs mt-1">Available!</p>
+              )}
+              <p className="text-muted text-[10px] mt-1">Lowercase letters, numbers, and underscores. 3-20 characters.</p>
             </div>
 
             {/* State */}
@@ -224,34 +298,6 @@ export default function OnboardingPage() {
                     <span className="text-xs text-muted mt-1">{opt.desc}</span>
                   </button>
                 ))}
-              </div>
-            </div>
-
-            {/* Interests */}
-            <div>
-              <label className="block text-primary font-medium text-sm mb-3">
-                What are you interested in?
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {INTEREST_OPTIONS.map(opt => {
-                  const Icon = opt.icon
-                  const selected = interests.includes(opt.value)
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => toggleInterest(opt.value)}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                        selected
-                          ? 'border-green-500/60 bg-green-950/30 text-primary'
-                          : 'border-subtle bg-surface hover:border-default text-secondary'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-sm font-medium">{opt.label}</span>
-                    </button>
-                  )
-                })}
               </div>
             </div>
 

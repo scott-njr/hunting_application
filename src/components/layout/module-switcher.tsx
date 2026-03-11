@@ -40,19 +40,23 @@ const MODULE_NAV_ENTRY: Record<ModuleSlug, string> = {
 export { MODULE_ICONS, MODULE_NAMES, MODULE_NAV_ENTRY }
 
 interface ModuleSwitcherProps {
-  /** Current module slug, or null when on Command Center */
+  /** Current module slug, or null when on Command Center / Admin */
   currentModule: ModuleSlug | null
   /** Called when user taps a link — parent should close mobile menu etc. */
   onNavigate?: () => void
   /** Override entry hrefs per module (used by ModuleSidebar which reads MODULE_NAV) */
   moduleHrefs?: Partial<Record<ModuleSlug, string>>
+  /** Override the display label (e.g. "Admin Panel" instead of "Command Center") */
+  label?: string
+  /** Override the icon shown for the current selection */
+  icon?: React.ElementType
 }
 
-export function ModuleSwitcher({ currentModule, onNavigate, moduleHrefs }: ModuleSwitcherProps) {
+export function ModuleSwitcher({ currentModule, onNavigate, moduleHrefs, label, icon }: ModuleSwitcherProps) {
   const [open, setOpen] = useState(false)
 
-  const CurrentIcon = currentModule ? MODULE_ICONS[currentModule] : LayoutDashboard
-  const currentLabel = currentModule ? MODULE_NAMES[currentModule] : 'Command Center'
+  const CurrentIcon = icon ?? (currentModule ? MODULE_ICONS[currentModule] : LayoutDashboard)
+  const currentLabel = label ?? (currentModule ? MODULE_NAMES[currentModule] : 'Command Center')
 
   function handleLinkClick() {
     setOpen(false)

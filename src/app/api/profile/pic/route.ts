@@ -59,14 +59,14 @@ export async function POST(request: Request) {
 
   // Save to DB
   const { data: existing } = await admin
-    .from('hunter_profiles')
+    .from('user_profile')
     .select('id')
     .eq('id', user.id)
     .maybeSingle()
 
   if (existing) {
     const { error } = await admin
-      .from('hunter_profiles')
+      .from('user_profile')
       .update({ avatar_url })
       .eq('id', user.id)
 
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     }
   } else {
     const { error } = await admin
-      .from('hunter_profiles')
+      .from('user_profile')
       .insert({ id: user.id, avatar_url })
 
     if (error) {

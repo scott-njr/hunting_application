@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { TacticalSelect } from '@/components/ui/tactical-select'
 import {
-  Rocket, ChevronDown, Save, ExternalLink, AlertCircle, CheckCircle, Clock, XCircle,
+  Rocket, ChevronDown, ExternalLink, AlertCircle, CheckCircle, Clock, XCircle,
 } from 'lucide-react'
 
 interface Issue {
@@ -23,7 +23,7 @@ interface Issue {
   admin_deploy_notes: string | null
   admin_notes: string | null
   created_at: string
-  members: { email: string; full_name: string | null } | null
+  members: { email: string; display_name: string | null } | null
 }
 
 interface DeployEntry {
@@ -91,19 +91,37 @@ export default function AdminDeploysPage() {
 
   const notesRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
 
-  const loadData = useCallback(async () => {
+  async function fetchDeployData() {
     setLoading(true)
-    const res = await fetch('/api/admin/deploys')
-    if (res.ok) {
-      const data = await res.json()
-      setQueue(data.queue)
-      setHistory(data.history)
-      setStats(data.stats)
+    try {
+      const res = await fetch('/api/admin/deploys')
+      if (res.ok) {
+        const data = await res.json()
+        setQueue(data.queue)
+        setHistory(data.history)
+        setStats(data.stats)
+      }
+    } catch {
+      // Network error — will show empty state
     }
     setLoading(false)
-  }, [])
+  }
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => {
+    let cancelled = false
+    async function loadData() {
+      const res = await fetch('/api/admin/deploys')
+      if (!cancelled && res.ok) {
+        const data = await res.json()
+        setQueue(data.queue)
+        setHistory(data.history)
+        setStats(data.stats)
+      }
+      if (!cancelled) setLoading(false)
+    }
+    loadData()
+    return () => { cancelled = true }
+  }, [])
 
   async function triggerDeploy(issueId: string) {
     setDeploying(issueId)
@@ -118,7 +136,7 @@ export default function AdminDeploysPage() {
     if (res.ok) {
       setDeploySuccess(issueId)
       setTimeout(() => setDeploySuccess(null), 3000)
-      loadData()
+      fetchDeployData()
     } else {
       const err = await res.json()
       alert(`Deploy failed: ${err.error ?? 'Unknown error'}`)
@@ -139,13 +157,13 @@ export default function AdminDeploysPage() {
 
       {/* Stat Cards */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-24 rounded-lg bg-surface border border-subtle animate-pulse" />
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="rounded-lg border border-subtle bg-surface p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="h-4 w-4 text-muted" />
@@ -215,7 +233,7 @@ export default function AdminDeploysPage() {
                       <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded', MODULE_COLORS[issue.module] || 'bg-muted/15 text-muted')}>
                         {issue.module}
                       </span>
-                      <span>{issue.members?.full_name || issue.members?.email || 'Unknown'}</span>
+                      <span>{issue.members?.display_name || issue.members?.email || 'Unknown'}</span>
                       <span>&middot;</span>
                       <span>{issue.category}</span>
                       <span>&middot;</span>

@@ -25,7 +25,7 @@ export default async function ComparePage({ params }: { params: Promise<{ shareI
 
   // Fetch the share
   const { data: share } = await supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .select('*')
     .eq('id', shareId)
     .eq('status', 'accepted')
@@ -36,12 +36,12 @@ export default async function ComparePage({ params }: { params: Promise<{ shareI
   // Fetch both plans
   const [sourceResult, targetResult] = await Promise.all([
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('id, user_id, plan_type, plan_data, goal, weeks_total, started_at')
       .eq('id', share.source_plan_id)
       .single(),
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('id, user_id, plan_type, plan_data, goal, weeks_total, started_at')
       .eq('id', share.target_plan_id)
       .single(),
@@ -50,11 +50,10 @@ export default async function ComparePage({ params }: { params: Promise<{ shareI
   if (!sourceResult.data || !targetResult.data) redirect('/fitness/my-plan')
 
   const sourcePlan = sourceResult.data
-  const targetPlan = targetResult.data
 
   // Fetch logs for both plans
   const { data: allLogs } = await supabase
-    .from('plan_workout_logs')
+    .from('fitness_plan_workout_logs')
     .select('plan_id, week_number, session_number, completed_at')
     .in('plan_id', [share.source_plan_id, share.target_plan_id])
 
@@ -76,7 +75,7 @@ export default async function ComparePage({ params }: { params: Promise<{ shareI
 
   // Fetch display names
   const { data: profiles } = await supabase
-    .from('hunter_profiles')
+    .from('user_profile')
     .select('id, display_name')
     .in('id', [share.source_user_id, share.target_user_id])
 

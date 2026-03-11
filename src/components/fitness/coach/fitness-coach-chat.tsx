@@ -53,7 +53,8 @@ const COACH_LOADING_STEPS = [
   'Preparing personalized advice...',
 ]
 
-export function FitnessCoachChat({ userId }: { userId: string }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function FitnessCoachChat({ userId: _userId }: { userId: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)

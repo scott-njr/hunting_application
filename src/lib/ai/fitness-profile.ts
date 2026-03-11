@@ -11,30 +11,30 @@ export async function getCoachContext(
 ): Promise<string> {
   const [profileResult, baselines, activePlans, recentLogs, wowScores] = await Promise.all([
     supabase
-      .from('hunter_profiles')
+      .from('user_profile')
       .select('date_of_birth, physical_condition')
       .eq('id', userId)
       .maybeSingle(),
     supabase
-      .from('baseline_tests')
+      .from('fitness_baseline_tests')
       .select('run_time_seconds, pushups, situps, pullups, tested_at')
       .eq('user_id', userId)
       .order('tested_at', { ascending: false })
       .limit(3),
     supabase
-      .from('training_plans')
+      .from('fitness_training_plans')
       .select('plan_type, goal, weeks_total, started_at, status')
       .eq('user_id', userId)
       .eq('status', 'active'),
     supabase
-      .from('plan_workout_logs')
+      .from('fitness_plan_workout_logs')
       .select('week_number, session_number, notes, completed_at')
       .eq('user_id', userId)
       .gte('completed_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
       .order('completed_at', { ascending: false })
       .limit(20),
     supabase
-      .from('workout_submissions')
+      .from('fitness_workout_submissions')
       .select('score_display, scaling, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -121,12 +121,12 @@ export async function getFitnessProfileContext(
 ): Promise<string> {
   const [profileResult, baselineResult] = await Promise.all([
     supabase
-      .from('hunter_profiles')
+      .from('user_profile')
       .select('date_of_birth, physical_condition')
       .eq('id', userId)
       .maybeSingle(),
     supabase
-      .from('baseline_tests')
+      .from('fitness_baseline_tests')
       .select('run_time_seconds, pushups, situps, pullups, tested_at')
       .eq('user_id', userId)
       .order('tested_at', { ascending: false })

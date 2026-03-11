@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   hasModuleAccess,
   hasModuleAIQuota,
@@ -11,7 +11,6 @@ import {
   MODULE_AI_QUOTA,
   MODULE_TIER_LABELS,
   ALL_MODULES,
-  type ModuleTier,
 } from '../modules'
 
 describe('MODULE_TIER_RANK', () => {

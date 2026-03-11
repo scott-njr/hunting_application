@@ -18,7 +18,7 @@ export default async function MyArcheryPage() {
     getUserModuleSubscriptionInfo(supabase, user.id, 'archery'),
     supabase.from('courses').select('id').eq('module', 'archery').eq('published', true),
     supabase.from('course_progress').select('course_id').eq('user_id', user.id).eq('completed', true),
-    supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('module', 'archery'),
+    supabase.from('social_posts').select('id', { count: 'exact', head: true }).eq('module', 'archery'),
   ])
 
   const courseIds = new Set((coursesResult.data ?? []).map(c => c.id))

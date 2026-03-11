@@ -6,9 +6,14 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 
+function safeRedirect(path: string | null): string {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/home'
+  return path
+}
+
 function SignupForm() {
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') ?? '/home'
+  const redirectTo = safeRedirect(searchParams.get('redirectTo'))
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -46,8 +51,8 @@ function SignupForm() {
 
     // If email confirmation is disabled, session is active immediately
     const supabase2 = createClient()
-    const { data: { session } } = await supabase2.auth.getSession()
-    if (session) {
+    const { data: { user: newUser } } = await supabase2.auth.getUser()
+    if (newUser) {
       window.location.href = redirectTo
       return
     }
@@ -70,9 +75,9 @@ function SignupForm() {
           Didn&apos;t receive it? Check your spam folder.
         </p>
         <div className="mt-6 pt-4 border-t border-subtle flex justify-center gap-4 text-xs">
-          <a href="/auth/login" className="text-accent-hover hover:text-accent-hover">Back to sign in</a>
+          <Link href="/auth/login" className="text-accent-hover hover:text-accent-hover">Back to sign in</Link>
           <span className="text-muted">·</span>
-          <a href="/auth/signup" className="text-muted hover:text-secondary">Try again</a>
+          <Link href="/auth/signup" className="text-muted hover:text-secondary">Try again</Link>
         </div>
       </div>
     )
@@ -161,12 +166,12 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center px-4">
+    <div className="min-h-dvh bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
         <Suspense fallback={<div className="glass-card rounded-lg p-8 text-secondary text-sm">Loading...</div>}>

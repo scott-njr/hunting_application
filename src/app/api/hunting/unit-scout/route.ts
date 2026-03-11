@@ -1,7 +1,6 @@
-// @ts-nocheck — pre-existing type mismatches (old AI client API + Supabase types); needs separate refactor
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getUserModuleSubscriptionInfo, hasModuleAIQuota, MODULE_AI_QUOTA } from '@/lib/modules'
+import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { getScoutContext } from '@/lib/ai/hunting-profile'
 import type { WizardInputs, ChatMessage } from '@/components/hunting/draw-research/types'
@@ -110,7 +109,7 @@ Return ONLY a valid JSON object matching the format described in your instructio
 
   if (parseFailed) {
     return NextResponse.json(
-      { error: 'Failed to parse AI response', raw: result.response },
+      { error: 'Failed to parse AI response' },
       { status: 422 },
     )
   }
@@ -119,8 +118,9 @@ Return ONLY a valid JSON object matching the format described in your instructio
   const title = `${stateLabel} ${speciesLabel.charAt(0).toUpperCase() + speciesLabel.slice(1)} ${new Date().getFullYear()}`
 
   const { data: report, error: insertErr } = await supabase
-    .from('draw_research_reports')
+    .from('hunting_draw_research_reports')
     .insert({
+      // @ts-expect-error — Supabase types don't recognize insert shape; works at runtime
       user_id: userId,
       title,
       state: wizard.state,
@@ -162,7 +162,7 @@ async function handleChat(
 ) {
   // Load report for context
   const { data: report } = await supabase
-    .from('draw_research_reports')
+    .from('hunting_draw_research_reports')
     .select('wizard_inputs, recommendations, summary, chat_history')
     .eq('id', reportId)
     .eq('user_id', userId)
@@ -206,8 +206,9 @@ async function handleChat(
   ]
 
   await supabase
-    .from('draw_research_reports')
+    .from('hunting_draw_research_reports')
     .update({
+      // @ts-expect-error — Json type mismatch; Record<string, unknown> works at runtime
       chat_history: updatedHistory as unknown as Record<string, unknown>,
       updated_at: new Date().toISOString(),
     })
@@ -238,7 +239,7 @@ async function handleUpdate(
   }
 
   const { error } = await supabase
-    .from('draw_research_reports')
+    .from('hunting_draw_research_reports')
     .update(updates)
     .eq('id', reportId)
     .eq('user_id', userId)

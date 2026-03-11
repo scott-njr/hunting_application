@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     // Fetch location — only lat/lng are used for scouting
     const { data: loc, error: locErr } = await supabase
-      .from('hunt_locations')
+      .from('hunting_locations')
       .select('*')
       .eq('id', location_id)
       .single()
@@ -199,11 +199,11 @@ Every POI must be a REAL named place with accurate GPS coordinates. No markdown,
     }
 
     await supabase
-      .from('hunt_locations')
+      .from('hunting_locations')
       .update({ scout_report: scoutReport })
       .eq('id', location_id)
 
-    // POIs are NOT auto-synced to journal_pins — users add them manually
+    // POIs are NOT auto-synced to hunting_field_map_pins — users add them manually
     // via "Add to Field Map" button per POI in the UI.
 
     // Increment module-specific AI query count (counts as 1 even with 2 calls)

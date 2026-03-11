@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback, use } from 'react'
+import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Calendar, Shield, ShieldOff } from 'lucide-react'
+import { ArrowLeft, Mail, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TacticalSelect } from '@/components/ui/tactical-select'
 
 interface UserDetail {
   id: string
   email: string
-  full_name: string | null
+  display_name: string | null
   is_admin: boolean
   created_at: string
 }
@@ -56,19 +56,22 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ user
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
 
-  const loadUser = useCallback(async () => {
-    setLoading(true)
-    const res = await fetch(`/api/admin/users/${userId}`)
-    if (res.ok) {
-      const data = await res.json()
-      setMember(data.member)
-      setSubscriptions(data.subscriptions)
-      setPlans(data.plans)
+  useEffect(() => {
+    let cancelled = false
+    async function loadUser() {
+      setLoading(true)
+      const res = await fetch(`/api/admin/users/${userId}`)
+      if (!cancelled && res.ok) {
+        const data = await res.json()
+        setMember(data.member)
+        setSubscriptions(data.subscriptions)
+        setPlans(data.plans)
+      }
+      if (!cancelled) setLoading(false)
     }
-    setLoading(false)
+    loadUser()
+    return () => { cancelled = true }
   }, [userId])
-
-  useEffect(() => { loadUser() }, [loadUser])
 
   async function updatePlanStatus(planId: string, status: string) {
     setUpdating(planId)
@@ -118,7 +121,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ user
       <div className="rounded-lg border border-subtle bg-surface p-6 mb-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold">{member.full_name || 'No Name'}</h1>
+            <h1 className="text-xl font-bold">{member.display_name || 'No Name'}</h1>
             <div className="flex items-center gap-2 mt-1 text-sm text-muted">
               <Mail className="h-3.5 w-3.5" />
               <span>{member.email}</span>

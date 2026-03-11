@@ -1,15 +1,21 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
+import { timingSafeEqual } from 'crypto'
 
 const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
+function secureCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
+
 export async function POST(req: Request) {
   // 1. Verify webhook secret
   const secret = req.headers.get('x-webhook-secret')
-  if (!WEBHOOK_SECRET || secret !== WEBHOOK_SECRET) {
+  if (!WEBHOOK_SECRET || !secret || !secureCompare(secret, WEBHOOK_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

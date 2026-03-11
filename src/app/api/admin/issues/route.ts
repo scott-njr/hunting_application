@@ -1,20 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  return member?.is_admin ? user : null
-}
+import { verifyAdmin } from '@/lib/admin-utils'
 
 export async function GET(req: NextRequest) {
   const adminUser = await verifyAdmin()
@@ -31,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   let query = admin
     .from('issue_reports')
-    .select('*, members!issue_reports_user_id_members_fkey(email, full_name)')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(50)
 
@@ -47,8 +33,24 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Enrich issues with email from members and display_name from user_profile
+  const issueUserIds = [...new Set((data ?? []).map(i => i.user_id))]
+  const [{ data: issueMembers }, { data: issueProfiles }] = issueUserIds.length > 0
+    ? await Promise.all([
+        admin.from('members').select('id, email').in('id', issueUserIds),
+        admin.from('user_profile').select('id, display_name').in('id', issueUserIds),
+      ])
+    : [{ data: [] }, { data: [] }]
+  const issueEmailMap = new Map((issueMembers ?? []).map(m => [m.id, m.email]))
+  const issueProfileMap = new Map((issueProfiles ?? []).map(p => [p.id, p.display_name]))
+
+  const enrichedIssues = (data ?? []).map(i => ({
+    ...i,
+    members: { email: issueEmailMap.get(i.user_id) ?? '', display_name: issueProfileMap.get(i.user_id) ?? null },
+  }))
+
   if (!includeStats) {
-    return NextResponse.json({ issues: data })
+    return NextResponse.json({ issues: enrichedIssues })
   }
 
   // Fetch stats and resolved issues for changelog
@@ -64,7 +66,7 @@ export async function GET(req: NextRequest) {
       .eq('status', 'resolved')
       .gte('resolved_at', monthStart),
     admin.from('issue_reports')
-      .select('id, module, category, title, resolution, resolved_at, created_at, release_tag, members!issue_reports_user_id_members_fkey(email, full_name)')
+      .select('id, user_id, module, category, title, resolution, resolved_at, created_at, release_tag')
       .eq('status', 'resolved')
       .order('resolved_at', { ascending: false })
       .limit(200),
@@ -87,15 +89,31 @@ export async function GET(req: NextRequest) {
     ? Math.round((totalResolutionMs / resolutionCount) / (1000 * 60 * 60 * 24) * 10) / 10
     : 0
 
+  // Enrich resolved issues with email and display_name
+  const resolvedUserIds = [...new Set((resolvedIssues ?? []).map(i => i.user_id))]
+  const [{ data: resolvedMembers }, { data: resolvedProfiles }] = resolvedUserIds.length > 0
+    ? await Promise.all([
+        admin.from('members').select('id, email').in('id', resolvedUserIds),
+        admin.from('user_profile').select('id, display_name').in('id', resolvedUserIds),
+      ])
+    : [{ data: [] }, { data: [] }]
+  const resolvedEmailMap = new Map((resolvedMembers ?? []).map(m => [m.id, m.email]))
+  const resolvedProfileMap = new Map((resolvedProfiles ?? []).map(p => [p.id, p.display_name]))
+
+  const enrichedResolved = (resolvedIssues ?? []).map(i => ({
+    ...i,
+    members: { email: resolvedEmailMap.get(i.user_id) ?? '', display_name: resolvedProfileMap.get(i.user_id) ?? null },
+  }))
+
   return NextResponse.json({
-    issues: data,
+    issues: enrichedIssues,
     stats: {
       totalResolved: totalResolved ?? 0,
       resolvedThisMonth: resolvedThisMonth ?? 0,
       avgResolutionDays,
       byModule,
     },
-    resolvedIssues: resolvedIssues ?? [],
+    resolvedIssues: enrichedResolved,
   })
 }
 

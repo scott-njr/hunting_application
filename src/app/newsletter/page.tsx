@@ -7,10 +7,12 @@ import {
   Newspaper,
 } from 'lucide-react'
 import { AuthCtaButton } from '@/components/ui/auth-cta-button'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Newsletter',
   description: 'Weekly updates on draw deadlines, gear drops, strategy tips, featured articles, and community highlights delivered straight to your inbox.',
+  alternates: { canonical: '/newsletter' },
 }
 
 const features = [
@@ -115,9 +117,7 @@ export default function NewsletterPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

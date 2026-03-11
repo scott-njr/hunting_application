@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const postModule = searchParams.get('module') ?? 'hunting'
 
   let query = supabase
-    .from('community_posts')
+    .from('social_posts')
     .select('id, user_id, post_type, entity_name, content, module, metadata, created_at')
     .eq('module', postModule)
     .order('created_at', { ascending: false })
@@ -30,16 +30,18 @@ export async function GET(req: Request) {
 
   // Fetch display names, comment counts, reaction counts, and user's own reactions in parallel
   const [profilesResult, commentCountsResult, reactionCountsResult, userReactionsResult] = await Promise.all([
-    supabase.from('hunter_profiles').select('id, display_name, avatar_url').in('id', userIds),
-    supabase.from('post_comments').select('post_id').in('post_id', postIds),
-    supabase.from('post_reactions').select('post_id').in('post_id', postIds),
-    supabase.from('post_reactions').select('post_id').in('post_id', postIds).eq('user_id', user.id),
+    supabase.from('user_profile').select('id, display_name, user_name, avatar_url').in('id', userIds),
+    supabase.from('social_comments').select('post_id').in('post_id', postIds),
+    supabase.from('social_reactions').select('post_id').in('post_id', postIds),
+    supabase.from('social_reactions').select('post_id').in('post_id', postIds).eq('user_id', user.id),
   ])
 
   const nameMap: Record<string, string | null> = {}
+  const userNameMap: Record<string, string | null> = {}
   const avatarMap: Record<string, string | null> = {}
   for (const p of profilesResult.data ?? []) {
     nameMap[p.id] = p.display_name
+    userNameMap[p.id] = p.user_name
     avatarMap[p.id] = p.avatar_url
   }
 
@@ -59,6 +61,7 @@ export async function GET(req: Request) {
     posts: posts.map(p => ({
       ...p,
       display_name: nameMap[p.user_id] ?? null,
+      user_name: userNameMap[p.user_id] ?? null,
       avatar_url: avatarMap[p.user_id] ?? null,
       comment_count: commentCountMap[p.id] ?? 0,
       reaction_count: reactionCountMap[p.id] ?? 0,
@@ -92,7 +95,7 @@ export async function POST(req: Request) {
   const safeEntityName = String(entity_name ?? '').trim().slice(0, 200) || null
 
   const { data: post, error } = await supabase
-    .from('community_posts')
+    .from('social_posts')
     .insert({
       user_id: user.id,
       post_type: post_type as 'discussion' | 'unit_review' | 'hunt_report' | 'guide_review',
@@ -106,8 +109,8 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const { data: profile } = await supabase
-    .from('hunter_profiles')
-    .select('display_name, avatar_url')
+    .from('user_profile')
+    .select('display_name, user_name, avatar_url')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -115,6 +118,7 @@ export async function POST(req: Request) {
     post: {
       ...post,
       display_name: profile?.display_name ?? null,
+      user_name: profile?.user_name ?? null,
       avatar_url: profile?.avatar_url ?? null,
       comment_count: 0,
       reaction_count: 0,

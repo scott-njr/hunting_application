@@ -16,8 +16,9 @@ type Submission = {
   community_post_id: string | null
   rank: number
   display_name: string
+  user_name: string | null
   avatar_url: string | null
-  date_of_birth: string | null
+  age_group: string | null
   gender: 'male' | 'female' | null
   fitness_level: string | null
   is_mine: boolean
@@ -27,25 +28,6 @@ type AgeGroup = '18-25' | '26-35' | '36-45' | '46-55' | '56+'
 
 const AGE_GROUPS: AgeGroup[] = ['18-25', '26-35', '36-45', '46-55', '56+']
 
-function getAge(dob: string): number {
-  const birth = new Date(dob)
-  const now = new Date()
-  let age = now.getFullYear() - birth.getFullYear()
-  const monthDiff = now.getMonth() - birth.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--
-  return age
-}
-
-function getAgeGroup(dob: string | null): AgeGroup | null {
-  if (!dob) return null
-  const age = getAge(dob)
-  if (age >= 56) return '56+'
-  if (age >= 46) return '46-55'
-  if (age >= 36) return '36-45'
-  if (age >= 26) return '26-35'
-  if (age >= 18) return '18-25'
-  return null
-}
 
 interface WowLeaderboardProps {
   workoutId: string | null
@@ -58,17 +40,20 @@ export function WowLeaderboard({ workoutId }: WowLeaderboardProps) {
 
   useEffect(() => {
     if (!workoutId) {
-      setLoading(false)
+      queueMicrotask(() => setLoading(false))
       return
     }
-    setLoading(true)
+    let cancelled = false
     fetch(`/api/fitness/wow/submissions?workout_id=${workoutId}`)
       .then(res => res.json())
       .then(data => {
-        setSubmissions(data.submissions ?? [])
-        setLoading(false)
+        if (!cancelled) {
+          setSubmissions(data.submissions ?? [])
+          setLoading(false)
+        }
       })
-      .catch(() => setLoading(false))
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [workoutId])
 
   // Apply scaling filter
@@ -85,7 +70,7 @@ export function WowLeaderboard({ workoutId }: WowLeaderboardProps) {
   const ageGroupBoards = AGE_GROUPS
     .map(ag => ({
       label: ag,
-      entries: rank(filtered.filter(s => getAgeGroup(s.date_of_birth) === ag)),
+      entries: rank(filtered.filter(s => s.age_group === ag)),
     }))
     .filter(b => b.entries.length > 0)
 
@@ -129,7 +114,7 @@ export function WowLeaderboard({ workoutId }: WowLeaderboardProps) {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard label="Total" value={totalParticipants} icon={<Users className="h-4 w-4 text-accent" />} />
         <StatCard label="Men" value={maleCount} icon={<span className="text-blue-400 text-sm font-bold">M</span>} />
         <StatCard label="Women" value={femaleCount} icon={<span className="text-pink-400 text-sm font-bold">W</span>} />
@@ -255,6 +240,7 @@ function BoardPanel({
               data={{
                 rank: s.rank,
                 displayName: s.display_name,
+                userName: s.user_name,
                 avatarUrl: s.avatar_url,
                 isMine: s.is_mine,
                 scaling: s.scaling,

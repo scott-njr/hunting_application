@@ -11,29 +11,34 @@ export async function getScoutContext(
   userId: string,
   wizard: WizardInputs,
 ): Promise<string> {
-  const [profileResult, pointsResult, baselineResult, applicationsResult, drawResult] =
+  const [userProfileResult, huntingProfileResult, pointsResult, baselineResult, applicationsResult, drawResult] =
     await Promise.all([
       supabase
-        .from('hunter_profiles')
+        .from('user_profile')
+        .select('physical_condition, state')
+        .eq('id', userId)
+        .maybeSingle(),
+      supabase
+        .from('hunting_profile')
         .select(
-          'experience_level, years_hunting, physical_condition, residency_state, weapon_types, target_species, hunt_styles, hunt_access_types, annual_budget, max_drive_hours, typical_trip_days',
+          'experience_level, years_hunting, weapon_types, target_species, hunt_styles, hunt_access_types, annual_budget, max_drive_hours',
         )
         .eq('id', userId)
         .maybeSingle(),
       supabase
-        .from('hunter_points')
+        .from('hunting_points')
         .select('state, species, points, point_type')
         .eq('user_id', userId)
         .eq('state', wizard.state),
       supabase
-        .from('baseline_tests')
+        .from('fitness_baseline_tests')
         .select('run_time_seconds, pushups, situps, pullups, tested_at')
         .eq('user_id', userId)
         .order('tested_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
       supabase
-        .from('hunt_applications')
+        .from('hunting_applications')
         .select('state, species, season, year, unit, status')
         .eq('user_id', userId)
         .eq('state', wizard.state)
@@ -41,7 +46,7 @@ export async function getScoutContext(
         .order('year', { ascending: false })
         .limit(5),
       supabase
-        .from('draw_species')
+        .from('hunting_draw_species')
         .select('species, seasons, deadline, results_date, status, note')
         .eq('state_code', wizard.state)
         .eq('species', wizard.species)
@@ -49,22 +54,22 @@ export async function getScoutContext(
     ])
 
   const lines: string[] = []
-  const profile = profileResult.data
+  const userProfile = userProfileResult.data
+  const huntingData = huntingProfileResult.data
 
   // Hunter profile
   lines.push('[HUNTER PROFILE]')
-  if (profile) {
+  if (userProfile || huntingData) {
     const parts: string[] = []
-    if (profile.experience_level) parts.push(`Experience: ${profile.experience_level}`)
-    if (profile.years_hunting) parts.push(`${profile.years_hunting} years`)
-    if (profile.physical_condition) parts.push(`Physical condition: ${profile.physical_condition}`)
+    if (huntingData?.experience_level) parts.push(`Experience: ${huntingData.experience_level}`)
+    if (huntingData?.years_hunting) parts.push(`${huntingData.years_hunting} years`)
+    if (userProfile?.physical_condition) parts.push(`Physical condition: ${userProfile.physical_condition}`)
     if (parts.length) lines.push(parts.join(', '))
-    if (profile.residency_state) lines.push(`Residency: ${profile.residency_state}`)
-    if (profile.weapon_types?.length) lines.push(`Weapons: ${(profile.weapon_types as string[]).join(', ')}`)
-    if (profile.hunt_styles?.length) lines.push(`Hunt styles: ${(profile.hunt_styles as string[]).join(', ')}`)
-    if (profile.annual_budget) lines.push(`Budget: ${profile.annual_budget}`)
-    if (profile.max_drive_hours) lines.push(`Max drive: ${profile.max_drive_hours} hours`)
-    if (profile.typical_trip_days) lines.push(`Typical trip: ${profile.typical_trip_days} days`)
+    if (userProfile?.state) lines.push(`Residency: ${userProfile.state}`)
+    if (huntingData?.weapon_types?.length) lines.push(`Weapons: ${(huntingData.weapon_types as string[]).join(', ')}`)
+    if (huntingData?.hunt_styles?.length) lines.push(`Hunt styles: ${(huntingData.hunt_styles as string[]).join(', ')}`)
+    if (huntingData?.annual_budget) lines.push(`Budget: ${huntingData.annual_budget}`)
+    if (huntingData?.max_drive_hours) lines.push(`Max drive: ${huntingData.max_drive_hours} hours`)
   } else {
     lines.push('No profile data available')
   }

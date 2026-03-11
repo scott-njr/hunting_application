@@ -11,11 +11,21 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   // If viewing own profile, redirect to the editable version
   if (user.id === userId) redirect('/hunting/profile')
 
-  const { data: profile } = await supabase
-    .from('hunter_profiles')
-    .select('display_name, avatar_url, photo_urls, residency_state, experience_level, looking_for_buddy, willing_to_mentor, buddy_bio, social_facebook, social_instagram, social_x')
-    .eq('id', userId)
-    .maybeSingle()
+  // Fetch shared user profile and hunting-specific profile in parallel
+  const [{ data: userProfile }, { data: huntingProfile }] = await Promise.all([
+    supabase
+      .from('user_profile')
+      .select('display_name, avatar_url, photo_urls, state, social_facebook, social_instagram, social_x')
+      .eq('id', userId)
+      .maybeSingle(),
+    supabase
+      .from('hunting_profile')
+      .select('experience_level, looking_for_buddy, willing_to_mentor, buddy_bio')
+      .eq('id', userId)
+      .maybeSingle(),
+  ])
+
+  const profile = userProfile ? { ...userProfile, ...huntingProfile } : null
 
   if (!profile) {
     return (
@@ -44,8 +54,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div>
             <h1 className="text-lg font-bold text-primary">{profile.display_name ?? 'Scout Member'}</h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              {profile.residency_state && (
-                <span className="text-secondary text-sm">{profile.residency_state}</span>
+              {profile.state && (
+                <span className="text-secondary text-sm">{profile.state}</span>
               )}
               {profile.experience_level && (
                 <span className="text-muted text-xs bg-elevated border border-default rounded px-2 py-0.5 capitalize">{profile.experience_level}</span>

@@ -43,18 +43,14 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [attempts, setAttempts] = useState<number[]>([])
-  const [countdown, setCountdown] = useState(0)
+  const [attempts, setAttempts] = useState<number[]>(() => getAttempts())
+  const [countdown, setCountdown] = useState(() => earliestResetMs(getAttempts()))
 
   const refreshAttempts = useCallback(() => {
     const a = getAttempts()
     setAttempts(a)
     setCountdown(earliestResetMs(a))
   }, [])
-
-  useEffect(() => {
-    refreshAttempts()
-  }, [refreshAttempts])
 
   // Tick countdown every second while rate-limited
   useEffect(() => {
@@ -107,11 +103,11 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-base flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-base flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
-          <a href="/" className="hover:opacity-80 transition-opacity mb-8 inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity mb-8 inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <div className="glass-card rounded-lg p-8">
             <div className="text-3xl mb-3">✓</div>
             <h2 className="text-primary font-semibold text-lg mb-2">Check your email</h2>
@@ -127,12 +123,12 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center px-4">
+    <div className="min-h-dvh bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
             <PraeviusWordmark />
-          </a>
+          </Link>
           <p className="text-secondary text-sm mt-1">Lead the Wild</p>
         </div>
 

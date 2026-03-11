@@ -92,20 +92,21 @@ export default async function HomePage() {
   if (!user) redirect('/auth/login')
 
   // Round 1: independent queries
-  const [subscriptions, memberResult] = await Promise.all([
+  const [subscriptions, profileResult] = await Promise.all([
     getUserModuleSubscriptions(supabase, user.id),
     supabase
-      .from('members')
-      .select('full_name')
+      .from('user_profile')
+      .select('display_name')
       .eq('id', user.id)
       .maybeSingle(),
   ])
 
-  const member = memberResult.data
+  const profile = profileResult.data
   const subscribedSlugs = (Object.keys(subscriptions) as ModuleSlug[]).filter(slug => subscriptions[slug]!.tier !== 'free')
   const hasHunting = !!subscriptions.hunting && subscriptions.hunting.tier !== 'free'
   const hasFitness = !!subscriptions.fitness && subscriptions.fitness.tier !== 'free'
   const today = new Date().toISOString().split('T')[0]
+  const nextWeek = new Date(new Date(today).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   // Round 2: depends on subscriptions
   const [
@@ -124,7 +125,7 @@ export default async function HomePage() {
     // Upcoming hunts
     hasHunting
       ? supabase
-          .from('hunt_plans')
+          .from('hunting_plans')
           .select('id, title, state, species, unit, status, trip_start_date, trip_end_date, trip_days')
           .eq('user_id', user.id)
           .in('status', ['planning', 'applied', 'booked'] as const)
@@ -134,15 +135,15 @@ export default async function HomePage() {
       : Promise.resolve({ data: null }),
     // Fitness plans
     hasFitness
-      ? supabase.from('training_plans').select('*').eq('user_id', user.id).eq('status', 'active')
+      ? supabase.from('fitness_training_plans').select('*').eq('user_id', user.id).eq('status', 'active')
       : Promise.resolve({ data: null }),
     // Baseline tests
     hasFitness
-      ? supabase.from('baseline_tests').select('*').eq('user_id', user.id).order('tested_at', { ascending: false }).limit(5)
+      ? supabase.from('fitness_baseline_tests').select('*').eq('user_id', user.id).order('tested_at', { ascending: false }).limit(5)
       : Promise.resolve({ data: null }),
     // Total workouts logged
     hasFitness
-      ? supabase.from('plan_workout_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+      ? supabase.from('fitness_plan_workout_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
       : Promise.resolve({ count: 0 }),
     // All published courses
     supabase.from('courses').select('id, module').eq('published', true),
@@ -150,28 +151,28 @@ export default async function HomePage() {
     supabase.from('course_progress').select('course_id').eq('user_id', user.id).eq('completed', true),
     // Community feed (sidebar)
     supabase
-      .from('community_posts')
+      .from('social_posts')
       .select('id, user_id, content, module, created_at')
       .order('created_at', { ascending: false })
       .limit(10),
     // User's own posts for "top posts"
     supabase
-      .from('community_posts')
+      .from('social_posts')
       .select('id, post_type, content, module, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20),
     // Weekly challenge (WOW)
     hasFitness
-      ? supabase.from('weekly_workouts').select('title, description').eq('week_start', getMondayOfWeek(new Date())).maybeSingle()
+      ? supabase.from('fitness_weekly_workouts').select('title, description').eq('week_start', getMondayOfWeek(new Date())).maybeSingle()
       : Promise.resolve({ data: null }),
     // Draw deadlines within next 7 days
     hasHunting
-      ? supabase.from('draw_species').select('species, state_code, deadline').gte('deadline', today).lte('deadline', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      ? supabase.from('hunting_draw_species').select('species, state_code, deadline').gte('deadline', today).lte('deadline', nextWeek)
       : Promise.resolve({ data: null }),
     // User's states of interest (for filtering deadlines)
     hasHunting
-      ? supabase.from('hunter_profiles').select('states_of_interest').eq('id', user.id).maybeSingle()
+      ? supabase.from('hunting_profile').select('states_of_interest').eq('id', user.id).maybeSingle()
       : Promise.resolve({ data: null }),
   ])
 
@@ -186,7 +187,7 @@ export default async function HomePage() {
   let allLogs: Array<{ plan_id: string; week_number: number; session_number: number; completed_at: string }> = []
   if (planIds.length > 0) {
     const { data } = await supabase
-      .from('plan_workout_logs')
+      .from('fitness_plan_workout_logs')
       .select('plan_id, week_number, session_number, completed_at')
       .in('plan_id', planIds)
     allLogs = data ?? []
@@ -242,7 +243,7 @@ export default async function HomePage() {
   const feedPosts = feedPostsResult.data ?? []
   const feedUserIds = [...new Set(feedPosts.map((p: { user_id: string }) => p.user_id))]
   const feedProfilesResult = feedUserIds.length > 0
-    ? await supabase.from('hunter_profiles').select('id, display_name').in('id', feedUserIds)
+    ? await supabase.from('user_profile').select('id, display_name').in('id', feedUserIds)
     : { data: [] }
   const feedProfileMap = new Map(
     (feedProfilesResult.data ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name ?? 'Unknown'])
@@ -262,8 +263,8 @@ export default async function HomePage() {
 
   if (userPostIds.length > 0) {
     const [reactionsResult, commentsResult] = await Promise.all([
-      supabase.from('post_reactions').select('post_id').in('post_id', userPostIds),
-      supabase.from('post_comments').select('post_id').in('post_id', userPostIds),
+      supabase.from('social_reactions').select('post_id').in('post_id', userPostIds),
+      supabase.from('social_comments').select('post_id').in('post_id', userPostIds),
     ])
 
     const reactionCounts: Record<string, number> = {}
@@ -315,7 +316,8 @@ export default async function HomePage() {
 
   // Today's fitness session counts
   const todayDayNum = getTodayDayNumber()
-  function countTodaySessions(planData: PlanData | null, plan: typeof runPlan, logsByWeek: Map<number, Set<number>>): number {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function countTodaySessions(planData: PlanData | null, plan: typeof runPlan, _logsByWeek: Map<number, Set<number>>): number {
     if (!plan || !planData?.weeks) return 0
     const currentWeek = getCurrentWeek(plan.started_at, plan.weeks_total)
     const weekData = planData.weeks.find(w => w.week_number === currentWeek)
@@ -473,7 +475,7 @@ export default async function HomePage() {
     })
   }
 
-  const firstName = member?.full_name?.split(' ')[0] ?? 'there'
+  const firstName = profile?.display_name?.split(' ')[0] ?? 'there'
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (

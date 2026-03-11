@@ -13,7 +13,7 @@ export async function POST(
 
   // Verify plan belongs to current user
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('id')
     .eq('id', planId)
     .eq('user_id', user.id)
@@ -29,7 +29,7 @@ export async function POST(
 
   // Upsert (one log per session per plan)
   const { data: log, error } = await supabase
-    .from('plan_workout_logs')
+    .from('fitness_plan_workout_logs')
     .upsert({
       plan_id: planId,
       user_id: user.id,
@@ -57,7 +57,7 @@ export async function DELETE(
 
   // Verify plan belongs to current user
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('id')
     .eq('id', planId)
     .eq('user_id', user.id)
@@ -72,7 +72,7 @@ export async function DELETE(
   }
 
   const { error } = await supabase
-    .from('plan_workout_logs')
+    .from('fitness_plan_workout_logs')
     .delete()
     .eq('plan_id', planId)
     .eq('user_id', user.id)

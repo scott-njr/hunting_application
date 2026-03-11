@@ -18,7 +18,7 @@ export default async function MyFirearmsPage() {
     getUserModuleSubscriptionInfo(supabase, user.id, 'firearms'),
     supabase.from('courses').select('id').eq('module', 'firearms').eq('published', true),
     supabase.from('course_progress').select('course_id').eq('user_id', user.id).eq('completed', true),
-    supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('module', 'firearms'),
+    supabase.from('social_posts').select('id', { count: 'exact', head: true }).eq('module', 'firearms'),
   ])
 
   const courseIds = new Set((coursesResult.data ?? []).map(c => c.id))

@@ -17,26 +17,39 @@ export default async function DrawResearchAIPage() {
     await Promise.all([
       getUserModuleSubscriptionInfo(supabase, user.id, 'hunting'),
       supabase
-        .from('draw_research_reports')
+        .from('hunting_draw_research_reports')
         .select('*')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false }),
       supabase
-        .from('draw_research_reports')
+        .from('hunting_draw_research_reports')
         .select('*')
         .contains('shared_with', [user.id])
         .order('updated_at', { ascending: false }),
+      Promise.all([
+        supabase
+          .from('user_profile')
+          .select('physical_condition, state')
+          .eq('id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('hunting_profile')
+          .select('experience_level, years_hunting, weapon_types, target_species, states_of_interest')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ]).then(([userRes, huntingRes]) => ({
+        data: userRes.data && huntingRes.data
+          ? { ...userRes.data, ...huntingRes.data }
+          : userRes.data
+            ? { ...userRes.data, experience_level: null, years_hunting: null, weapon_types: null, target_species: null, states_of_interest: null }
+            : null,
+      })),
       supabase
-        .from('hunter_profiles')
-        .select('experience_level, years_hunting, physical_condition, residency_state, weapon_types, target_species, states_of_interest')
-        .eq('id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('hunter_points')
+        .from('hunting_points')
         .select('state, species, points, point_type')
         .eq('user_id', user.id),
       supabase
-        .from('baseline_tests')
+        .from('fitness_baseline_tests')
         .select('run_time_seconds, pushups, situps, pullups, tested_at')
         .eq('user_id', user.id)
         .order('tested_at', { ascending: false })
@@ -63,7 +76,7 @@ export default async function DrawResearchAIPage() {
     })),
     physicalCondition: profile?.physical_condition ?? null,
     experienceLevel: profile?.experience_level ?? null,
-    residencyState: profile?.residency_state ?? null,
+    state: profile?.state ?? null,
     yearsHunting: profile?.years_hunting ?? null,
     weaponTypes: (profile?.weapon_types as string[] | null) ?? null,
     statesOfInterest: (profile?.states_of_interest as string[] | null) ?? null,
@@ -127,7 +140,7 @@ export default async function DrawResearchAIPage() {
               href="/pricing?upgrade=pro"
               className="ml-4 shrink-0 btn-primary font-semibold rounded px-3 py-1 text-xs transition-colors"
             >
-              Upgrade for unlimited
+              Upgrade for more queries
             </Link>
           )}
         </div>

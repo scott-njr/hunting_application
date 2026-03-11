@@ -23,6 +23,7 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export const metadata: Metadata = {
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     template: '%s | Lead the Wild by Praevius',
     default: 'Lead the Wild by Praevius — Outdoor Skills Platform',
   },
-  description: 'Structured paths, seasoned mentors, and AI-powered tools for hunting, archery, firearms, fishing, fitness, and more. Join the community built around the things that matter.',
+  description: 'Structured paths, mentors, and AI-powered tools for hunting, archery, firearms, fishing, and fitness. Join the outdoor community.',
   openGraph: {
     type: 'website',
     siteName: 'Lead the Wild by Praevius',

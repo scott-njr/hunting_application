@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   if (!UUID_RE.test(friendId)) return NextResponse.json({ error: 'Invalid friend_id' }, { status: 400 })
 
   const { data, error } = await supabase
-    .from('direct_messages')
+    .from('social_messages')
     .select('id, sender_id, recipient_id, content, read_at, created_at')
     .or(`and(sender_id.eq.${user.id},recipient_id.eq.${friendId}),and(sender_id.eq.${friendId},recipient_id.eq.${user.id})`)
     .order('created_at', { ascending: true })
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 
   // Mark unread messages as read
   await supabase
-    .from('direct_messages')
+    .from('social_messages')
     .update({ read_at: new Date().toISOString() })
     .eq('sender_id', friendId)
     .eq('recipient_id', user.id)
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
   // Verify they are friends (accepted)
   const { data: friendship } = await supabase
-    .from('friendships')
+    .from('social_friendships')
     .select('id')
     .eq('status', 'accepted')
     .or(`and(requester_id.eq.${user.id},recipient_id.eq.${recipient_id}),and(requester_id.eq.${recipient_id},recipient_id.eq.${user.id})`)
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   }
 
   const { data, error } = await supabase
-    .from('direct_messages')
+    .from('social_messages')
     .insert({
       sender_id: user.id,
       recipient_id,

@@ -24,19 +24,21 @@ export function ResearchChat({
   onSend: (message: string, history: ChatMessage[]) => Promise<void>
   isLoading: boolean
 }) {
+  const [prevReportId, setPrevReportId] = useState(reportId)
   const [messages, setMessages] = useState<ChatMessage[]>(initialHistory)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // Sync with initialHistory when reportId changes
+  if (prevReportId !== reportId) {
+    setPrevReportId(reportId)
+    setMessages(initialHistory)
+  }
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  // Sync with initialHistory when reportId changes
-  useEffect(() => {
-    setMessages(initialHistory)
-  }, [reportId, initialHistory])
 
   async function handleSend(text?: string) {
     const msg = (text ?? input).trim()
@@ -54,14 +56,6 @@ export function ResearchChat({
     await onSend(msg, updated)
   }
 
-  // Called from parent after API response
-  function appendAssistant(content: string) {
-    setMessages(prev => [...prev, { role: 'assistant', content }])
-  }
-
-  // Expose appendAssistant via ref pattern — parent calls onSend which returns response
-  // and parent appends it. Actually, let's have onSend handle appending.
-  // The parent's onSend should call the API and then call back to append.
   // For simplicity, let parent manage the full flow.
 
   function handleKeyDown(e: React.KeyboardEvent) {

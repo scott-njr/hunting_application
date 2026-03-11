@@ -20,7 +20,8 @@ type Friend = {
 type SearchResult = {
   user_id: string
   display_name: string | null
-  email: string
+  user_name: string | null
+  avatar_url: string | null
 }
 
 function initials(name: string | null, email: string): string {
@@ -95,7 +96,7 @@ export default function FriendsPage() {
           friendship_id: crypto.randomUUID(),
           friend_id: recipientId,
           display_name: target.display_name,
-          email: target.email,
+          email: '',
           direction: 'sent' as const,
           status: 'pending' as const,
           created_at: new Date().toISOString(),
@@ -170,11 +171,11 @@ export default function FriendsPage() {
                 <div key={r.user_id} className="flex items-center justify-between px-4 py-3 border-b border-subtle last:border-0">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-xs font-semibold text-primary shrink-0">
-                      {initials(r.display_name, r.email)}
+                      {initials(r.display_name, r.user_name ?? '')}
                     </div>
                     <div>
-                      <p className="text-sm text-primary">{r.display_name || r.email}</p>
-                      {r.display_name && <p className="text-xs text-muted">{r.email}</p>}
+                      <p className="text-sm text-primary">{r.display_name || r.user_name || 'Member'}</p>
+                      {r.user_name && <p className="text-xs text-muted">@{r.user_name}</p>}
                     </div>
                   </div>
                   <button

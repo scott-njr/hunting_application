@@ -24,14 +24,14 @@ export default async function LeaderboardPage() {
 
   // Fetch current week's workout, fall back to most recent
   let { data: workout } = await supabase
-    .from('weekly_workouts')
+    .from('fitness_weekly_workouts')
     .select('id, title, week_start')
     .eq('week_start', weekStart)
     .maybeSingle()
 
   if (!workout) {
     const { data: latest } = await supabase
-      .from('weekly_workouts')
+      .from('fitness_weekly_workouts')
       .select('id, title, week_start')
       .order('week_start', { ascending: false })
       .limit(1)

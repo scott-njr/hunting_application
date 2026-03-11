@@ -203,7 +203,6 @@ export function WeeklyPreview({ days, flexItems }: WeeklyPreviewProps) {
           <div className="space-y-2">
             {flexItems.map((item, i) => {
               const Icon = CATEGORY_ICONS[item.type]
-              const typeColor = getTypeColor('deadline') // amber for challenge
               return (
                 <Link
                   key={i}

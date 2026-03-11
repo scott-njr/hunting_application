@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   // Verify plan belongs to the current user and is active
   const { data: plan } = await supabase
-    .from('training_plans')
+    .from('fitness_training_plans')
     .select('id, plan_type, goal')
     .eq('id', plan_id)
     .eq('user_id', user.id)
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   // Check for existing share (allow re-share if previously declined)
   const { data: existing } = await supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .select('id, status')
     .eq('source_plan_id', plan_id)
     .eq('target_user_id', friend_id)
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
     // Declined — re-share by updating back to pending
     const { data: updated, error } = await supabase
-      .from('shared_plans')
+      .from('fitness_shared_plans')
       .update({ status: 'pending' as const, shared_at: new Date().toISOString(), target_plan_id: null, accepted_at: null })
       .eq('id', existing.id)
       .select()
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   // Create new share
   const { data: share, error } = await supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .insert({
       source_plan_id: plan_id,
       source_user_id: user.id,
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   const direction = req.nextUrl.searchParams.get('direction') ?? 'all'
 
   let query = supabase
-    .from('shared_plans')
+    .from('fitness_shared_plans')
     .select('*')
     .order('shared_at', { ascending: false })
 
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
   // Fetch display names
   const { data: profiles } = userIds.size > 0
     ? await supabase
-        .from('hunter_profiles')
+        .from('user_profile')
         .select('id, display_name')
         .in('id', [...userIds])
     : { data: [] }
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
   // Fetch plan info (type + goal)
   const { data: plans } = planIds.size > 0
     ? await supabase
-        .from('training_plans')
+        .from('fitness_training_plans')
         .select('id, plan_type, goal')
         .in('id', [...planIds])
     : { data: [] }
