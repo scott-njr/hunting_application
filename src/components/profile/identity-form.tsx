@@ -1,9 +1,9 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, ShieldCheck } from 'lucide-react'
+import { CheckCircle, ShieldCheck, Check, X, Loader2 } from 'lucide-react'
 import { TacticalSelect } from '@/components/ui/tactical-select'
 import { AvatarUpload } from '@/components/profile/avatar-upload'
 import { PhotoGallery } from '@/components/profile/photo-gallery'
@@ -57,6 +57,10 @@ export default function IdentityForm() {
   const [dirty, setDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState('')
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+  const [checkingUsername, setCheckingUsername] = useState(false)
+  const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initialUsernameRef = useRef('')
 
   const loadProfile = useCallback(async () => {
     const supabase = createClient()
@@ -67,6 +71,7 @@ export default function IdentityForm() {
     const { data: prof } = await supabase.from('user_profile').select('*').eq('id', user.id).maybeSingle()
 
     if (prof) {
+      initialUsernameRef.current = prof.user_name ?? ''
       setForm({
         first_name: prof.first_name ?? '',
         last_name: prof.last_name ?? '',
@@ -94,6 +99,26 @@ export default function IdentityForm() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- loadProfile is an async data fetcher
   useEffect(() => { void loadProfile() }, [loadProfile])
 
+  // Debounced username availability check
+  useEffect(() => {
+    setUsernameAvailable(null)
+    if (!form.user_name || form.user_name.length < 3 || form.user_name === initialUsernameRef.current) return
+    if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current)
+    usernameDebounceRef.current = setTimeout(async () => {
+      setCheckingUsername(true)
+      try {
+        const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(form.user_name)}`)
+        const data = await res.json()
+        setUsernameAvailable(data.available ?? false)
+      } catch {
+        setUsernameAvailable(null)
+      } finally {
+        setCheckingUsername(false)
+      }
+    }, 400)
+    return () => { if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current) }
+  }, [form.user_name])
+
   function updateForm(updater: (prev: IdentityForm) => IdentityForm) {
     setDirty(true)
     setForm(updater)
@@ -101,6 +126,7 @@ export default function IdentityForm() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    if (usernameAvailable === false) { setError('Username is already taken'); return }
     setSaving(true); setError(null); setSaved(false)
 
     const supabase = createClient()
@@ -124,7 +150,17 @@ export default function IdentityForm() {
       social_x: form.social_x ? `https://x.com/${form.social_x}` : null,
     }, { onConflict: 'id' })
 
-    if (err) { setError(err.message) } else { setSaved(true); setDirty(false); setTimeout(() => setSaved(false), 3000) }
+    if (err) {
+      if (err.message.includes('user_name_unique') || err.message.includes('duplicate')) {
+        setError('That username was just taken. Try another.')
+        setUsernameAvailable(false)
+      } else {
+        setError(err.message)
+      }
+    } else {
+      initialUsernameRef.current = form.user_name
+      setSaved(true); setDirty(false); setTimeout(() => setSaved(false), 3000)
+    }
     setSaving(false)
   }
 
@@ -183,13 +219,23 @@ export default function IdentityForm() {
                     type="text"
                     value={form.user_name}
                     onChange={e => updateForm(p => ({ ...p, user_name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) }))}
-                    className={`${INPUT_CLASS} w-full pl-7`}
+                    className={`${INPUT_CLASS} w-full pl-7 pr-8`}
                     placeholder="buckslayer42"
                     maxLength={20}
                   />
+                  {form.user_name.length >= 3 && form.user_name !== initialUsernameRef.current && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {checkingUsername && <Loader2 className="h-3.5 w-3.5 text-muted animate-spin" />}
+                      {!checkingUsername && usernameAvailable === true && <Check className="h-3.5 w-3.5 text-green-400" />}
+                      {!checkingUsername && usernameAvailable === false && <X className="h-3.5 w-3.5 text-red-400" />}
+                    </div>
+                  )}
                 </div>
                 {form.user_name && form.user_name.length < 3 && (
                   <p className="text-amber-400 text-[10px] mt-0.5">Min 3 characters</p>
+                )}
+                {!checkingUsername && usernameAvailable === false && form.user_name.length >= 3 && (
+                  <p className="text-red-400 text-[10px] mt-0.5">Username taken</p>
                 )}
               </div>
               <div>

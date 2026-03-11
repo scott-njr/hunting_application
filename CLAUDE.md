@@ -45,23 +45,27 @@ src/app/hunting/
 
 The `(module)` route group is invisible in URLs — `/hunting/deadlines` works normally.
 
-Coming-soon modules (firearms, fishing, fitness, medical) are simple public pages only — no route group, no layout, no sub-routes.
+Coming-soon modules (spearfishing, butcher-block, mindset) are simple public pages only — no route group, no layout, no sub-routes.
 
 ### Module Registry
 
 | Module | Slug | Status | Nav2 Page | Module Pages |
 |--------|------|--------|-----------|-------------|
+| Command Center | `home` | Active | `/dashboard` | `/home` (authenticated dashboard) |
 | Hunting | `hunting` | Active | `/hunting` | `/hunting/deadlines`, `/hunting/courses`, etc. |
 | Archery | `archery` | Active | `/archery` | `/archery/courses`, `/archery/community`, etc. |
-| Firearms | `firearms` | Coming soon | `/firearms` | None |
-| Medical | `medical` | Coming soon | `/medical` | None |
-| Fishing | `fishing` | Coming soon | `/fishing` | None |
-| Fitness | `fitness` | Coming soon | `/fitness` | None |
+| Firearms | `firearms` | Active | `/firearms` | `/firearms/courses`, `/firearms/community`, etc. |
+| Medical | `medical` | Active | `/medical` | `/medical/courses`, `/medical/community`, etc. |
+| Fishing | `fishing` | Active | `/fishing` | `/fishing/courses`, `/fishing/community`, etc. |
+| Fitness | `fitness` | Active | `/fitness` | `/fitness/coach`, `/fitness/meal-prep`, etc. |
+| Spearfishing | `spearfishing` | Coming soon | `/spearfishing` | None |
+| Butcher Block | `butcher-block` | Coming soon | `/butcher-block` | None |
+| Mindset | `mindset` | Coming soon | `/mindset` | None |
 
 - Module definitions: `src/lib/modules.ts` (`ModuleSlug`, `ModuleTier`, `ALL_MODULES`)
 - Module sidebar nav config: `src/components/layout/module-sidebar.tsx` (`MODULE_NAV`)
 - Nav2 link config: `src/components/layout/nav2.tsx`
-- Legacy routes `/dashboard` and `/modules` redirect to `/hunting` via `next.config.ts`
+- `/dashboard` is the public Nav2 page for Command Center; `/home` is the authenticated Command Center module
 
 ### Auth & Route Protection (`middleware.ts`)
 1. Preview password gate (Vercel deploys only) — when `PREVIEW_PASSWORD` env var is set
@@ -84,7 +88,9 @@ Two tier systems coexist:
 - **Module tier** (`src/lib/modules.ts`): `ModuleTier` = free | basic | pro — stored in `module_subscriptions` table
 
 ### Layout Hierarchy
-Active modules use a `layout.tsx` inside the `(module)` route group (e.g., `src/app/hunting/(module)/layout.tsx`) that wraps sub-routes in `ModuleSidebar` + auth guard. The root page (`src/app/hunting/page.tsx`) sits outside this group and renders without a layout (public Nav2 page). The layout fetches the user's member info and module tier server-side.
+**Single Navbar everywhere**: One `Navbar` component (`src/components/layout/navbar.tsx`) is used on all pages. On public pages it renders centered (`max-w-7xl`). On module pages it renders full-width with a mobile hamburger menu (`showHamburger` prop). The hamburger dispatches a `'open-mobile-menu'` custom DOM event that `SidebarShell` listens for to open the mobile drawer.
+
+Active modules use a `layout.tsx` inside the `(module)` route group (e.g., `src/app/hunting/(module)/layout.tsx`) that wraps sub-routes in `Navbar showHamburger` + `ModuleSidebar` + auth guard. The root page (`src/app/hunting/page.tsx`) sits outside this group and renders without a layout (public Nav2 page). Module layouts are created via `createModuleLayout()` in `src/lib/module-layout.tsx`.
 
 ### AI Framework (`src/lib/ai/`)
 Layered guardrails system for all AI interactions:
