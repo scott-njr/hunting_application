@@ -72,16 +72,32 @@ jobs:
             Admin notes:
             ${{ github.event.inputs.admin_notes }}
 
-            After applying the fix, run `source ~/.zprofile && npm run build` to verify the build passes.
+            After applying the fix, run `npm run build` to verify the build passes.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash(npm run build),Bash(npm test),Edit,Read,Glob,Grep,Write"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes were made by Claude"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git reset HEAD
+          fi
 
       - name: Run tests
+        if: steps.changes.outputs.has_changes == 'true'
         run: npm test
 
       - name: Run build
+        if: steps.changes.outputs.has_changes == 'true'
         run: npm run build
 
       - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -89,17 +105,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/scott-njr/hunting_application.git"
           git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "fix: ${{ github.event.inputs.title }}
+          git commit -m "fix: ${{ github.event.inputs.title }}
 
           Issue ID: ${{ github.event.inputs.issue_id }}
           Severity: ${{ github.event.inputs.severity }}
 
           Co-Authored-By: Claude <noreply@anthropic.com>"
-          fi
           git push origin "$BRANCH"
 
       - name: Create PR
+        if: steps.changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -137,7 +152,7 @@ jobs:
             --label "bug,${LABEL}"
 
       - name: Auto-merge if easy
-        if: github.event.inputs.severity == 'easy'
+        if: steps.changes.outputs.has_changes == 'true' && github.event.inputs.severity == 'easy'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

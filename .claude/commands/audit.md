@@ -1,7 +1,7 @@
 Run all audit skills and produce a consolidated report.
 
 Arguments: $ARGUMENTS
-(Optional — "auth", "security", "seo", "cell", "editor", "buttons", "memberships", "duplicates" to run a single audit. "fix" to auto-apply safe fixes. Defaults to running ALL audits.)
+(Optional — "auth", "security", "seo", "cell", "editor", "buttons", "memberships", "duplicates", "duplicate-components" to run a single audit. "fix" to auto-apply safe fixes. Defaults to running ALL audits.)
 
 ## Your Task
 
@@ -19,6 +19,7 @@ The following audits exist in `.claude/skills/`:
 6. **audit-buttons** — Buttons & links (broken hrefs, missing error handling, silent API failures, dead handlers)
 7. **audit-memberships** — Membership & subscription (tier gating, module subscriptions, pricing consistency)
 8. **audit-duplicates** — Duplicate bronze logging (routes that call `logBronze()` after `aiCall()`, which already logs internally)
+9. **audit-duplicate-components** — Duplicate UI components (near-identical markup/logic repeated across multiple files that should be shared)
 
 ## Steps
 
@@ -54,6 +55,7 @@ After all audits complete, merge the results into a single report.
 | Buttons | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
 | Memberships | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
 | Duplicates | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
+| Dup Components | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
 
 ### Overall: X critical, X high, X medium, X low
 
@@ -96,6 +98,11 @@ After all audits complete, merge the results into a single report.
 
 ### Duplicates Audit
 [Full duplicates audit report from audit-duplicates.md]
+
+---
+
+### Duplicate Components Audit
+[Full duplicate components audit report from audit-duplicate-components.md]
 
 ---
 
