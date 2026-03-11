@@ -322,7 +322,7 @@ export default async function MyPlanPage() {
           />
 
           {/* ── Today + Leaderboard ── */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-lg border border-accent/30 bg-surface p-5 space-y-4">
             {/* Date + Stats row */}
             <div className="flex items-center justify-between flex-wrap gap-3">
