@@ -1,24 +1,33 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 
-const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
-export async function POST(req: Request) {
-  // 1. Verify webhook secret
-  const secret = req.headers.get('x-webhook-secret')
-  if (!WEBHOOK_SECRET || secret !== WEBHOOK_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+async function verifyAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  // 2. Parse Supabase webhook payload
-  const payload = await req.json()
-  const record = payload.record
+  const { data: member } = await supabase
+    .from('members')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
 
-  if (!record?.id || !record?.title || !record?.description) {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  return member?.is_admin ? user : null
+}
+
+/** POST — Manually trigger AI triage on an existing issue */
+export async function POST(req: NextRequest) {
+  const adminUser = await verifyAdmin()
+  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const { issueId } = await req.json()
+  if (!issueId) {
+    return NextResponse.json({ error: 'issueId required' }, { status: 400 })
   }
 
   const admin = createServiceClient(
@@ -26,7 +35,18 @@ export async function POST(req: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // 3. AI classification via aiCall()
+  // Fetch the issue
+  const { data: record, error } = await admin
+    .from('issue_reports')
+    .select('*')
+    .eq('id', issueId)
+    .single()
+
+  if (error || !record) {
+    return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
+  }
+
+  // AI classification
   let severity: 'easy' | 'major' | null = null
   let proposedFix = ''
   let reasoning = ''
@@ -62,9 +82,10 @@ ${record.description}`,
     }
   } catch (err) {
     console.error('[Issue Triage] AI classification failed:', err)
+    return NextResponse.json({ error: 'AI classification failed' }, { status: 500 })
   }
 
-  // 4. Update issue_reports with triage data
+  // Update issue with triage data
   const updateData: Record<string, unknown> = {
     ai_classified_at: new Date().toISOString(),
   }
@@ -77,23 +98,12 @@ ${record.description}`,
   await admin
     .from('issue_reports')
     .update(updateData)
-    .eq('id', record.id)
+    .eq('id', issueId)
 
-  // 5. Create GitHub Issue (skip if already created — prevents duplicates from webhook retries)
-  let githubIssueUrl: string | null = null
+  // Create GitHub Issue if not already created
+  let githubIssueUrl: string | null = record.github_issue_url ?? null
 
-  // Re-fetch to check if another webhook invocation already created the GitHub Issue
-  const { data: freshIssue } = await admin
-    .from('issue_reports')
-    .select('github_issue_url')
-    .eq('id', record.id)
-    .single()
-
-  if (freshIssue?.github_issue_url) {
-    return NextResponse.json({ ok: true, severity, githubIssueUrl: freshIssue.github_issue_url })
-  }
-
-  if (GITHUB_TOKEN) {
+  if (GITHUB_TOKEN && !githubIssueUrl) {
     try {
       const severityTag = severity === 'easy' ? 'EASY' : severity === 'major' ? 'MAJOR' : 'UNCLASSIFIED'
       const labels = ['bug']
@@ -134,16 +144,21 @@ ${record.description}`,
         await admin
           .from('issue_reports')
           .update({ github_issue_url: githubIssueUrl })
-          .eq('id', record.id)
+          .eq('id', issueId)
       } else {
         console.error('[Issue Triage] GitHub Issue creation failed:', await ghResponse.text())
       }
     } catch (err) {
       console.error('[Issue Triage] GitHub API error:', err)
     }
-  } else {
-    console.log('[Issue Triage] GITHUB_TOKEN not set, skipping GitHub Issue creation')
   }
 
-  return NextResponse.json({ ok: true, severity, githubIssueUrl })
+  return NextResponse.json({
+    ok: true,
+    severity,
+    proposedFix,
+    reasoning,
+    githubIssueUrl,
+    ai_classified_at: updateData.ai_classified_at,
+  })
 }

@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
   const [{ data: profiles }, { data: members }] = await Promise.all([
     supabase
       .from('hunter_profiles')
-      .select('id, display_name, avatar_url, date_of_birth')
+      .select('id, display_name, avatar_url, date_of_birth, gender')
       .in('id', userIds),
     supabase
       .from('members')
@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
       display_name: profile?.display_name ?? 'Anonymous',
       avatar_url: profile?.avatar_url ?? null,
       date_of_birth: profile?.date_of_birth ?? null,
+      gender: profile?.gender ?? null,
       fitness_level: member?.fitness_level ?? null,
       is_mine: s.user_id === user.id,
     }

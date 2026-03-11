@@ -68,6 +68,7 @@ const US_STATES = [
 type ProfileForm = {
   display_name: string
   date_of_birth: string
+  gender: 'male' | 'female' | ''
   email: string
   phone: string
   residency_state: string
@@ -115,6 +116,7 @@ type PointsRow = {
 const EMPTY: ProfileForm = {
   display_name: '',
   date_of_birth: '',
+  gender: '',
   email: '',
   phone: '',
   residency_state: '',
@@ -205,6 +207,7 @@ export default function ProfilePage({ moduleSlug }: { moduleSlug?: string } = {}
       setForm({
         display_name: profile.display_name ?? '',
         date_of_birth: profile.date_of_birth ?? '',
+        gender: profile.gender ?? '',
         email: user.email ?? '',
         phone: profile.phone ?? '',
         residency_state: profile.residency_state ?? '',
@@ -271,6 +274,7 @@ export default function ProfilePage({ moduleSlug }: { moduleSlug?: string } = {}
       id: user.id,
       display_name: form.display_name || null,
       date_of_birth: form.date_of_birth || null,
+      gender: (form.gender || null) as 'male' | 'female' | null,
       phone: form.phone || null,
       residency_state: form.residency_state || null,
       hunter_ed_number: form.hunter_ed_number || null,
@@ -476,6 +480,10 @@ export default function ProfilePage({ moduleSlug }: { moduleSlug?: string } = {}
                   <div>
                     <label className="block text-muted text-xs mb-0.5">Date of Birth</label>
                     <input type="date" value={form.date_of_birth} onChange={e => updateForm(p => ({ ...p, date_of_birth: e.target.value }))} className={`${inputClass} w-full`} />
+                  </div>
+                  <div>
+                    <label className="block text-muted text-xs mb-0.5">Gender</label>
+                    <TacticalSelect value={form.gender} onChange={v => updateForm(p => ({ ...p, gender: v as 'male' | 'female' | '' }))} options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]} placeholder="— Select —" />
                   </div>
                   <div>
                     <label className="block text-muted text-xs mb-0.5">Phone</label>

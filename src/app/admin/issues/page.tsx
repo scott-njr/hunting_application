@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { TacticalSelect } from '@/components/ui/tactical-select'
-import { CheckCircle, Clock, ChevronDown, Save } from 'lucide-react'
+import { CheckCircle, Clock, ChevronDown, Save, Zap, ExternalLink } from 'lucide-react'
 
 interface Issue {
   id: string
@@ -18,6 +18,10 @@ interface Issue {
   resolution: string | null
   resolved_at: string | null
   release_tag: string | null
+  severity: 'easy' | 'major' | null
+  ai_proposed_fix: string | null
+  ai_classified_at: string | null
+  github_issue_url: string | null
   created_at: string
   members: { email: string; full_name: string | null } | null
 }
@@ -69,6 +73,11 @@ const STATUS_COLORS: Record<string, string> = {
   wont_fix: 'bg-muted/15 text-muted',
 }
 
+const SEVERITY_COLORS: Record<string, string> = {
+  easy: 'bg-accent/15 text-accent',
+  major: 'bg-red-500/15 text-red-400',
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   bug: 'bg-red-500/15 text-red-400',
   feature_request: 'bg-blue-500/15 text-blue-400',
@@ -84,6 +93,8 @@ export default function AdminIssuesPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [saving, setSaving] = useState<string | null>(null)
   const [savedField, setSavedField] = useState<string | null>(null)
+  const [triaging, setTriaging] = useState<string | null>(null)
+  const [triageSuccess, setTriageSuccess] = useState<string | null>(null)
 
   // Stats & changelog state
   const [stats, setStats] = useState<Stats | null>(null)
@@ -152,6 +163,34 @@ export default function AdminIssuesPage() {
       setTimeout(() => setSavedField(null), 2000)
     }
     setSaving(null)
+  }
+
+  async function triageIssue(issueId: string) {
+    setTriaging(issueId)
+    const res = await fetch('/api/admin/issues/triage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ issueId }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setIssues(prev => prev.map(i =>
+        i.id === issueId ? {
+          ...i,
+          severity: data.severity,
+          ai_proposed_fix: data.proposedFix || null,
+          ai_classified_at: data.ai_classified_at,
+          github_issue_url: data.githubIssueUrl || i.github_issue_url,
+          admin_notes: data.reasoning ? `AI Reasoning: ${data.reasoning}` : i.admin_notes,
+        } : i
+      ))
+      setTriageSuccess(issueId)
+      setTimeout(() => setTriageSuccess(null), 3000)
+    } else {
+      const err = await res.json()
+      alert(`Triage failed: ${err.error ?? 'Unknown error'}`)
+    }
+    setTriaging(null)
   }
 
   // Group resolved issues by release_tag
@@ -360,9 +399,16 @@ export default function AdminIssuesPage() {
                       <span>{new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>
-                  <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded flex-shrink-0', STATUS_COLORS[issue.status] || STATUS_COLORS.open)}>
-                    {issue.status.replace('_', ' ')}
-                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {issue.severity && (
+                      <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded', SEVERITY_COLORS[issue.severity])}>
+                        {issue.severity}
+                      </span>
+                    )}
+                    <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded', STATUS_COLORS[issue.status] || STATUS_COLORS.open)}>
+                      {issue.status.replace('_', ' ')}
+                    </span>
+                  </div>
                 </div>
               </button>
 
@@ -379,6 +425,51 @@ export default function AdminIssuesPage() {
                       <p className="text-accent text-sm">{issue.page_url}</p>
                     </div>
                   )}
+
+                  {/* AI Triage Section */}
+                  <div className="rounded border border-subtle bg-base p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted uppercase tracking-wider">AI Triage</p>
+                      <div className="flex items-center gap-2">
+                        {issue.ai_classified_at && issue.severity && (
+                          <span className={cn('text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded', SEVERITY_COLORS[issue.severity])}>
+                            {issue.severity}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => triageIssue(issue.id)}
+                          disabled={triaging === issue.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-500/15 text-blue-400 text-xs font-medium hover:bg-blue-500/25 transition-colors disabled:opacity-50"
+                        >
+                          <Zap className="h-3 w-3" />
+                          {triaging === issue.id ? 'Triaging...' : issue.ai_classified_at ? 'Re-triage' : 'Triage'}
+                        </button>
+                        {triageSuccess === issue.id && (
+                          <span className="text-accent text-xs flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Done
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {issue.ai_proposed_fix && (
+                      <div>
+                        <p className="text-xs text-muted mb-1">Proposed Fix</p>
+                        <p className="text-secondary text-sm whitespace-pre-wrap font-mono">{issue.ai_proposed_fix}</p>
+                      </div>
+                    )}
+                    {issue.github_issue_url && (
+                      <a
+                        href={issue.github_issue_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-accent text-xs hover:text-accent/80"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        GitHub Issue
+                      </a>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-3">
                     <p className="text-xs text-muted uppercase tracking-wider">Status</p>
