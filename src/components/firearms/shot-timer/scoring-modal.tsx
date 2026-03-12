@@ -143,7 +143,7 @@ export function ScoringModal({ open, strings, shotsPerString, totalStringsInCour
                       value={inputs[zone]}
                       onChange={e => updateInput(zone, e.target.value)}
                       className={cn(
-                        'w-20 px-3 py-2.5 text-center text-sm font-mono font-bold rounded-lg border bg-elevated text-primary placeholder:text-muted/50 focus:border-accent focus:outline-none',
+                        'w-20 px-3 py-2.5 text-center text-base sm:text-sm font-mono font-bold rounded-lg border bg-elevated text-primary placeholder:text-muted/50 focus:border-accent focus:outline-none',
                         zone === 'miss' ? 'border-red-800/50' : 'border-subtle'
                       )}
                     />
@@ -181,7 +181,7 @@ export function ScoringModal({ open, strings, shotsPerString, totalStringsInCour
                 placeholder="0"
                 value={procedurals}
                 onChange={e => setProcedurals(e.target.value.replace(/[^0-9]/g, ''))}
-                className="w-full px-3 py-2.5 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono placeholder:text-muted/50 focus:border-accent focus:outline-none"
+                className="w-full px-3 py-2.5 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono placeholder:text-muted/50 focus:border-accent focus:outline-none"
               />
               {proceduralCount > 0 && (
                 <p className="text-red-400 text-[10px] mt-1">-{proceduralCount * PROCEDURAL_PENALTY} pts</p>
@@ -195,7 +195,7 @@ export function ScoringModal({ open, strings, shotsPerString, totalStringsInCour
                 placeholder="0"
                 value={additionalPenalty}
                 onChange={e => setAdditionalPenalty(e.target.value.replace(/[^0-9]/g, ''))}
-                className="w-full px-3 py-2.5 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono placeholder:text-muted/50 focus:border-accent focus:outline-none"
+                className="w-full px-3 py-2.5 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono placeholder:text-muted/50 focus:border-accent focus:outline-none"
               />
               {additionalPenaltyCount > 0 && (
                 <p className="text-red-400 text-[10px] mt-1">-{additionalPenaltyCount} pts</p>

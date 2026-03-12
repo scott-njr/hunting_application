@@ -12,6 +12,16 @@ export type AmplitudeSample = {
   a: number
 }
 
+/** A sound spike detected during the grace period (muted, not counted as a shot) */
+export type RejectedDetection = {
+  /** Milliseconds from string start */
+  t: number
+  /** Peak amplitude at rejection */
+  amplitude: number
+  /** Always grace_period — sound was muted during the start beep window */
+  reason: 'grace_period'
+}
+
 /** A completed shot string with all recorded data */
 export type CompletedString = {
   stringNumber: number
@@ -184,15 +194,11 @@ export const SENSITIVITY_THRESHOLDS: Record<number, number> = {
   8: 132,
 }
 
-// ─── Hybrid Detection: Amplitude Primary + Frequency Beep Rejection ─────────
-// Consumer laptop/phone mics have limited frequency response above ~8kHz, so
-// multi-band broadband detection doesn't work reliably. Instead:
-//   1. Amplitude (time-domain) = PRIMARY shot detector — fast, catches transients
-//   2. Frequency analysis = BEEP REJECTION filter — if energy is concentrated in
-//      the beep frequency range (800-1200Hz), it's a beep, not a shot → reject
-// This works on all consumer hardware because amplitude detection is universal.
+// ─── Detection: Amplitude-based with Grace Period ───────────────────────────
+// Simple amplitude threshold detection. The grace period (BEEP_IGNORE_MS) mutes
+// the start beep + reverb. After that, every spike above threshold = shot.
 
-/** Frequency bands for display and beep rejection analysis */
+/** Frequency bands for calibration display only */
 export const FREQUENCY_BANDS = [
   { name: 'bass',     minHz: 100,  maxHz: 400 },
   { name: 'low-mid',  minHz: 400,  maxHz: 1500 },
@@ -200,16 +206,6 @@ export const FREQUENCY_BANDS = [
   { name: 'high-mid', minHz: 4000, maxHz: 8000 },
   { name: 'high',     minHz: 8000, maxHz: 16000 },
 ] as const
-
-/** Beep frequency range to check for rejection (our beep is 1000Hz square wave) */
-export const BEEP_REJECT_MIN_HZ = 800
-export const BEEP_REJECT_MAX_HZ = 1200
-
-/** If beep band has this fraction of total energy, reject as beep (0-1) */
-export const BEEP_ENERGY_RATIO_THRESHOLD = 0.35
-
-/** Minimum frequency bands that must be active to count as a shot (kept for calibration display) */
-export const MIN_ACTIVE_BANDS = 2
 
 /** Per-band energy threshold by sensitivity level (for calibration display only) */
 export const BAND_ENERGY_THRESHOLDS: Record<number, number> = {
@@ -239,14 +235,6 @@ export function bandEnergy(freqData: Uint8Array<ArrayBuffer>, startBin: number, 
   return sum / (endBin - startBin + 1)
 }
 
-/** Check if a spike is a beep (narrowband energy concentrated at beep frequency) */
-export function isBeepLike(freqData: Uint8Array<ArrayBuffer>, beepBins: [number, number], allBins: [number, number]): boolean {
-  const beepEnergy = bandEnergy(freqData, beepBins[0], beepBins[1])
-  const totalEnergy = bandEnergy(freqData, allBins[0], allBins[1])
-  if (totalEnergy <= 0) return false
-  return (beepEnergy / totalEnergy) >= BEEP_ENERGY_RATIO_THRESHOLD
-}
-
 /** Max shots per string */
 export const MAX_SHOTS_PER_STRING = 99
 
@@ -256,13 +244,16 @@ export const MAX_STRINGS_PER_SESSION = 10
 /** Minimum time between shot detections in ms */
 export const SHOT_DEBOUNCE_MS = 80
 
-/** Schmitt trigger hysteresis — re-arm threshold as fraction of trigger threshold */
+/** Schmitt trigger hysteresis — re-arm when amplitude drops to 20% of the spike
+ * height above silence (128). Must be above 128 (silence) so re-arm is achievable.
+ * Low factor = faster re-arm = better rapid shot detection. */
 export function getRearmThreshold(triggerThreshold: number): number {
-  return Math.round(triggerThreshold * 0.6)
+  return Math.round(128 + (triggerThreshold - 128) * 0.2)
 }
 
-/** Grace period after timer start to ignore the start beep + room reverb (ms) */
-export const BEEP_IGNORE_MS = 450
+/** Grace period after timer start to ignore the start beep + room reverb (ms).
+ * All sounds during this window are muted and shown as MUTE markers on the waveform. */
+export const BEEP_IGNORE_MS = 500
 
 /** Amplitude sampling interval in ms */
 export const AMPLITUDE_SAMPLE_INTERVAL_MS = 50

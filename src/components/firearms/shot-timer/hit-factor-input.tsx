@@ -49,7 +49,7 @@ export function HitFactorInput({ points, hitFactor, totalTimeMs, onSetPoints }: 
             onChange={e => setInputValue(e.target.value)}
             onBlur={handleSubmit}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            className="w-full px-3 py-2 bg-surface border border-subtle rounded-lg text-primary text-sm font-mono"
+            className="w-full px-3 py-2 bg-surface border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono"
           />
         </div>
 

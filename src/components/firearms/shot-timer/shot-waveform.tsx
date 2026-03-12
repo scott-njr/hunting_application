@@ -1,12 +1,16 @@
 'use client'
 
 import { useMemo } from 'react'
-import { type AmplitudeSample } from './shot-timer-types'
+import { type AmplitudeSample, type RejectedDetection } from './shot-timer-types'
 
 interface ShotWaveformProps {
   amplitudeSamples: AmplitudeSample[]
   shotTimesMs: number[]
   parTimesMs?: number[]
+  /** Rejected detections to show as muted markers on the waveform */
+  rejectedDetections?: RejectedDetection[]
+  /** Amplitude threshold (0-255) — draws a horizontal line showing detection level */
+  amplitudeThreshold?: number
   /** Height in pixels */
   height?: number
   /** Whether to show live (scrolling) mode */
@@ -22,13 +26,18 @@ const PADDING_Y = 8
  *
  * Renders amplitude_samples as a continuous line (like a seismograph/EKG).
  * Baseline sits at ~128 (silence), spikes up/down on loud sounds.
- * Shot detections marked with vertical accent-colored lines + shot number labels.
- * Par times shown as dashed amber vertical lines.
+ *
+ * Marker types:
+ * - SHOT (red solid line + dot at top) — detected and accepted
+ * - MUTE (amber dashed line + dot at top) — sound during grace period (start beep)
+ * - PAR (amber dashed line) — par time target
  */
 export function ShotWaveform({
   amplitudeSamples,
   shotTimesMs,
   parTimesMs = [],
+  rejectedDetections = [],
+  amplitudeThreshold,
   height = WAVEFORM_HEIGHT,
 }: ShotWaveformProps) {
   const { path, viewWidth, timeMax, xScale } = useMemo(() => {
@@ -43,8 +52,6 @@ export function ShotWaveform({
 
     const xFn = (t: number) => PADDING_X + (t / Math.max(tMax, 1)) * drawWidth
 
-    // Build SVG path from amplitude samples
-    // Normalize: 128 = center (silence), 0/255 = extremes
     const points = amplitudeSamples.map(s => {
       const x = xFn(s.t)
       const normalized = (s.a - 128) / 128
@@ -68,6 +75,8 @@ export function ShotWaveform({
     timeLabels.push(s * 1000)
   }
 
+  const visibleRejections = rejectedDetections
+
   return (
     <div className="bg-elevated border border-subtle rounded-lg p-2 overflow-x-auto">
       <svg
@@ -82,6 +91,31 @@ export function ShotWaveform({
           x2={viewWidth - PADDING_X} y2={centerY}
           stroke="currentColor" className="text-subtle" strokeWidth={0.5}
         />
+
+        {/* Amplitude threshold line */}
+        {amplitudeThreshold !== undefined && (() => {
+          const normalized = (amplitudeThreshold - 128) / 128
+          const thresholdY = PADDING_Y + drawHeight / 2 - normalized * (drawHeight / 2)
+          return (
+            <>
+              <line
+                x1={PADDING_X} y1={thresholdY}
+                x2={viewWidth - PADDING_X} y2={thresholdY}
+                stroke="#c4880c" strokeWidth={1}
+                strokeDasharray="4,3"
+              />
+              <text
+                x={PADDING_X - 2} y={thresholdY + 3}
+                textAnchor="end"
+                fill="#c4880c"
+                fontSize={7}
+                fontFamily="monospace"
+              >
+                THR
+              </text>
+            </>
+          )
+        })()}
 
         {/* Time axis labels */}
         {timeLabels.map(t => {
@@ -139,21 +173,56 @@ export function ShotWaveform({
           strokeLinecap="round"
         />
 
-        {/* Shot markers */}
+        {/* Muted sounds during grace period — amber dashed line + dot at TOP */}
+        {visibleRejections.map((rej, i) => {
+          const x = xScale(rej.t)
+          return (
+            <g key={`rej-${i}`}>
+              <line
+                x1={x} y1={PADDING_Y + 14} x2={x} y2={height - PADDING_Y}
+                stroke="#c4880c" strokeWidth={1.5}
+                strokeDasharray="3,3"
+                opacity={0.8}
+              />
+              <circle cx={x} cy={PADDING_Y + 4} r={7} fill="#c4880c" opacity={0.85} />
+              <text
+                x={x} y={PADDING_Y + 7.5}
+                textAnchor="middle"
+                fill="#121210"
+                fontSize={5.5}
+                fontWeight="bold"
+                fontFamily="monospace"
+              >
+                MUTE
+              </text>
+              <text
+                x={x} y={PADDING_Y + 18}
+                textAnchor="middle"
+                fill="#c4880c"
+                fontSize={7}
+                fontFamily="monospace"
+              >
+                {rej.amplitude}
+              </text>
+            </g>
+          )
+        })}
+
+        {/* Shot markers — RED solid line + dot at top with shot number */}
         {shotTimesMs.map((shotMs, i) => {
           const x = xScale(shotMs)
           return (
             <g key={`shot-${i}`}>
               <line
-                x1={x} y1={PADDING_Y} x2={x} y2={height - PADDING_Y}
-                stroke="#7c9a6e" strokeWidth={2}
-                opacity={0.8}
+                x1={x} y1={PADDING_Y + 14} x2={x} y2={height - PADDING_Y}
+                stroke="#ef4444" strokeWidth={2}
+                opacity={0.85}
               />
-              <circle cx={x} cy={PADDING_Y + 4} r={8} fill="#7c9a6e" opacity={0.9} />
+              <circle cx={x} cy={PADDING_Y + 4} r={8} fill="#ef4444" opacity={0.9} />
               <text
                 x={x} y={PADDING_Y + 8}
                 textAnchor="middle"
-                fill="#121210"
+                fill="#fff"
                 fontSize={9}
                 fontWeight="bold"
                 fontFamily="monospace"
@@ -164,6 +233,32 @@ export function ShotWaveform({
           )
         })}
       </svg>
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-3 mt-1.5 px-1 text-[10px] font-mono">
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-0.5 bg-[#7c9a6e] rounded" />
+          <span className="text-[#7c9a6e]">Waveform</span>
+        </span>
+        {amplitudeThreshold !== undefined && (
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-3 h-0.5 bg-[#c4880c] rounded" style={{ borderTop: '1px dashed #c4880c' }} />
+            <span className="text-[#c4880c]">Threshold</span>
+          </span>
+        )}
+        {shotTimesMs.length > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#ef4444]" />
+            <span className="text-[#ef4444]">Shot</span>
+          </span>
+        )}
+        {visibleRejections.length > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#c4880c]" />
+            <span className="text-[#c4880c]">Muted (beep)</span>
+          </span>
+        )}
+      </div>
     </div>
   )
 }

@@ -7,13 +7,9 @@ import {
   SENSITIVITY_THRESHOLDS,
   SHOT_DEBOUNCE_MS,
   FREQUENCY_BANDS,
-  MIN_ACTIVE_BANDS,
-  BEEP_REJECT_MIN_HZ,
-  BEEP_REJECT_MAX_HZ,
   DEFAULT_BAND_THRESHOLDS,
   bandBinRange,
   bandEnergy,
-  isBeepLike,
   getRearmThreshold,
 } from './shot-timer-types'
 import { BandIndicator } from './band-indicator'
@@ -211,8 +207,6 @@ export function CalibrationMode({ onApplySettings }: CalibrationModeProps = {}) 
   const timeDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const freqDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const binRangesRef = useRef<[number, number][]>([])
-  const beepBinsRef = useRef<[number, number]>([0, 0])
-  const allBinsRef = useRef<[number, number]>([0, 0])
   const lastShotTimeRef = useRef(0)
   const lastSampleTimeRef = useRef(0)
   const sensitivityRef = useRef(sensitivity)
@@ -237,7 +231,7 @@ export function CalibrationMode({ onApplySettings }: CalibrationModeProps = {}) 
 
       const source = audioContext.createMediaStreamSource(stream)
       const analyser = audioContext.createAnalyser()
-      analyser.fftSize = 2048
+      analyser.fftSize = 1024
       analyser.smoothingTimeConstant = 0.1
       source.connect(analyser)
       analyserRef.current = analyser
@@ -250,9 +244,6 @@ export function CalibrationMode({ onApplySettings }: CalibrationModeProps = {}) 
       binRangesRef.current = FREQUENCY_BANDS.map(band =>
         bandBinRange(band.minHz, band.maxHz, sampleRate, analyser.fftSize)
       )
-      beepBinsRef.current = bandBinRange(BEEP_REJECT_MIN_HZ, BEEP_REJECT_MAX_HZ, sampleRate, analyser.fftSize)
-      allBinsRef.current = bandBinRange(100, 8000, sampleRate, analyser.fftSize)
-
       setPermissionGranted(true)
       return true
     } catch (err) {
@@ -330,20 +321,15 @@ export function CalibrationMode({ onApplySettings }: CalibrationModeProps = {}) 
       setBandEnergies(energies)
       setActiveBandCount(active)
 
-      // ── Hybrid detection: amplitude primary + beep rejection ──
+      // ── Amplitude detection with Schmitt trigger ──
       const ampThreshold = SENSITIVITY_THRESHOLDS[sensitivityRef.current] ?? SENSITIVITY_THRESHOLDS[4]
       const rearmLevel = getRearmThreshold(ampThreshold)
 
       if (peak >= ampThreshold) {
         if (!aboveThresholdRef.current && elapsed - lastShotTimeRef.current >= SHOT_DEBOUNCE_MS) {
-          // Check if it's a beep (narrowband at 1000Hz)
-          const beepDetected = isBeepLike(freqData, beepBinsRef.current, allBinsRef.current)
-
-          if (!beepDetected) {
-            lastShotTimeRef.current = elapsed
-            const id = ++detectionIdRef.current
-            setDetections(prev => [{ id, amplitude: peak, activeBands: active, timestamp: elapsed }, ...prev].slice(0, MAX_LOG_ENTRIES))
-          }
+          lastShotTimeRef.current = elapsed
+          const id = ++detectionIdRef.current
+          setDetections(prev => [{ id, amplitude: peak, activeBands: active, timestamp: elapsed }, ...prev].slice(0, MAX_LOG_ENTRIES))
         }
         aboveThresholdRef.current = true
       } else if (peak <= rearmLevel) {
@@ -418,7 +404,7 @@ export function CalibrationMode({ onApplySettings }: CalibrationModeProps = {}) 
         <div>
           <h3 className="text-primary font-bold text-sm">Calibration Mode</h3>
           <p className="text-muted text-xs mt-1">
-            Amplitude-based detection with beep rejection filter.
+            Amplitude-based detection.
             Adjust sensitivity until nearby bay shots don&apos;t trigger.
           </p>
         </div>

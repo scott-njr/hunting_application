@@ -22,10 +22,10 @@ export default async function MatchTimerPage({ params }: PageProps) {
 
   if (!match) notFound()
 
-  // Fetch all members to get total count and the specific member
+  // Fetch all members to get total count, specific member, and next unscored shooter
   const { data: allMembers } = await supabase
     .from('firearms_match_member')
-    .select('id, user_id, shoot_order')
+    .select('id, user_id, shoot_order, session_id')
     .eq('match_id', matchId)
     .order('shoot_order', { ascending: true })
 
@@ -64,6 +64,26 @@ export default async function MatchTimerPage({ params }: PageProps) {
     .limit(20)
 
   const shootOrder = allMembers?.findIndex(m => m.id === memberId) ?? 0
+
+  // Find next unscored shooter (excluding current) for auto-advance
+  let nextShooter: { memberId: string; shooterName: string } | null = null
+  if (allMembers) {
+    const unscoredAfter = allMembers.filter(m => m.id !== memberId && !m.session_id)
+    if (unscoredAfter.length > 0) {
+      const next = unscoredAfter[0]
+      // Fetch the next shooter's display name
+      const { data: nextProfile } = await supabase
+        .from('user_profile')
+        .select('display_name')
+        .eq('id', next.user_id)
+        .single()
+      nextShooter = {
+        memberId: next.id,
+        shooterName: nextProfile?.display_name ?? 'Next Shooter',
+      }
+    }
+  }
+
   const matchContext: MatchTimerContext = {
     matchId,
     matchName: match.name,
@@ -78,6 +98,7 @@ export default async function MatchTimerPage({ params }: PageProps) {
     courseDelayMinMs: course.delay_min_ms,
     courseDelayMaxMs: course.delay_max_ms,
     courseParTimesMs: course.par_times_ms,
+    nextShooter,
   }
 
   return (

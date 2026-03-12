@@ -15,7 +15,7 @@ import {
 
 const DEFAULT_SETTINGS: SessionSettings = {
   mode: 'timer',
-  sensitivity: 4,
+  sensitivity: 5,
   bandThresholds: [...DEFAULT_BAND_THRESHOLDS],
   delayMode: 'random',
   delayMinMs: 2000,
@@ -118,6 +118,7 @@ function timerReducer(state: TimerState, action: TimerAction): TimerState {
           shotAmplitudes: newAmplitudes,
           hitFactor,
         })
+        const newStrings = [...state.strings, completed]
         return {
           ...state,
           phase: 'stopped',
@@ -125,7 +126,8 @@ function timerReducer(state: TimerState, action: TimerAction): TimerState {
           shotAmplitudes: newAmplitudes,
           splitTimes: newSplits,
           hitFactor,
-          strings: [...state.strings, completed],
+          strings: newStrings,
+          reviewIndex: newStrings.length - 1,
         }
       }
 
@@ -145,10 +147,12 @@ function timerReducer(state: TimerState, action: TimerAction): TimerState {
       }
       if (state.phase !== 'running') return state
       const completed = buildCompletedString(state)
+      const stoppedStrings = [...state.strings, completed]
       return {
         ...state,
         phase: 'stopped',
-        strings: [...state.strings, completed],
+        strings: stoppedStrings,
+        reviewIndex: stoppedStrings.length - 1,
       }
     }
 
@@ -190,19 +194,24 @@ function timerReducer(state: TimerState, action: TimerAction): TimerState {
       }
     }
 
-    case 'REVIEW_FORWARD':
+    case 'REVIEW_FORWARD': {
+      // Preserve current phase during active session (stopped/idle) so controls stay visible
+      const fwdPhase = (state.phase === 'stopped' || state.phase === 'idle') ? state.phase : 'review'
       return {
         ...state,
-        phase: 'review',
+        phase: fwdPhase,
         reviewIndex: Math.min(state.reviewIndex + 1, state.strings.length - 1),
       }
+    }
 
-    case 'REVIEW_BACK':
+    case 'REVIEW_BACK': {
+      const backPhase = (state.phase === 'stopped' || state.phase === 'idle') ? state.phase : 'review'
       return {
         ...state,
-        phase: 'review',
+        phase: backPhase,
         reviewIndex: Math.max(state.reviewIndex - 1, 0),
       }
+    }
 
     case 'UPDATE_SETTINGS':
       return {

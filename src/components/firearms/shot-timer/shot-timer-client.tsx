@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Timer, History, CalculatorIcon, Target, SlidersHorizontal, Trophy, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { type TimerMode, type CompletedString, type SessionSettings, type CourseScoring, DEFAULT_BAND_THRESHOLDS } from './shot-timer-types'
+import { type TimerMode, type CompletedString, type SessionSettings, type CourseScoring, type RejectedDetection, DEFAULT_BAND_THRESHOLDS, SENSITIVITY_THRESHOLDS } from './shot-timer-types'
 import { MicConsentModal, hasMicConsent } from './mic-consent-modal'
 import { useBeep } from './use-beep'
 import { useShotDetection } from './use-shot-detection'
@@ -41,6 +41,8 @@ export type MatchTimerContext = {
   courseDelayMinMs: number
   courseDelayMaxMs: number
   courseParTimesMs: number[]
+  /** Next unscored shooter — if set, auto-advance after scoring */
+  nextShooter?: { memberId: string; shooterName: string } | null
 }
 
 interface ShotTimerClientProps {
@@ -64,7 +66,9 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
 
   const [pendingSave, setPendingSave] = useState(false)
   const [showScoring, setShowScoring] = useState(false)
+  const [courseResults, setCourseResults] = useState<CourseScoring | null>(null)
   const [bandEnergies, setBandEnergies] = useState<number[]>([0, 0, 0, 0, 0])
+  const [rejectedDetections, setRejectedDetections] = useState<RejectedDetection[]>([])
   const [sessionError, setSessionError] = useState<string | null>(null)
 
   const {
@@ -86,6 +90,10 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
 
   const { playStartBeep, playParBeep, warmUp: warmUpBeep, cleanup: cleanupBeep } = useBeep()
 
+  const handleRejected = useCallback((rej: RejectedDetection) => {
+    setRejectedDetections(prev => prev.length >= 200 ? prev : [...prev, rej])
+  }, [])
+
   const { isListening, permissionState, micError, requestPermission, cleanup: cleanupMic } =
     useShotDetection({
       sensitivity: state.settings.sensitivity,
@@ -93,6 +101,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
       onShotDetected: recordShot,
       onAmplitudeSample: addAmplitudeSample,
       onFrequencyUpdate: setBandEnergies,
+      onRejected: handleRejected,
       startTimestamp: state.startTimestamp,
       active: state.phase === 'running' && state.settings.mode !== 'stopwatch',
     })
@@ -191,12 +200,13 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
   }
 
   /** Core start logic — called after consent + permission + session are confirmed */
-  function beginTimer() {
+  async function beginTimer() {
     parTimesHitRef.current.clear()
+    setRejectedDetections([])
 
     // Warm up audio context during this user gesture so beep works in setTimeout
     if (state.settings.mode !== 'spy') {
-      warmUpBeep()
+      await warmUpBeep()
     }
 
     const currentMode = state.settings.mode
@@ -234,7 +244,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
       }
     }
 
-    beginTimer()
+    await beginTimer()
   }
 
   // Show save/discard prompt when a new string is completed
@@ -288,12 +298,13 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
         return
       }
 
-      // Refresh sessions list
+      // Refresh sessions list and switch to history view
       const res = await fetch('/api/firearms/shot-timer')
       if (res.ok) {
         const data = await res.json()
         setSessions(data.sessions)
       }
+      setView('history')
     } catch {
       // Silent fail
     } finally {
@@ -302,6 +313,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
       sessionStartedRef.current = false
       prevStringCountRef.current = 0
       setActiveCourse(null)
+      setCourseResults(null)
       reset()
     }
   }
@@ -322,7 +334,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
       }
     }
 
-    beginTimer()
+    await beginTimer()
   }
 
   /** Load a course of fire — apply settings and switch to timer */
@@ -337,14 +349,20 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
     setShowScoring(true)
   }
 
-  /** Handle scoring submission — saves overall course scoring to session */
+  /** Handle scoring submission — saves scoring to session and auto-ends it */
   async function handleScoringSubmit(scoring: CourseScoring) {
     setShowScoring(false)
     setPoints(scoring.totalPoints)
 
+    // In match mode, skip the results panel — save and advance immediately
+    if (!matchContext) {
+      setCourseResults(scoring)
+    }
+
     if (!currentSessionId) return
 
     try {
+      // Save scoring data to session
       await fetch(`/api/firearms/shot-timer/${currentSessionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -361,12 +379,42 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
           charlie: scoring.charlie,
           delta: scoring.delta,
           miss: scoring.miss,
+          total_strings: state.strings.length,
+          ended_at: new Date().toISOString(),
           ...(matchContext ? { match_id: matchContext.matchId, match_member_id: matchContext.memberId } : {}),
         }),
       })
+
+      // Match mode — auto-advance to next shooter or back to match
+      if (matchContext) {
+        if (matchContext.nextShooter) {
+          router.push(`/firearms/matches/${matchContext.matchId}/timer/${matchContext.nextShooter.memberId}`)
+        } else {
+          router.push(`/firearms/matches/${matchContext.matchId}`)
+        }
+        return
+      }
+
+      // Solo mode — refresh sessions list so it appears in history
+      const res = await fetch('/api/firearms/shot-timer')
+      if (res.ok) {
+        const data = await res.json()
+        setSessions(data.sessions)
+      }
     } catch {
       // Silent fail — scoring data is visible in-memory
     }
+  }
+
+  /** Dismiss the results panel, reset, and go to history */
+  function handleDismissResults() {
+    setCourseResults(null)
+    setCurrentSessionId(null)
+    sessionStartedRef.current = false
+    prevStringCountRef.current = 0
+    setActiveCourse(null)
+    reset()
+    setView('history')
   }
 
   /** Reset course — clears all strings/scores but keeps the course loaded */
@@ -375,6 +423,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
     prevStringCountRef.current = 0
     setPendingSave(false)
     setShowScoring(false)
+    setCourseResults(null)
     // Keep activeCourse and session — just reset the string data
   }
 
@@ -468,7 +517,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
         {[
           { key: 'timer' as View, label: 'Timer', icon: Timer },
           { key: 'courses' as View, label: 'Courses', icon: Target },
-          { key: 'calibrate' as View, label: 'Calibrate', icon: SlidersHorizontal },
+          { key: 'calibrate' as View, label: 'Cal', icon: SlidersHorizontal },
           { key: 'history' as View, label: 'History', icon: History },
           { key: 'calculator' as View, label: 'Calc', icon: CalculatorIcon },
         ].map(({ key, label, icon: Icon }) => (
@@ -476,12 +525,12 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
             key={key}
             onClick={() => setView(key)}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+              'flex-1 flex items-center justify-center gap-1 px-1.5 py-2 text-xs sm:text-sm sm:gap-1.5 sm:px-3 font-medium rounded-md transition-colors min-w-0',
               view === key ? 'bg-accent text-base' : 'text-muted hover:text-secondary'
             )}
           >
-            <Icon className="h-4 w-4" />
-            {label}
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{label}</span>
           </button>
         ))}
       </div>
@@ -493,6 +542,94 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
           {(micError || sessionError) && (
             <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-3">
               <p className="text-red-400 text-sm">{micError || sessionError}</p>
+            </div>
+          )}
+
+          {/* Course Results — shown after scoring submission */}
+          {courseResults && (
+            <div className="bg-surface border border-accent/40 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-accent font-bold text-base">
+                  {activeCourse ? `${activeCourse} — Final Results` : 'Final Results'}
+                </h3>
+                <span className={cn(
+                  'text-xs font-bold uppercase px-2 py-0.5 rounded',
+                  courseResults.status === 'dq' ? 'bg-red-900/30 text-red-400'
+                    : courseResults.status === 'dnf' ? 'bg-amber-900/30 text-amber-400'
+                    : 'bg-accent/20 text-accent'
+                )}>
+                  {courseResults.status === 'dq' ? 'DQ' : courseResults.status === 'dnf' ? 'DNF' : 'Complete'}
+                </span>
+              </div>
+
+              {/* Per-string breakdown */}
+              <div className="space-y-1.5">
+                {state.strings.map((str, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <span className="text-secondary">String {str.stringNumber}</span>
+                    <span className="text-primary font-mono font-bold">
+                      {(str.totalTimeMs / 1000).toFixed(2)}s
+                      <span className="text-muted font-normal ml-2">({str.shotCount} shots)</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Hit zone breakdown */}
+              <div className="grid grid-cols-5 gap-2 text-center">
+                {[
+                  { label: 'A', count: courseResults.alpha, color: 'text-accent' },
+                  { label: 'B', count: courseResults.bravo, color: 'text-primary' },
+                  { label: 'C', count: courseResults.charlie, color: 'text-primary' },
+                  { label: 'D', count: courseResults.delta, color: 'text-secondary' },
+                  { label: 'M', count: courseResults.miss, color: 'text-red-400' },
+                ].map(zone => (
+                  <div key={zone.label} className="bg-elevated border border-subtle rounded-lg p-2">
+                    <p className="text-muted text-[10px]">{zone.label}</p>
+                    <p className={cn('font-mono font-bold text-lg', zone.color)}>{zone.count}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totals */}
+              <div className="bg-elevated border border-subtle rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-secondary text-xs">Total Time</span>
+                  <span className="text-primary font-mono text-sm font-bold">
+                    {(courseResults.totalTime / 1000).toFixed(2)}s
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-secondary text-xs">Total Points</span>
+                  <span className={cn(
+                    'font-mono text-sm font-bold',
+                    courseResults.totalPoints < 0 ? 'text-red-400' : 'text-primary'
+                  )}>
+                    {courseResults.totalPoints}
+                  </span>
+                </div>
+                {courseResults.hitFactor !== null && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary text-xs">Hit Factor</span>
+                    <span className="text-accent font-mono text-sm font-bold">
+                      {courseResults.hitFactor.toFixed(4)}
+                    </span>
+                  </div>
+                )}
+                {courseResults.procedurals > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary text-xs">Procedurals</span>
+                    <span className="text-red-400 font-mono text-sm">-{courseResults.procedurals * 10}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleDismissResults}
+                className="w-full px-4 py-2.5 text-sm font-medium bg-accent text-base rounded-lg hover:bg-accent/90 transition-colors"
+              >
+                Done — New Session
+              </button>
             </div>
           )}
 
@@ -512,13 +649,15 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
             shotsPerString={state.settings.shotsPerString}
           />
 
-          {/* Live waveform during running */}
-          {state.phase === 'running' && state.amplitudeSamples.length > 0 && (
+          {/* Live waveform during running / stopped */}
+          {(state.phase === 'running' || state.phase === 'stopped') && state.amplitudeSamples.length > 0 && (
             <ShotWaveform
               amplitudeSamples={state.amplitudeSamples}
               shotTimesMs={state.shots}
               parTimesMs={state.settings.parTimesMs}
-              live
+              rejectedDetections={rejectedDetections}
+              amplitudeThreshold={SENSITIVITY_THRESHOLDS[state.settings.sensitivity]}
+              live={state.phase === 'running'}
             />
           )}
 

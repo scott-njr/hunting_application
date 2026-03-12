@@ -139,7 +139,7 @@ export function TimerSettingsPanel({ settings, onUpdate, onClose }: TimerSetting
                 onUpdate({ shotsPerString: v && v > 0 ? v : null })
               }}
               placeholder="Auto"
-              className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono placeholder:text-muted"
+              className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono placeholder:text-muted"
             />
           </div>
           <p className="text-muted text-[10px] mt-0.5">Auto-stop after N shots. Blank = manual stop.</p>
@@ -159,7 +159,7 @@ export function TimerSettingsPanel({ settings, onUpdate, onClose }: TimerSetting
               onUpdate({ totalStringsInCourse: v && v > 0 ? v : null })
             }}
             placeholder="Unlimited"
-            className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono placeholder:text-muted"
+            className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono placeholder:text-muted"
           />
           <p className="text-muted text-[10px] mt-0.5">Blank = unlimited strings.</p>
         </div>
@@ -200,7 +200,7 @@ export function TimerSettingsPanel({ settings, onUpdate, onClose }: TimerSetting
               max="30"
               value={(settings.delayMinMs / 1000).toFixed(1)}
               onChange={e => onUpdate({ delayMinMs: Math.round(parseFloat(e.target.value) * 1000) })}
-              className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono"
+              className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono"
             />
           </div>
           {settings.delayMode === 'random' && (
@@ -213,7 +213,7 @@ export function TimerSettingsPanel({ settings, onUpdate, onClose }: TimerSetting
                 max="30"
                 value={(settings.delayMaxMs / 1000).toFixed(1)}
                 onChange={e => onUpdate({ delayMaxMs: Math.round(parseFloat(e.target.value) * 1000) })}
-                className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono"
+                className="w-full px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono"
               />
             </div>
           )}
@@ -256,7 +256,7 @@ export function TimerSettingsPanel({ settings, onUpdate, onClose }: TimerSetting
             value={newParTime}
             onChange={e => setNewParTime(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addParTime()}
-            className="flex-1 px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-sm font-mono placeholder:text-muted"
+            className="flex-1 px-3 py-2 bg-elevated border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono placeholder:text-muted"
           />
           <button
             onClick={addParTime}

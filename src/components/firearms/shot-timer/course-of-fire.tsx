@@ -162,8 +162,8 @@ export function CourseOfFirePanel({ onLoadCourse }: CourseOfFirePanelProps) {
     setShowForm(true)
   }
 
-  const inputClass = 'w-full px-3 py-2 bg-surface border border-subtle rounded-lg text-primary text-sm placeholder:text-muted'
-  const monoInputClass = 'w-full px-3 py-2 bg-surface border border-subtle rounded-lg text-primary text-sm font-mono'
+  const inputClass = 'w-full px-3 py-2 bg-surface border border-subtle rounded-lg text-primary text-base sm:text-sm placeholder:text-muted'
+  const monoInputClass = 'w-full px-3 py-2 bg-surface border border-subtle rounded-lg text-primary text-base sm:text-sm font-mono'
 
   return (
     <>

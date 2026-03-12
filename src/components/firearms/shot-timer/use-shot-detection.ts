@@ -3,18 +3,15 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
 import {
   type AmplitudeSample,
+  type RejectedDetection,
   SENSITIVITY_THRESHOLDS,
   SHOT_DEBOUNCE_MS,
   BEEP_IGNORE_MS,
   AMPLITUDE_SAMPLE_INTERVAL_MS,
   FREQUENCY_BANDS,
-  BEEP_REJECT_MIN_HZ,
-  BEEP_REJECT_MAX_HZ,
-  MIN_ACTIVE_BANDS,
   DEFAULT_BAND_THRESHOLDS,
   bandBinRange,
   bandEnergy,
-  isBeepLike,
   getRearmThreshold,
 } from './shot-timer-types'
 
@@ -28,21 +25,19 @@ interface UseShotDetectionOptions {
   onAmplitudeSample?: (sample: AmplitudeSample) => void
   /** Called each frame with current per-band energy values */
   onFrequencyUpdate?: (bandEnergies: number[]) => void
+  /** Called when a spike is detected but rejected (for debug visualization) */
+  onRejected?: (rejection: RejectedDetection) => void
   startTimestamp: number
   active: boolean
 }
 
 /**
- * Hook for shot detection via Web Audio API — hybrid approach:
+ * Hook for shot detection via Web Audio API.
  *
- * 1. AMPLITUDE (time-domain) = primary detector — catches all transient spikes
- *    regardless of mic frequency response. Works on any consumer device.
+ * Amplitude (time-domain) spike detection with Schmitt trigger hysteresis.
+ * First 500ms after timer start = grace period (mutes the start beep).
+ * After that, every spike above the sensitivity threshold = shot.
  *
- * 2. FREQUENCY analysis = beep rejection filter — when an amplitude spike is
- *    detected, checks if energy is concentrated at the beep frequency (1000Hz).
- *    If so, rejects it as a beep, not a shot.
- *
- * Uses Schmitt trigger hysteresis on amplitude to prevent double-triggers.
  * No audio is recorded — only amplitude values analyzed in real-time.
  * Stream is stopped immediately when detection stops or component unmounts.
  */
@@ -52,6 +47,7 @@ export function useShotDetection({
   onShotDetected,
   onAmplitudeSample,
   onFrequencyUpdate,
+  onRejected,
   startTimestamp,
   active,
 }: UseShotDetectionOptions) {
@@ -71,10 +67,6 @@ export function useShotDetection({
   const freqDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   /** Precomputed bin ranges for each frequency band (for display) */
   const binRangesRef = useRef<[number, number][]>([])
-  /** Precomputed bin range for beep rejection frequency check */
-  const beepBinsRef = useRef<[number, number]>([0, 0])
-  /** Full frequency range bins for total energy comparison */
-  const allBinsRef = useRef<[number, number]>([0, 0])
 
   // Refs for values that change frequently — avoids stale closures in RAF loop
   const sensitivityRef = useRef(sensitivity)
@@ -83,6 +75,7 @@ export function useShotDetection({
   const onShotDetectedRef = useRef(onShotDetected)
   const onAmplitudeSampleRef = useRef(onAmplitudeSample)
   const onFrequencyUpdateRef = useRef(onFrequencyUpdate)
+  const onRejectedRef = useRef(onRejected)
 
   useEffect(() => { sensitivityRef.current = sensitivity }, [sensitivity])
   useEffect(() => { bandThresholdsRef.current = bandThresholds }, [bandThresholds])
@@ -90,6 +83,7 @@ export function useShotDetection({
   useEffect(() => { onShotDetectedRef.current = onShotDetected }, [onShotDetected])
   useEffect(() => { onAmplitudeSampleRef.current = onAmplitudeSample }, [onAmplitudeSample])
   useEffect(() => { onFrequencyUpdateRef.current = onFrequencyUpdate }, [onFrequencyUpdate])
+  useEffect(() => { onRejectedRef.current = onRejected }, [onRejected])
 
   /** Request microphone permission and set up audio pipeline */
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -106,8 +100,8 @@ export function useShotDetection({
 
       const source = audioContext.createMediaStreamSource(stream)
       const analyser = audioContext.createAnalyser()
-      analyser.fftSize = 2048
-      // Lower smoothing for faster transient response on consumer mics
+      // Smaller FFT = shorter buffer (~23ms at 44.1kHz) = faster re-arm between rapid shots
+      analyser.fftSize = 1024
       analyser.smoothingTimeConstant = 0.1
       source.connect(analyser)
       analyserRef.current = analyser
@@ -121,11 +115,6 @@ export function useShotDetection({
       binRangesRef.current = FREQUENCY_BANDS.map(band =>
         bandBinRange(band.minHz, band.maxHz, sampleRate, analyser.fftSize)
       )
-
-      // Precompute beep rejection bin range (800-1200Hz)
-      beepBinsRef.current = bandBinRange(BEEP_REJECT_MIN_HZ, BEEP_REJECT_MAX_HZ, sampleRate, analyser.fftSize)
-      // Full audible range for total energy comparison (100Hz - 8000Hz, consumer mic range)
-      allBinsRef.current = bandBinRange(100, 8000, sampleRate, analyser.fftSize)
 
       setPermissionState('granted')
       return true
@@ -183,8 +172,8 @@ export function useShotDetection({
         if (mirror > peak) peak = mirror
       }
 
-      // Amplitude sampling for waveform (every ~50ms, skip beep grace period)
-      if (elapsed >= BEEP_IGNORE_MS && elapsed - lastSampleTimeRef.current >= AMPLITUDE_SAMPLE_INTERVAL_MS) {
+      // Amplitude sampling for waveform (every ~50ms — includes grace period for visibility)
+      if (elapsed - lastSampleTimeRef.current >= AMPLITUDE_SAMPLE_INTERVAL_MS) {
         lastSampleTimeRef.current = elapsed
         onAmplitudeSampleRef.current?.({
           t: Math.round(elapsed),
@@ -204,26 +193,27 @@ export function useShotDetection({
       }
       onFrequencyUpdateRef.current?.(energies)
 
-      // ── Hybrid detection: amplitude primary + beep rejection + band gating ──
-      if (elapsed >= BEEP_IGNORE_MS) {
-        const threshold = SENSITIVITY_THRESHOLDS[sensitivityRef.current] ?? SENSITIVITY_THRESHOLDS[4]
-        const rearmLevel = getRearmThreshold(threshold)
+      // ── Hybrid detection: amplitude primary + beep rejection ──
+      const threshold = SENSITIVITY_THRESHOLDS[sensitivityRef.current] ?? SENSITIVITY_THRESHOLDS[4]
+      const rearmLevel = getRearmThreshold(threshold)
 
-        if (peak >= threshold) {
-          if (!aboveThresholdRef.current && elapsed - lastShotTimeRef.current >= SHOT_DEBOUNCE_MS) {
-            // Amplitude spike detected — check if it's a beep (narrowband at 1000Hz)
-            const beepDetected = isBeepLike(freqData, beepBinsRef.current, allBinsRef.current)
+      if (peak >= threshold) {
+        if (!aboveThresholdRef.current) {
+          const roundedElapsed = Math.round(elapsed)
 
-            if (!beepDetected) {
-              lastShotTimeRef.current = elapsed
-              onShotDetectedRef.current(Math.round(elapsed), peak)
-            }
+          if (elapsed < BEEP_IGNORE_MS) {
+            // Grace period — mute start beep, show as MUTE marker on waveform
+            onRejectedRef.current?.({ t: roundedElapsed, amplitude: peak, reason: 'grace_period' })
+          } else if (elapsed - lastShotTimeRef.current >= SHOT_DEBOUNCE_MS) {
+            // Past grace period + debounce — accept as shot
+            lastShotTimeRef.current = elapsed
+            onShotDetectedRef.current(roundedElapsed, peak)
           }
-          aboveThresholdRef.current = true
-        } else if (peak <= rearmLevel) {
-          // Re-arm when amplitude drops sufficiently below threshold
-          aboveThresholdRef.current = false
         }
+        aboveThresholdRef.current = true
+      } else if (peak <= rearmLevel) {
+        // Re-arm when amplitude drops sufficiently below threshold
+        aboveThresholdRef.current = false
       }
 
       rafRef.current = requestAnimationFrame(analyze)
