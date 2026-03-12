@@ -800,15 +800,17 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
       {/* Spy mode flash */}
       <SpyModeOverlay flash={spyFlash} />
 
-      {/* Scoring modal */}
-      <ScoringModal
-        open={showScoring}
-        strings={state.strings}
-        shotsPerString={state.settings.shotsPerString}
-        totalStringsInCourse={state.settings.totalStringsInCourse}
-        onSubmit={handleScoringSubmit}
-        onClose={() => setShowScoring(false)}
-      />
+      {/* Scoring modal — key forces remount so inputs reset each time */}
+      {showScoring && (
+        <ScoringModal
+          open
+          strings={state.strings}
+          shotsPerString={state.settings.shotsPerString}
+          totalStringsInCourse={state.settings.totalStringsInCourse}
+          onSubmit={handleScoringSubmit}
+          onClose={() => setShowScoring(false)}
+        />
+      )}
 
       {/* Mic consent modal */}
       <MicConsentModal

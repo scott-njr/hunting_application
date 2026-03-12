@@ -48,7 +48,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
   // Fetch user profiles separately and merge
   const memberList = rawMembers ?? []
   const memberUserIds = memberList.map(m => m.user_id as string)
-  let profileMap: Record<string, { display_name: string | null; user_name: string | null; avatar_url: string | null }> = {}
+  const profileMap: Record<string, { display_name: string | null; user_name: string | null; avatar_url: string | null }> = {}
   if (memberUserIds.length > 0) {
     const { data: profiles } = await supabase
       .from('user_profile')

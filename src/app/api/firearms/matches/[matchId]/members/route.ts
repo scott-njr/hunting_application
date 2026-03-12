@@ -38,7 +38,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
   // Fetch user profiles separately
   const userIds = memberList.map(m => m.user_id as string)
-  let profileMap: Record<string, { display_name: string | null; user_name: string | null; avatar_url: string | null }> = {}
+  const profileMap: Record<string, { display_name: string | null; user_name: string | null; avatar_url: string | null }> = {}
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
       .from('user_profile')
