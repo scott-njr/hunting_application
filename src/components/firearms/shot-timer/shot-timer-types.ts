@@ -252,8 +252,9 @@ export function getRearmThreshold(triggerThreshold: number): number {
 }
 
 /** Grace period after timer start to ignore the start beep + room reverb (ms).
- * All sounds during this window are muted and shown as MUTE markers on the waveform. */
-export const BEEP_IGNORE_MS = 500
+ * All sounds during this window are muted and shown as MUTE markers on the waveform.
+ * 300ms balances beep rejection vs fast first shots (competitive shooters break ~0.4s). */
+export const BEEP_IGNORE_MS = 300
 
 /** Amplitude sampling interval in ms */
 export const AMPLITUDE_SAMPLE_INTERVAL_MS = 50

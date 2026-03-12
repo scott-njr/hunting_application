@@ -97,7 +97,7 @@ function SessionCard({
   const [strings, setStrings] = useState<StringDetail[] | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const hasScoring = showScoring && session.status && (session.alpha > 0 || session.bravo > 0 || session.charlie > 0 || session.delta > 0 || session.miss > 0)
+  const hasScoring = showScoring && session.status && (session.alpha > 0 || session.bravo > 0 || session.charlie > 0 || session.delta > 0 || (session.miss ?? 0) > 0)
   const isMatch = !!session.match_id
 
   async function toggleExpand() {

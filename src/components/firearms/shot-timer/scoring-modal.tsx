@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -45,6 +45,17 @@ export function ScoringModal({ open, strings, shotsPerString, totalStringsInCour
   const [additionalPenalty, setAdditionalPenalty] = useState('')
   const [isDQ, setIsDQ] = useState(false)
   const [isDNF, setIsDNF] = useState(false)
+
+  // Reset inputs when modal opens so stale data from previous scoring doesn't persist
+  useEffect(() => {
+    if (open) {
+      setInputs({ alpha: '', bravo: '', charlie: '', delta: '', miss: '' })
+      setProcedurals('')
+      setAdditionalPenalty('')
+      setIsDQ(false)
+      setIsDNF(false)
+    }
+  }, [open])
 
   const proceduralCount = parseInt(procedurals) || 0
   const additionalPenaltyCount = parseInt(additionalPenalty) || 0

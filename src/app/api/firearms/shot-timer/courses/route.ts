@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 /** GET /api/firearms/shot-timer/courses — List user's courses of fire */
 export async function GET() {
@@ -132,5 +132,5 @@ export async function DELETE(req: Request) {
 
   if (error) return serverError()
 
-  return apiOk({ ok: true })
+  return apiDone()
 }

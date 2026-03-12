@@ -42,7 +42,7 @@ const INITIAL_STATE: TimerState = {
 }
 
 function computeHitFactor(points: number, totalTimeMs: number): number | null {
-  if (totalTimeMs <= 0 || points <= 0) return null
+  if (totalTimeMs <= 0) return null
   return points / (totalTimeMs / 1000)
 }
 
