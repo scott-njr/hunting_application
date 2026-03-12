@@ -22,6 +22,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // CSRF: Block cross-origin state-changing requests to API routes
+  if (pathname.startsWith('/api/') && request.method !== 'GET') {
+    const origin = request.headers.get('origin')
+    const host = request.headers.get('host')
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+    }
+  }
+
   // Preview password gate — only active when PREVIEW_PASSWORD is set (Vercel deploys only)
   const previewPassword = process.env.PREVIEW_PASSWORD
   if (previewPassword) {

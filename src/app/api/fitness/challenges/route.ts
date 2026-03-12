@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 import type { Json } from '@/types/database.types'
 
 // POST /api/fitness/challenges — Create a workout challenge
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -63,10 +63,11 @@ export async function POST(req: NextRequest) {
   }
 
   return apiOk({ challenge }, 201)
-}
+})
+
 
 // GET /api/fitness/challenges — List challenges
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -135,4 +136,5 @@ export async function GET(req: NextRequest) {
   })
 
   return apiOk({ challenges: enriched })
-}
+})
+

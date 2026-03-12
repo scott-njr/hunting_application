@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized } from '@/lib/api-response'
+import { apiOk, unauthorized, withHandler, serverError } from '@/lib/api-response'
 
 // POST /api/community/posts/[id]/react — toggle like on/off
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withHandler(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -35,4 +35,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     liked: !existing,
     reaction_count: reactions?.length ?? 0,
   })
-}
+})
+

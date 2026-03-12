@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { unauthorized, notFound, serverError } from '@/lib/api-response'
+import { unauthorized, notFound, serverError, withHandler } from '@/lib/api-response'
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>
 }
 
 /** GET /api/firearms/shot-timer/[sessionId]/export — Export session as Practiscore-compatible CSV */
-export async function GET(_req: Request, { params }: RouteParams) {
+export const GET = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { sessionId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -53,4 +53,5 @@ export async function GET(_req: Request, { params }: RouteParams) {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
-}
+})
+

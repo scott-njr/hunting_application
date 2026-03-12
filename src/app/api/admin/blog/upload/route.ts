@@ -1,12 +1,12 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, forbidden, badRequest, serverError } from '@/lib/api-response'
+import { apiOk, forbidden, badRequest, serverError, withHandler } from '@/lib/api-response'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -51,4 +51,5 @@ export async function POST(req: NextRequest) {
     .getPublicUrl(fileName)
 
   return apiOk({ url: urlData.publicUrl })
-}
+})
+

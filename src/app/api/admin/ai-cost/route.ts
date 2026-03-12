@@ -1,12 +1,12 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, forbidden } from '@/lib/api-response'
+import { apiOk, forbidden, withHandler, serverError } from '@/lib/api-response'
 
 // Claude Sonnet 4.6 pricing
 const INPUT_COST_PER_TOKEN = 3 / 1_000_000   // $3 per 1M input tokens
 const OUTPUT_COST_PER_TOKEN = 15 / 1_000_000  // $15 per 1M output tokens
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -86,4 +86,5 @@ export async function GET() {
     dayOfMonth,
     daysInMonth,
   })
-}
+})
+

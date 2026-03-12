@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(
+export const GET = withHandler(async (
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -38,12 +38,13 @@ export async function GET(
   }
 
   return apiOk({ issue })
-}
+})
 
-export async function PATCH(
+
+export const PATCH = withHandler(async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -96,4 +97,5 @@ export async function PATCH(
   if (error) return serverError()
 
   return apiOk({ issue })
-}
+})
+

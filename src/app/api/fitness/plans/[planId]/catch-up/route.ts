@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import { getCurrentWeek, getWeekMonday } from '@/lib/fitness/date-helpers'
-import { apiDone, unauthorized, notFound, badRequest, serverError } from '@/lib/api-response'
+import { apiDone, unauthorized, notFound, badRequest, serverError, withHandler } from '@/lib/api-response'
 
 const TRAINING_DAYS: Record<number, number[]> = {
   1: [1],
@@ -15,10 +15,10 @@ const TRAINING_DAYS: Record<number, number[]> = {
 // POST /api/fitness/plans/[planId]/catch-up
 // Shifts the plan timeline so the next unfinished workout falls on today.
 // No AI call — pure schedule adjustment.
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -115,4 +115,5 @@ export async function POST(
     current_week: newCurrentWeek,
     next_session: target as Record<string, unknown>,
   })
-}
+})
+

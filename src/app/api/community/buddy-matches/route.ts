@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized } from '@/lib/api-response'
+import { apiOk, unauthorized, withHandler, serverError } from '@/lib/api-response'
 
 type MergedProfile = {
   id: string
@@ -123,7 +123,7 @@ function scoreBuddy(me: MergedProfile, candidate: MergedProfile): { score: numbe
   return { score, reasons }
 }
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -250,4 +250,5 @@ export async function GET() {
   const mentors = scored.filter(m => m.willing_to_mentor).slice(0, 3)
 
   return apiOk({ matches, mentors })
-}
+})
+

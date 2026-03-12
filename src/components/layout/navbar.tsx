@@ -35,7 +35,7 @@ export function Navbar({ showHamburger }: NavbarProps) {
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-menu'))}
-              className="lg:hidden p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
+              className="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
@@ -52,7 +52,7 @@ export function Navbar({ showHamburger }: NavbarProps) {
             <>
               <Link
                 href="/home/friends"
-                className="relative p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
+                className="relative p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
                 aria-label="Friends"
               >
                 <Users className="h-5 w-5" />
@@ -64,7 +64,7 @@ export function Navbar({ showHamburger }: NavbarProps) {
               </Link>
               <Link
                 href="/home/messages"
-                className="relative p-2 text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
+                className="relative p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-primary transition-colors rounded-lg hover:bg-surface"
                 aria-label="Messages"
               >
                 <Mail className="h-5 w-5" />

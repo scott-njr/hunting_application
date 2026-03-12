@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized } from '@/lib/api-response'
+import { apiOk, unauthorized, withHandler, serverError } from '@/lib/api-response'
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -24,4 +24,5 @@ export async function GET(req: NextRequest) {
     .maybeSingle()
 
   return apiOk({ available: !existing })
-}
+})
+

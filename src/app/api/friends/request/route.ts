@@ -1,13 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // POST /api/friends/request — send a friend request to another user
 // Body: { recipient_id: string }
 
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -43,4 +43,5 @@ export async function POST(req: NextRequest) {
   }
 
   return apiOk({ friendship: data }, 201)
-}
+})
+

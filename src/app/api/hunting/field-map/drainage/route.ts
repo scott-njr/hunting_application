@@ -5,7 +5,7 @@ import {
   traceDrainageFlow,
   flowResultToBands,
 } from '@/lib/field-map/drainage'
-import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, withHandler, serverError } from '@/lib/api-response'
 
 /** Grid dimensions — 15×15 = 225 sample points */
 const GRID_SIZE = 15
@@ -23,7 +23,7 @@ const USGS_3DEP_URL =
  * Fetches a DEM grid from USGS 3DEP and traces terrain-following
  * scent flow path from the given location.
  */
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -120,7 +120,8 @@ export async function GET(req: NextRequest) {
     // Return null — the client falls back to a straight cone
     return apiOk({ bands: null } as Record<string, unknown>)
   }
-}
+})
+
 
 /**
  * Parse USGS getSamples response into grid-friendly format.

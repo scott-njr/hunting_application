@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 import { aiCall } from '@/lib/ai'
 import { getCoachContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
-import { apiOk, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 /** Maximum conversation turns to serialize into the prompt */
 const MAX_HISTORY_TURNS = 6
@@ -13,7 +13,7 @@ type ConversationTurn = {
   content: string
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -70,4 +70,5 @@ export async function POST(req: NextRequest) {
   })
 
   return apiOk({ response: result.response })
-}
+})
+

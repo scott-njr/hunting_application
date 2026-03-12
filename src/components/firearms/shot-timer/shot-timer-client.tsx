@@ -663,7 +663,7 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
 
           {/* Live shot splits — shown during running when shots are detected */}
           {(state.phase === 'running' || state.phase === 'stopped') && state.shots.length > 0 && (
-            <div className="bg-elevated border border-subtle rounded-lg overflow-hidden">
+            <div className="bg-elevated border border-subtle rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-subtle">

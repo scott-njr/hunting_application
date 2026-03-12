@@ -1,14 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import type { Json } from '@/types/database.types'
-import { apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/[planId]/accept-adjustment
 // Accepts a draft adjustment: snapshots current plan to history, then saves the draft
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -65,4 +65,5 @@ export async function POST(
   }
 
   return apiDone()
-}
+})
+

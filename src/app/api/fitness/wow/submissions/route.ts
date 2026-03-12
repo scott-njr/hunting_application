@@ -2,7 +2,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import { calculateWeeklyPoints } from '@/lib/fitness/leaderboard-points'
-import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 function computeAgeGroup(dob: string | null): string | null {
   if (!dob) return null
@@ -31,7 +31,7 @@ function getCurrentMonday(): string {
   return `${year}-${month}-${date}`
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -106,9 +106,10 @@ export async function GET(req: NextRequest) {
   })
 
   return apiOk({ submissions: enriched, workout_id: resolvedWorkoutId, scoring: scoring ?? 'time' })
-}
+})
 
-export async function POST(req: NextRequest) {
+
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -190,4 +191,5 @@ export async function POST(req: NextRequest) {
   await calculateWeeklyPoints(workout_id, admin)
 
   return apiOk({ submission: { ...submission, community_post_id: post?.id ?? null } }, 201)
-}
+})
+

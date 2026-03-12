@@ -42,6 +42,7 @@ export default function CommunityClient({ initialFriends, currentUserId }: Props
       setSearching(true)
       try {
         const res = await fetch(`/api/users/find?q=${encodeURIComponent(searchQuery)}`)
+        if (!res.ok) return
         const data = await res.json()
         const existingIds = new Set([currentUserId, ...friends.map(f => f.friend_id)])
         setSearchResults((data.results ?? []).filter((r: SearchResult) => !existingIds.has(r.user_id)))

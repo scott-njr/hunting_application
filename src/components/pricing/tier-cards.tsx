@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ALL_MODULES, MODULE_TIER_LABELS, type ModuleSlug, type ModuleTier } from '@/lib/modules'
+import { ALL_MODULES, MODULE_TIER_LABELS, MODULE_TIER_PRICES as TIER_PRICES, type ModuleSlug, type ModuleTier } from '@/lib/modules'
 import { Crosshair, Target, Shield, Heart, Fish, Dumbbell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthModal } from '@/components/auth/auth-modal-provider'
@@ -19,11 +19,6 @@ const MODULE_ICONS: Record<ModuleSlug, React.ElementType> = {
 
 const TIERS: ModuleTier[] = ['free', 'basic', 'pro']
 
-const TIER_PRICES: Record<ModuleTier, { amount: string; period: string }> = {
-  free: { amount: '$0', period: 'forever' },
-  basic: { amount: '$9', period: '/mo' },
-  pro: { amount: '$19', period: '/mo' },
-}
 
 interface TierCardsProps {
   onTierChanged?: () => void

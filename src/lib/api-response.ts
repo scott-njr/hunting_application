@@ -62,6 +62,23 @@ export function isErrorResponse(value: unknown): value is NextResponse {
   return value instanceof NextResponse
 }
 
+// ── Handler wrapper ──
+
+/** Wraps an API handler with top-level try/catch to prevent unhandled 500s */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withHandler<T extends (...args: any[]) => Promise<Response>>(handler: T): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (async (...args: any[]) => {
+    try {
+      return await handler(...args)
+    } catch (err) {
+      const req = args[0] as NextRequest
+      console.error(`[API ${req.method} ${req.nextUrl.pathname}]`, err)
+      return serverError()
+    }
+  }) as T
+}
+
 // ── CSRF ──
 
 /** Check Origin header against the app's host — returns 403 response if cross-origin, null if OK */

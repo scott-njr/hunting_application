@@ -227,7 +227,7 @@ function ActiveChallengeCard({
               Submit Score
             </button>
           )}
-          <button onClick={onToggle} className="text-muted hover:text-secondary p-1">
+          <button onClick={onToggle} className="text-muted hover:text-secondary p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
         </div>

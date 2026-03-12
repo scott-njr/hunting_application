@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -19,9 +19,10 @@ export async function GET() {
   }
 
   return apiOk({ tests: tests ?? [] })
-}
+})
 
-export async function POST(req: NextRequest) {
+
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -62,4 +63,5 @@ export async function POST(req: NextRequest) {
   }
 
   return apiOk({ test }, 201)
-}
+})
+

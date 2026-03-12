@@ -1,9 +1,9 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, apiDone, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+export const GET = withHandler(async (_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -44,9 +44,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ use
     subscriptions: subscriptions ?? [],
     plans: plans ?? [],
   })
-}
+})
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+
+export const PATCH = withHandler(async (req: NextRequest, { params }: { params: Promise<{ userId: string }> }) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -78,4 +79,5 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
   if (error) return serverError()
 
   return apiDone()
-}
+})
+

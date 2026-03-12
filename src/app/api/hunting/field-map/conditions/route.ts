@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, withHandler, serverError } from '@/lib/api-response'
 
 const WIND_DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
 
@@ -30,7 +30,7 @@ function getMoonData(date: Date) {
   return { moon_phase: phaseName, moon_illumination: illumination }
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -81,4 +81,5 @@ export async function GET(req: NextRequest) {
       ...moon,
     } as Record<string, unknown>)
   }
-}
+})
+

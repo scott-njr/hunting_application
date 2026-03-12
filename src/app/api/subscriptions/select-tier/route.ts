@@ -27,8 +27,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Block paid tier upgrades unless explicitly allowed (pre-Stripe development mode)
-    if (tier !== 'free' && !process.env.ALLOW_FREE_TIER_SELECTION) {
-      return apiError('Payment required. Tier upgrades are not available without a valid subscription.', 402)
+    // Double-guard: even if env var is accidentally set in production, block upgrades
+    if (tier !== 'free') {
+      if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_SECRET_KEY) {
+        return apiError('Payment required. Tier upgrades require Stripe integration.', 402)
+      }
+      if (!process.env.ALLOW_FREE_TIER_SELECTION && !process.env.STRIPE_SECRET_KEY) {
+        return apiError('Payment required. Tier upgrades are not available without a valid subscription.', 402)
+      }
     }
 
     const supabase = await createClient()

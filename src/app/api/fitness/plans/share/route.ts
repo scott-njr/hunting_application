@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, apiError, unauthorized, notFound, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiError, unauthorized, notFound, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/share — Share a plan with a friend
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -83,10 +83,11 @@ export async function POST(req: NextRequest) {
   }
 
   return apiOk({ share }, 201)
-}
+})
+
 
 // GET /api/fitness/plans/share — List shared plans
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -152,4 +153,5 @@ export async function GET(req: NextRequest) {
   })
 
   return apiOk({ shares: enriched })
-}
+})
+

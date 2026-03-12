@@ -4,12 +4,12 @@ import { aiCall, extractJSON } from '@/lib/ai'
 import { getFitnessProfileContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import type { Json } from '@/types/database.types'
-import { apiDone, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiDone, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -134,4 +134,5 @@ Instructions should be 1-3 sentences max — enough to know the method, not a de
   })
 
   return apiDone({ meal: newMeal })
-}
+})
+

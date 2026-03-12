@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(req: Request) {
+export const GET = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -71,9 +71,10 @@ export async function GET(req: Request) {
       liked_by_me: likedSet.has(p.id),
     })),
   })
-}
+})
 
-export async function POST(req: Request) {
+
+export const POST = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -137,4 +138,5 @@ export async function POST(req: Request) {
       liked_by_me: false,
     },
   }, 201)
-}
+})
+

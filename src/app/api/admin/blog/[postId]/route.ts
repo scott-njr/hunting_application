@@ -1,12 +1,12 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, apiDone, apiError, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, apiError, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(
+export const GET = withHandler(async (
   _req: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
-) {
+) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -26,12 +26,13 @@ export async function GET(
   if (error || !data) return notFound('Post not found')
 
   return apiOk({ post: data })
-}
+})
 
-export async function PATCH(
+
+export const PATCH = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
-) {
+) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -86,12 +87,13 @@ export async function PATCH(
   }
 
   return apiOk({ post: data })
-}
+})
 
-export async function DELETE(
+
+export const DELETE = withHandler(async (
   _req: NextRequest,
   { params }: { params: Promise<{ postId: string }> }
-) {
+) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -110,4 +112,5 @@ export async function DELETE(
   if (error) return serverError('Failed to delete post')
 
   return apiDone()
-}
+})
+

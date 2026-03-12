@@ -1,7 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { aiCall, extractJSON } from '@/lib/ai'
-import { apiOk, apiError, unauthorized, forbidden, serverError } from '@/lib/api-response'
+import { apiOk, apiError, unauthorized, forbidden, serverError, withHandler } from '@/lib/api-response'
 
 function getCurrentMonday(): string {
   const now = new Date()
@@ -62,7 +62,7 @@ Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
   }
 }`
 
-export async function POST() {
+export const POST = withHandler(async () => {
   // Dev-only — production uses Vercel cron at /api/cron/wow
   if (process.env.NODE_ENV === 'production') {
     return forbidden()
@@ -130,4 +130,5 @@ export async function POST() {
   }
 
   return apiOk({ workout })
-}
+})
+

@@ -102,7 +102,7 @@ export function PlanCompareDetail({ activePlanId, sourcePlanId, weeks: rawWeeks,
     <div className="space-y-4">
       {/* Apply selected weeks bar */}
       {!isMeal && selectedWeeks.size > 0 && (
-        <div className="sticky top-0 z-10 rounded-lg border border-blue-400/30 bg-surface p-3 flex items-center justify-between gap-3">
+        <div className="sticky top-0 z-10 rounded-lg border border-blue-400/30 bg-surface p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
           <p className="text-secondary text-sm">
             {selectedWeeks.size} week{selectedWeeks.size > 1 ? 's' : ''} selected from previous plan
           </p>

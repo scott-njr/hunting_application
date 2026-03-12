@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, apiDone, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // GET /api/community/posts/[id]/comments
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withHandler(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -45,10 +45,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       avatar_url: avatarMap[c.user_id] ?? null,
     })),
   })
-}
+})
+
 
 // POST /api/community/posts/[id]/comments
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withHandler(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -79,10 +80,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .maybeSingle()
 
   return apiOk({ comment: { ...comment, display_name: profile?.display_name ?? null, user_name: profile?.user_name ?? null, avatar_url: profile?.avatar_url ?? null } }, 201)
-}
+})
+
 
 // DELETE /api/community/posts/[id]/comments?comment_id=xxx
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withHandler(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -103,4 +105,5 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return serverError()
   }
   return apiDone()
-}
+})
+

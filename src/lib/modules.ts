@@ -15,6 +15,13 @@ export const MODULE_TIER_LABELS: Record<ModuleTier, string> = {
   pro: 'Pro',
 }
 
+/** Placeholder prices — will be replaced by Stripe price lookup when payments are wired */
+export const MODULE_TIER_PRICES: Record<ModuleTier, { amount: string; period: string }> = {
+  free: { amount: '$0', period: 'forever' },
+  basic: { amount: '$9', period: '/mo' },
+  pro: { amount: '$19', period: '/mo' },
+}
+
 // AI query quota per module tier per month
 export const MODULE_AI_QUOTA: Record<ModuleTier, number> = {
   free: 0,

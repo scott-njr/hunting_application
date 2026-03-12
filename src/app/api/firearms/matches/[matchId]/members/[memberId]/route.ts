@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 interface RouteParams {
   params: Promise<{ matchId: string; memberId: string }>
 }
 
 /** PATCH /api/firearms/matches/[matchId]/members/[memberId] — Update member */
-export async function PATCH(req: Request, { params }: RouteParams) {
+export const PATCH = withHandler(async (req: Request, { params }: RouteParams) => {
   const { matchId, memberId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -46,10 +46,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   if (error) return serverError()
 
   return apiOk({ member })
-}
+})
+
 
 /** DELETE /api/firearms/matches/[matchId]/members/[memberId] — Remove member */
-export async function DELETE(_req: Request, { params }: RouteParams) {
+export const DELETE = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { matchId, memberId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -74,4 +75,5 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   if (error) return serverError()
 
   return apiDone()
-}
+})
+

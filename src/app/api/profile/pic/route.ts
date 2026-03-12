@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { apiOk, unauthorized, badRequest, serverError } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, withHandler } from '@/lib/api-response'
 
-export async function POST(request: Request) {
+export const POST = withHandler(async (request: Request) => {
   // Verify auth
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -86,4 +86,5 @@ export async function POST(request: Request) {
   }
 
   return apiOk({ avatar_url })
-}
+})
+

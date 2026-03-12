@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, apiDone, unauthorized, notFound, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, unauthorized, notFound, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>
 }
 
 /** GET /api/firearms/shot-timer/[sessionId] — Fetch session with strings */
-export async function GET(_req: Request, { params }: RouteParams) {
+export const GET = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { sessionId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,10 +29,11 @@ export async function GET(_req: Request, { params }: RouteParams) {
     .order('string_number', { ascending: true })
 
   return apiOk({ session, strings: strings ?? [] })
-}
+})
+
 
 /** PATCH /api/firearms/shot-timer/[sessionId] — Update session */
-export async function PATCH(req: Request, { params }: RouteParams) {
+export const PATCH = withHandler(async (req: Request, { params }: RouteParams) => {
   const { sessionId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -80,10 +81,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   }
 
   return apiOk({ session })
-}
+})
+
 
 /** DELETE /api/firearms/shot-timer/[sessionId] — Delete session */
-export async function DELETE(_req: Request, { params }: RouteParams) {
+export const DELETE = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { sessionId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -98,4 +100,5 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   if (error) return serverError()
 
   return apiDone()
-}
+})
+

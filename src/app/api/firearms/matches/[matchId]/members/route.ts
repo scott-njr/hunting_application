@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 interface RouteParams {
   params: Promise<{ matchId: string }>
 }
 
 /** GET /api/firearms/matches/[matchId]/members — List members with scores */
-export async function GET(_req: Request, { params }: RouteParams) {
+export const GET = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { matchId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -55,10 +55,11 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }))
 
   return apiOk({ members })
-}
+})
+
 
 /** POST /api/firearms/matches/[matchId]/members — Add member */
-export async function POST(req: Request, { params }: RouteParams) {
+export const POST = withHandler(async (req: Request, { params }: RouteParams) => {
   const { matchId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -99,4 +100,5 @@ export async function POST(req: Request, { params }: RouteParams) {
   }
 
   return apiOk({ member }, 201)
-}
+})
+

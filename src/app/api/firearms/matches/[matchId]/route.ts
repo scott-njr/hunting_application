@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 interface RouteParams {
   params: Promise<{ matchId: string }>
 }
 
 /** GET /api/firearms/matches/[matchId] — Match detail with members and course */
-export async function GET(_req: Request, { params }: RouteParams) {
+export const GET = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { matchId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -37,10 +37,11 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }
 
   return apiOk({ match, members: members ?? [], course })
-}
+})
+
 
 /** PATCH /api/firearms/matches/[matchId] — Update match (organizer only) */
-export async function PATCH(req: Request, { params }: RouteParams) {
+export const PATCH = withHandler(async (req: Request, { params }: RouteParams) => {
   const { matchId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -81,10 +82,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   if (error) return serverError()
 
   return apiOk({ match })
-}
+})
+
 
 /** DELETE /api/firearms/matches/[matchId] — Delete match (organizer only) */
-export async function DELETE(_req: Request, { params }: RouteParams) {
+export const DELETE = withHandler(async (_req: Request, { params }: RouteParams) => {
   const { matchId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -99,4 +101,5 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   if (error) return serverError()
 
   return apiDone()
-}
+})
+

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, apiError } from '@/lib/api-response'
+import { apiOk, apiError, withHandler, serverError } from '@/lib/api-response'
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -19,4 +19,5 @@ export async function GET() {
   }
 
   return apiOk({ count: count ?? 0 })
-}
+})
+

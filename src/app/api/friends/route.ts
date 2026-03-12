@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized, serverError } from '@/lib/api-response'
+import { apiOk, unauthorized, serverError, withHandler } from '@/lib/api-response'
 
 // GET /api/friends — returns friends for the authenticated user
 // ?status=accepted (default) — confirmed friends only (used by hunt party picker)
 // ?status=all — all friendships including pending (used by friends page)
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -32,4 +32,5 @@ export async function GET(req: NextRequest) {
   }
 
   return apiOk({ friends: data ?? [] })
-}
+})
+

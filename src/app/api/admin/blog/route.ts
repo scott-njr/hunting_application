@@ -1,9 +1,9 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, apiError, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiError, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -32,9 +32,10 @@ export async function GET() {
   }))
 
   return apiOk({ posts: enriched })
-}
+})
 
-export async function POST(req: NextRequest) {
+
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -81,4 +82,5 @@ export async function POST(req: NextRequest) {
   }
 
   return apiOk({ post: data }, 201)
-}
+})
+

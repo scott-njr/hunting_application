@@ -403,7 +403,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span className="text-muted text-xs">{timeAgo(c.created_on)}</span>
                                   {c.user_id === currentUserId && (
-                                    <button onClick={() => deleteComment(post.id, c.id)} className="text-muted hover:text-red-400 transition-colors" title="Delete">
+                                    <button onClick={() => deleteComment(post.id, c.id)} className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-red-400 transition-colors" title="Delete">
                                       <Trash2 className="w-3 h-3" />
                                     </button>
                                   )}

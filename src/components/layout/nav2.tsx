@@ -26,7 +26,7 @@ export function Nav2() {
             <li key={label}>
               <Link
                 href={href}
-                className="text-xs font-medium text-muted hover:text-primary px-2 py-2.5 rounded-md hover:bg-elevated/60 transition-colors whitespace-nowrap tracking-wide uppercase"
+                className="text-xs font-medium text-muted hover:text-primary px-3 py-2.5 min-h-[44px] inline-flex items-center rounded-md hover:bg-elevated/60 transition-colors whitespace-nowrap tracking-wide uppercase"
               >
                 {label}
               </Link>

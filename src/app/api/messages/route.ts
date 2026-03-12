@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest, forbidden, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, forbidden, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // GET /api/messages?friend_id=xxx — fetch conversation with a specific friend
-export async function GET(req: Request) {
+export const GET = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -35,10 +35,11 @@ export async function GET(req: Request) {
     .is('read_at', null)
 
   return apiOk({ messages: data ?? [] })
-}
+})
+
 
 // POST /api/messages — send a direct message
-export async function POST(req: Request) {
+export const POST = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -85,4 +86,5 @@ export async function POST(req: Request) {
     return serverError()
   }
   return apiOk({ message: data }, 201)
-}
+})
+

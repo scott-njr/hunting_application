@@ -5,7 +5,7 @@ import { Resend } from 'resend'
 import { marked } from 'marked'
 import { verifyAdmin } from '@/lib/admin-utils'
 import { buildBroadcastEmail, htmlToPlainText } from '@/lib/email/broadcast-template'
-import { apiOk, apiDone, apiError, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, apiError, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 import type { BroadcastCategory } from '@/types'
 
 const VALID_CATEGORIES: BroadcastCategory[] = ['release_notes', 'newsletter', 'blog', 'announcement']
@@ -24,7 +24,7 @@ function buildUnsubscribeUrl(email: string, category: string): string {
 }
 
 // GET — list past broadcasts
-export async function GET() {
+export const GET = withHandler(async () => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -42,10 +42,11 @@ export async function GET() {
   if (error) return serverError()
 
   return apiOk({ broadcasts: data ?? [] })
-}
+})
+
 
 // POST — send a broadcast
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -240,4 +241,5 @@ export async function POST(req: NextRequest) {
     console.error('[Broadcast]', err)
     return serverError()
   }
-}
+})
+

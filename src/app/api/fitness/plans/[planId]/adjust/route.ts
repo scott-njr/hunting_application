@@ -4,12 +4,12 @@ import { aiCall, extractJSON } from '@/lib/ai'
 import { getFitnessProfileContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import { getCurrentWeek, getPassedSessionNumbers } from '@/lib/fitness/date-helpers'
-import { apiOk, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -198,4 +198,5 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
     draft: parsed as Record<string, unknown>,
     goal: ((parsed.goal_summary as string) ?? plan.goal) as string,
   })
-}
+})
+

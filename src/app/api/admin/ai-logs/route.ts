@@ -1,9 +1,9 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, forbidden, serverError } from '@/lib/api-response'
+import { apiOk, forbidden, serverError, withHandler } from '@/lib/api-response'
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -67,4 +67,5 @@ export async function GET(req: NextRequest) {
   const distinctFeatures = [...new Set((features ?? []).map(f => f.feature))].sort()
 
   return apiOk({ logs: enrichedLogs, total: count ?? 0, features: distinctFeatures })
-}
+})
+

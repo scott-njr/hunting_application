@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized, notFound } from '@/lib/api-response'
+import { apiOk, unauthorized, notFound, withHandler, serverError } from '@/lib/api-response'
 
 // GET /api/fitness/plans/share/[shareId]/compare — Comparison data for shared plan
-export async function GET(
+export const GET = withHandler(async (
   _req: NextRequest,
   { params }: { params: Promise<{ shareId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -127,4 +127,5 @@ export async function GET(
     weeks: comparison,
     is_source: user.id === share.source_user_id,
   })
-}
+})
+

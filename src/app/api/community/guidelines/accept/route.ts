@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiDone, unauthorized, serverError } from '@/lib/api-response'
+import { apiDone, unauthorized, serverError, withHandler } from '@/lib/api-response'
 import { CURRENT_GUIDELINES_VERSION } from '@/lib/community-guidelines'
 
-export async function POST() {
+export const POST = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -22,4 +22,5 @@ export async function POST() {
   }
 
   return apiDone()
-}
+})
+

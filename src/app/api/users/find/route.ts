@@ -1,7 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, withHandler, serverError } from '@/lib/api-response'
 
 // Uses service role key — bypasses RLS to look up Scout users.
 // Returns minimal info only: user_id + display_name + email. Never returns sensitive data.
@@ -9,7 +9,7 @@ import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
 // ?email=  — exact single-result lookup (used by legacy flows)
 // ?q=      — search by display_name or email prefix, returns array (used by Community page)
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return unauthorized()
@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
   // ── Search by display_name or email prefix (community search) ───────────────
   if (q && q.length < 2) return apiOk({ results: [] })
 
-  // Sanitize q to prevent PostgREST filter metacharacter injection
-  const sanitizedQ = (q as string).replace(/[(),."'\\]/g, '')
+  // Sanitize q to prevent PostgREST filter metacharacter and SQL wildcard injection
+  const sanitizedQ = (q as string).replace(/[(),."'\\%_]/g, '')
   if (!sanitizedQ) return apiOk({ results: [] })
 
   // Search user_profile by display_name or user_name
@@ -68,4 +68,5 @@ export async function GET(req: NextRequest) {
   }
 
   return apiOk({ results })
-}
+})
+

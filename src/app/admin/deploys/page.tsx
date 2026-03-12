@@ -128,19 +128,23 @@ export default function AdminDeploysPage() {
     setDeploying(issueId)
     const adminNotes = notesRefs.current[issueId]?.value ?? ''
 
-    const res = await fetch('/api/admin/deploys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ issueId, adminNotes }),
-    })
+    try {
+      const res = await fetch('/api/admin/deploys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issueId, adminNotes }),
+      })
 
-    if (res.ok) {
-      setDeploySuccess(issueId)
-      setTimeout(() => setDeploySuccess(null), 3000)
-      fetchDeployData()
-    } else {
-      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
-      setDeployError(`Deploy failed: ${err.error ?? 'Unknown error'}`)
+      if (res.ok) {
+        setDeploySuccess(issueId)
+        setTimeout(() => setDeploySuccess(null), 3000)
+        fetchDeployData()
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+        setDeployError(`Deploy failed: ${err.error ?? 'Unknown error'}`)
+      }
+    } catch {
+      setDeployError('Deploy failed: Network error')
     }
     setDeploying(null)
   }

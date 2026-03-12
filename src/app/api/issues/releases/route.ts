@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, serverError } from '@/lib/api-response'
+import { apiOk, serverError, withHandler } from '@/lib/api-response'
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
 
   // Fetch resolved issues with release tags — RLS allows public read for these
@@ -28,4 +28,5 @@ export async function GET() {
   }))
 
   return apiOk({ releases })
-}
+})
+

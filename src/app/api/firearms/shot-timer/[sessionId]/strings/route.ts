@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>
 }
 
 /** POST /api/firearms/shot-timer/[sessionId]/strings — Save a completed string */
-export async function POST(req: Request, { params }: RouteParams) {
+export const POST = withHandler(async (req: Request, { params }: RouteParams) => {
   const { sessionId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -44,4 +44,5 @@ export async function POST(req: Request, { params }: RouteParams) {
   if (error) return serverError()
 
   return apiOk({ string }, 201)
-}
+})
+

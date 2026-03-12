@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { apiOk, unauthorized, badRequest, serverError } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, withHandler } from '@/lib/api-response'
 
 const MAX_PHOTOS = 6
 
-export async function POST(request: Request) {
+export const POST = withHandler(async (request: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -71,9 +71,10 @@ export async function POST(request: Request) {
   }
 
   return apiOk({ photo_urls: updatedPhotos })
-}
+})
 
-export async function DELETE(request: Request) {
+
+export const DELETE = withHandler(async (request: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -113,4 +114,5 @@ export async function DELETE(request: Request) {
   }
 
   return apiOk({ photo_urls: updatedPhotos })
-}
+})
+

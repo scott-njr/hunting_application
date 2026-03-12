@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
-import { apiOk, unauthorized, badRequest, serverError } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, withHandler } from '@/lib/api-response'
 
 // GET /api/fitness/plans/history?type=run|strength|meal — List abandoned (historical) plans
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -47,4 +47,5 @@ export async function GET(req: NextRequest) {
   }))
 
   return apiOk({ plans: enriched })
-}
+})
+

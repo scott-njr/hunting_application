@@ -1,9 +1,9 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, apiDone, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
     .range(offset, offset + limit - 1)
 
   if (search) {
-    // Sanitize search to prevent PostgREST filter injection
-    const safe = search.replace(/[(),."'\\]/g, '')
+    // Sanitize search to prevent PostgREST filter and SQL wildcard injection
+    const safe = search.replace(/[(),."'\\%_]/g, '')
     if (safe) {
       query = query.or(`email.ilike.%${safe}%`)
     }
@@ -59,9 +59,10 @@ export async function GET(req: NextRequest) {
   }))
 
   return apiOk({ users, total: count, page, limit })
-}
+})
 
-export async function PATCH(req: NextRequest) {
+
+export const PATCH = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -91,4 +92,5 @@ export async function PATCH(req: NextRequest) {
   if (error) return serverError()
 
   return apiDone()
-}
+})
+

@@ -2,13 +2,13 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiDone, forbidden, badRequest, notFound, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiDone, forbidden, badRequest, notFound, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
 /** POST — Manually trigger AI triage on an existing issue */
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -48,13 +48,14 @@ export async function POST(req: NextRequest) {
       maxTokens: 512,
       userMessage: `Classify this bug report and propose a fix.
 
-Title: ${record.title}
-Category: ${record.category}
-Module: ${record.module}
-Page URL: ${record.page_url ?? 'not provided'}
+<title>${record.title}</title>
+<category>${record.category}</category>
+<module>${record.module}</module>
+<page_url>${record.page_url ?? 'not provided'}</page_url>
 
-Description:
-${record.description}`,
+<description>
+${record.description}
+</description>`,
     })
 
     if (result.success) {
@@ -149,4 +150,5 @@ ${record.description}`,
     githubIssueUrl,
     ai_classified_at: updateData.ai_classified_at as string,
   })
-}
+})
+

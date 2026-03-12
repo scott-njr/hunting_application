@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 /** GET /api/firearms/matches — List organizer's matches */
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -37,10 +37,11 @@ export async function GET() {
   }))
 
   return apiOk({ matches: enriched })
-}
+})
+
 
 /** POST /api/firearms/matches — Create match */
-export async function POST(req: Request) {
+export const POST = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -66,4 +67,5 @@ export async function POST(req: Request) {
   if (error) return serverError()
 
   return apiOk({ match }, 201)
-}
+})
+

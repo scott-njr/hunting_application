@@ -221,7 +221,7 @@ function SessionCard({
 
                   {/* Splits table */}
                   {str.shots_ms.length > 0 && (
-                    <div className="overflow-hidden rounded border border-subtle">
+                    <div className="overflow-x-auto rounded border border-subtle">
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-subtle bg-elevated">
@@ -274,7 +274,7 @@ function SessionCard({
             <ExportButton sessionId={session.id} />
             <button
               onClick={() => onDelete(session.id)}
-              className="p-2 text-muted hover:text-red-400 transition-colors"
+              className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-red-400 transition-colors"
               title="Delete session"
             >
               <Trash2 className="h-4 w-4" />

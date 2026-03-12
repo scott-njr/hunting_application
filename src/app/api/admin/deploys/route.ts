@@ -1,14 +1,14 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, apiDone, forbidden, badRequest, notFound, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, forbidden, badRequest, notFound, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
 /** GET — Fetch deploy queue (triaged issues) + deploy history */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function GET(_req: NextRequest) {
+export const GET = withHandler(async (_req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -80,10 +80,11 @@ export async function GET(_req: NextRequest) {
       deploysThisWeek: deploysThisWeek ?? 0,
     },
   })
-}
+})
+
 
 /** POST — Trigger fix & deploy via GitHub Action workflow_dispatch */
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -170,4 +171,5 @@ export async function POST(req: NextRequest) {
     .eq('id', issueId)
 
   return apiDone({ message: 'GitHub Action triggered' })
-}
+})
+

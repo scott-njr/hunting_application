@@ -1,11 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
-import { apiDone, unauthorized, forbidden, notFound, badRequest } from '@/lib/api-response'
+import { apiDone, unauthorized, forbidden, notFound, badRequest, withHandler, serverError } from '@/lib/api-response'
 
-export async function POST(
+export const POST = withHandler(async (
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -69,4 +69,5 @@ export async function POST(
     .eq('id', id)
 
   return apiDone()
-}
+})
+

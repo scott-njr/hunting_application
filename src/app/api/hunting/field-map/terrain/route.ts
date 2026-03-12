@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
+import { apiOk, unauthorized, badRequest, withHandler, serverError } from '@/lib/api-response'
 
 const DEG = Math.PI / 180
 
@@ -10,7 +10,7 @@ const DEG = Math.PI / 180
  * Fetches elevation from USGS 3DEP and computes slope/aspect
  * from a 3-point gradient (~50m offset grid).
  */
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -60,7 +60,8 @@ export async function GET(req: NextRequest) {
       slopeAspectDeg: 180,
     })
   }
-}
+})
+
 
 async function fetchElevation(lat: number, lng: number): Promise<number> {
   const url = `https://epqs.nationalmap.gov/v1/json?x=${lng}&y=${lat}&wkid=4326&units=Meters&includeDate=false`

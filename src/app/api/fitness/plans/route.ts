@@ -4,7 +4,7 @@ import { aiCall, extractJSON } from '@/lib/ai'
 import { getFitnessProfileContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import type { Json } from '@/types/database.types'
-import { apiOk, apiDone, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const RUN_PLAN_PROMPT = (config: {
   goal: string
@@ -224,7 +224,7 @@ Keep recipes practical and concise:
 const VALID_PLAN_TYPES = ['run', 'strength', 'meal'] as const
 type PlanType = typeof VALID_PLAN_TYPES[number]
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -251,9 +251,10 @@ export async function GET(req: NextRequest) {
     .order('completed_at', { ascending: true })
 
   return apiOk({ plan, logs: logs ?? [] })
-}
+})
 
-export async function POST(req: NextRequest) {
+
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -446,9 +447,10 @@ export async function POST(req: NextRequest) {
   })
 
   return apiOk({ plan }, 201)
-}
+})
 
-export async function DELETE(req: NextRequest) {
+
+export const DELETE = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -466,4 +468,5 @@ export async function DELETE(req: NextRequest) {
     .eq('status', 'active')
 
   return apiDone()
-}
+})
+

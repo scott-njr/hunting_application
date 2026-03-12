@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, apiDone, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiOk, apiDone, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 /** GET /api/firearms/shot-timer/courses — List user's courses of fire */
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -16,10 +16,11 @@ export async function GET() {
   if (error) return serverError()
 
   return apiOk({ courses: courses ?? [] })
-}
+})
+
 
 /** POST /api/firearms/shot-timer/courses — Create a course of fire */
-export async function POST(req: Request) {
+export const POST = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -64,10 +65,11 @@ export async function POST(req: Request) {
   if (error) return serverError()
 
   return apiOk({ course }, 201)
-}
+})
+
 
 /** PATCH /api/firearms/shot-timer/courses — Update a course of fire */
-export async function PATCH(req: Request) {
+export const PATCH = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -112,10 +114,11 @@ export async function PATCH(req: Request) {
   if (error) return serverError()
 
   return apiOk({ course })
-}
+})
+
 
 /** DELETE /api/firearms/shot-timer/courses — Delete a course of fire by id */
-export async function DELETE(req: Request) {
+export const DELETE = withHandler(async (req: Request) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -133,4 +136,5 @@ export async function DELETE(req: Request) {
   if (error) return serverError()
 
   return apiDone()
-}
+})
+

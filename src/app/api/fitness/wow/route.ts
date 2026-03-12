@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { apiOk, unauthorized, serverError } from '@/lib/api-response'
+import { apiOk, unauthorized, serverError, withHandler } from '@/lib/api-response'
 
 function getCurrentMonday(): string {
   const now = new Date()
@@ -13,7 +13,7 @@ function getCurrentMonday(): string {
   return `${year}-${month}-${date}`
 }
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return unauthorized()
@@ -51,4 +51,5 @@ export async function GET() {
   }
 
   return apiOk({ workout: data })
-}
+})
+

@@ -1,12 +1,12 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { verifyAdmin } from '@/lib/admin-utils'
-import { apiOk, forbidden, badRequest, serverError } from '@/lib/api-response'
+import { apiOk, forbidden, badRequest, serverError, withHandler } from '@/lib/api-response'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const BUCKET = 'broadcast-images'
 
-export async function POST(request: Request) {
+export const POST = withHandler(async (request: Request) => {
   const adminUser = await verifyAdmin()
   if (!adminUser) return forbidden()
 
@@ -59,4 +59,5 @@ export async function POST(request: Request) {
     console.error('[Broadcast Upload]', err)
     return serverError()
   }
-}
+})
+
