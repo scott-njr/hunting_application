@@ -155,8 +155,8 @@ export function useShotDetection({
 
     lastShotTimeRef.current = 0
     lastSampleTimeRef.current = 0
-    // Start "above" so we require silence before first detection — prevents beep residual
-    aboveThresholdRef.current = true
+    // Start below threshold — the BEEP_IGNORE_MS grace period handles beep residual
+    aboveThresholdRef.current = false
     setIsListening(true)
 
     function analyze() {
@@ -213,10 +213,8 @@ export function useShotDetection({
           if (!aboveThresholdRef.current && elapsed - lastShotTimeRef.current >= SHOT_DEBOUNCE_MS) {
             // Amplitude spike detected — check if it's a beep (narrowband at 1000Hz)
             const beepDetected = isBeepLike(freqData, beepBinsRef.current, allBinsRef.current)
-            // Require at least MIN_ACTIVE_BANDS to filter single-band noise (table bumps etc.)
-            const hasBandActivity = activeBands >= MIN_ACTIVE_BANDS
 
-            if (!beepDetected && hasBandActivity) {
+            if (!beepDetected) {
               lastShotTimeRef.current = elapsed
               onShotDetectedRef.current(Math.round(elapsed), peak)
             }

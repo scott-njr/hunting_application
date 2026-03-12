@@ -522,6 +522,36 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
             />
           )}
 
+          {/* Live shot splits — shown during running when shots are detected */}
+          {(state.phase === 'running' || state.phase === 'stopped') && state.shots.length > 0 && (
+            <div className="bg-elevated border border-subtle rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-subtle">
+                    <th className="px-3 py-1.5 text-left text-muted text-xs font-medium">#</th>
+                    <th className="px-3 py-1.5 text-right text-muted text-xs font-medium">Time</th>
+                    <th className="px-3 py-1.5 text-right text-muted text-xs font-medium">Split</th>
+                    <th className="px-3 py-1.5 text-right text-muted text-xs font-medium">Amp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.shots.map((shotMs, i) => (
+                    <tr key={i} className="border-b border-subtle last:border-0">
+                      <td className="px-3 py-1 text-secondary font-mono">{i + 1}</td>
+                      <td className="px-3 py-1 text-primary font-mono text-right">{(shotMs / 1000).toFixed(3)}s</td>
+                      <td className="px-3 py-1 text-accent font-mono text-right">
+                        {i > 0 ? (state.splitTimes[i - 1] / 1000).toFixed(3) + 's' : '—'}
+                      </td>
+                      <td className="px-3 py-1 text-muted font-mono text-right">
+                        {state.shotAmplitudes[i] ?? '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* Controls */}
           <TimerControls
             phase={state.phase}
