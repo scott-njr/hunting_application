@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiOk, unauthorized, badRequest, forbidden, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -7,23 +7,23 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export async function GET(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { searchParams } = new URL(req.url)
   const friendId = searchParams.get('friend_id')
-  if (!friendId) return NextResponse.json({ error: 'friend_id required' }, { status: 400 })
-  if (!UUID_RE.test(friendId)) return NextResponse.json({ error: 'Invalid friend_id' }, { status: 400 })
+  if (!friendId) return badRequest('friend_id required')
+  if (!UUID_RE.test(friendId)) return badRequest('Invalid friend_id')
 
   const { data, error } = await supabase
     .from('social_messages')
-    .select('id, sender_id, recipient_id, content, read_at, created_at')
+    .select('id, sender_id, recipient_id, content, read_at, created_on')
     .or(`and(sender_id.eq.${user.id},recipient_id.eq.${friendId}),and(sender_id.eq.${friendId},recipient_id.eq.${user.id})`)
-    .order('created_at', { ascending: true })
+    .order('created_on', { ascending: true })
     .limit(100)
 
   if (error) {
     console.error('[messages GET] fetch error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   // Mark unread messages as read
@@ -34,27 +34,28 @@ export async function GET(req: Request) {
     .eq('recipient_id', user.id)
     .is('read_at', null)
 
-  return NextResponse.json({ messages: data ?? [] })
+  return apiOk({ messages: data ?? [] })
 }
 
 // POST /api/messages — send a direct message
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const body = await req.json()
-  const { recipient_id, content } = body
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { recipient_id, content } = body as { recipient_id: string; content: string }
 
   const trimmedContent = String(content ?? '').trim()
   if (!recipient_id || !trimmedContent) {
-    return NextResponse.json({ error: 'recipient_id and content are required' }, { status: 400 })
+    return badRequest('recipient_id and content are required')
   }
   if (!UUID_RE.test(recipient_id)) {
-    return NextResponse.json({ error: 'Invalid recipient_id' }, { status: 400 })
+    return badRequest('Invalid recipient_id')
   }
   if (trimmedContent.length > 2000) {
-    return NextResponse.json({ error: 'Message must be 2000 characters or fewer' }, { status: 400 })
+    return badRequest('Message must be 2000 characters or fewer')
   }
 
   // Verify they are friends (accepted)
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
     .maybeSingle()
 
   if (!friendship) {
-    return NextResponse.json({ error: 'You can only message friends' }, { status: 403 })
+    return forbidden()
   }
 
   const { data, error } = await supabase
@@ -76,12 +77,12 @@ export async function POST(req: Request) {
       recipient_id,
       content: trimmedContent,
     })
-    .select('id, sender_id, recipient_id, content, read_at, created_at')
+    .select('id, sender_id, recipient_id, content, read_at, created_on')
     .single()
 
   if (error) {
     console.error('[messages POST] insert error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
-  return NextResponse.json({ message: data })
+  return apiOk({ message: data }, 201)
 }

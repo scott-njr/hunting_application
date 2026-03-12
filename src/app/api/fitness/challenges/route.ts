@@ -1,28 +1,38 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
+import type { Json } from '@/types/database.types'
 
 // POST /api/fitness/challenges — Create a workout challenge
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { challenged_id, item_type, item_snapshot, scoring_type, message } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { challenged_id, item_type, item_snapshot, scoring_type, message } = body as {
+    challenged_id: string
+    item_type: string
+    item_snapshot: Json
+    scoring_type: string
+    message: string
+  }
 
   if (!challenged_id || !item_type || !item_snapshot || !scoring_type) {
-    return NextResponse.json({ error: 'challenged_id, item_type, item_snapshot, and scoring_type are required' }, { status: 400 })
+    return badRequest('challenged_id, item_type, item_snapshot, and scoring_type are required')
   }
 
   if (!['run_session', 'strength_session'].includes(item_type)) {
-    return NextResponse.json({ error: 'Invalid item_type (must be run_session or strength_session)' }, { status: 400 })
+    return badRequest('Invalid item_type (must be run_session or strength_session)')
   }
 
   if (!['time', 'reps'].includes(scoring_type)) {
-    return NextResponse.json({ error: 'Invalid scoring_type (must be time or reps)' }, { status: 400 })
+    return badRequest('Invalid scoring_type (must be time or reps)')
   }
 
   if (challenged_id === user.id) {
-    return NextResponse.json({ error: 'Cannot challenge yourself' }, { status: 400 })
+    return badRequest('Cannot challenge yourself')
   }
 
   // Verify friend
@@ -32,7 +42,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'accepted')
 
   const isFriend = friends?.some(f => f.friend_id === challenged_id)
-  if (!isFriend) return NextResponse.json({ error: 'Not a confirmed friend' }, { status: 403 })
+  if (!isFriend) return forbidden()
 
   const { data: challenge, error } = await supabase
     .from('fitness_challenges')
@@ -48,25 +58,25 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Challenges] insert error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ challenge })
+  return apiOk({ challenge }, 201)
 }
 
 // GET /api/fitness/challenges — List challenges
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const status = req.nextUrl.searchParams.get('status')
 
   let query = supabase
     .from('fitness_challenges')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
 
   if (status) {
     query = query.eq('status', status as 'pending' | 'accepted' | 'declined' | 'completed')
@@ -75,8 +85,8 @@ export async function GET(req: NextRequest) {
   const { data: challenges, error } = await query
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Challenges] fetch error:', error)
+    return serverError()
   }
 
   // Enrich with partner names + submissions
@@ -124,5 +134,5 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  return NextResponse.json({ challenges: enriched })
+  return apiOk({ challenges: enriched })
 }

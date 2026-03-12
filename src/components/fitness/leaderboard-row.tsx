@@ -68,7 +68,7 @@ export function LeaderboardRow({ data }: { data: LeaderboardRowData }) {
       <div className="flex-shrink-0">
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+          <img src={avatarUrl} alt={displayName} className="w-7 h-7 rounded-full object-cover" />
         ) : (
           <div className="w-7 h-7 rounded-full bg-elevated flex items-center justify-center text-[10px] font-semibold text-primary">
             {initials}

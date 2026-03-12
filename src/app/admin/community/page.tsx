@@ -13,7 +13,7 @@ interface Post {
   entity_name: string | null
   content: string
   module: string
-  created_at: string
+  created_on: string
   display_name: string | null
 }
 
@@ -47,22 +47,21 @@ export default function AdminCommunityPage() {
       setLoading(true)
       const supabase = createClient()
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query = (supabase as any)
+      let query = supabase
         .from('social_posts')
-        .select('id, user_id, post_type, entity_name, content, module, created_at')
-        .order('created_at', { ascending: false })
+        .select('id, user_id, post_type, entity_name, content, module, created_on')
+        .order('created_on', { ascending: false })
         .limit(50)
 
       if (moduleFilter !== 'all') {
-        query = query.eq('module', moduleFilter)
+        query = query.eq('module', moduleFilter as 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness')
       }
 
       const { data: rawPosts } = await query
-      const posts = rawPosts ?? []
+      const posts = (rawPosts ?? []) as { id: string; user_id: string; post_type: string; entity_name: string | null; content: string; module: string; created_on: string }[]
 
       // Fetch display names from user_profile
-      const userIds = [...new Set(posts.map((p: { user_id: string }) => p.user_id))] as string[]
+      const userIds = [...new Set(posts.map(p => p.user_id))]
       const profileMap = new Map<string, string | null>()
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
@@ -73,7 +72,7 @@ export default function AdminCommunityPage() {
       }
 
       if (!cancelled) {
-        setPosts(posts.map((p: { user_id: string }) => ({ ...p, display_name: profileMap.get(p.user_id) ?? null })))
+        setPosts(posts.map(p => ({ ...p, display_name: profileMap.get(p.user_id) ?? null })))
         setLoading(false)
       }
     }
@@ -86,8 +85,7 @@ export default function AdminCommunityPage() {
     setDeleting(postId)
     const supabase = createClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('social_posts')
       .delete()
       .eq('id', postId)
@@ -147,7 +145,7 @@ export default function AdminCommunityPage() {
                   )}
                   <p className="text-secondary text-sm line-clamp-3">{post.content}</p>
                   <p className="text-muted text-xs mt-2">
-                    {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    {new Date(post.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, Circle, Activity, Dumbbell, UtensilsCrossed, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -129,7 +130,45 @@ export function TodayChecklist({ items }: { items: ChecklistItem[] }) {
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(
     new Set(items.filter(i => i.isCompleted).map(i => i.id))
   )
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [expandedItem, setExpandedItem] = useState<string | null>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const cardRefs = useRef<Record<string, HTMLDivElement>>({})
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Position dropdown below the card using a portal
+  const updateDropdownPos = useCallback(() => {
+    if (!expandedItem) { setDropdownPos(null); return }
+    const el = cardRefs.current[expandedItem]
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setDropdownPos({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX, width: rect.width })
+  }, [expandedItem])
+
+  useEffect(() => {
+    updateDropdownPos()
+    if (!expandedItem) return
+    window.addEventListener('scroll', updateDropdownPos, true)
+    window.addEventListener('resize', updateDropdownPos)
+    return () => {
+      window.removeEventListener('scroll', updateDropdownPos, true)
+      window.removeEventListener('resize', updateDropdownPos)
+    }
+  }, [expandedItem, updateDropdownPos])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!expandedItem) return
+    function handleClickOutside(e: MouseEvent) {
+      const cardEl = cardRefs.current[expandedItem!]
+      const ddEl = dropdownRef.current
+      const target = e.target as Node
+      if (cardEl && !cardEl.contains(target) && (!ddEl || !ddEl.contains(target))) {
+        setExpandedItem(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [expandedItem])
 
   async function toggleItem(item: ChecklistItem) {
     setToggling(item.id)
@@ -138,11 +177,12 @@ export function TodayChecklist({ items }: { items: ChecklistItem[] }) {
     try {
       if (isCompleted) {
         await fetch(`/api/fitness/plans/${item.planId}/logs`, {
-          method: 'DELETE',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             week_number: item.weekNumber,
             session_number: item.sessionNumber,
+            completed: false,
           }),
         })
         setLocalCompleted(prev => {
@@ -163,22 +203,14 @@ export function TodayChecklist({ items }: { items: ChecklistItem[] }) {
       }
       router.refresh()
     } catch {
-      // revert on error
+      // State was not updated yet (updates follow successful fetch), so no revert needed
     } finally {
       setToggling(null)
     }
   }
 
   function toggleExpand(id: string) {
-    setExpandedItems(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
+    setExpandedItem(prev => prev === id ? null : id)
   }
 
   const completedCount = [...localCompleted].filter(id => items.some(i => i.id === id)).length
@@ -196,19 +228,37 @@ export function TodayChecklist({ items }: { items: ChecklistItem[] }) {
         const Icon = TYPE_ICONS[item.type]
         const completed = localCompleted.has(item.id)
         const isToggling = toggling === item.id
-        const isExpanded = expandedItems.has(item.id)
+        const isExpanded = expandedItem === item.id
         const hasDetails = !!item.details
 
         return (
           <div
             key={item.id}
+            ref={el => { if (el) cardRefs.current[item.id] = el }}
             className={`rounded-lg border transition-colors ${
               completed
                 ? 'border-green-500/30 bg-green-950/10'
+                : isExpanded
+                ? 'border-accent/50 bg-elevated'
                 : 'border-subtle bg-elevated'
             }`}
           >
             <div className="flex items-center gap-3 p-3">
+              {/* Checkbox on left */}
+              <button
+                onClick={() => toggleItem(item)}
+                disabled={isToggling}
+                className="shrink-0 disabled:opacity-40"
+                title={completed ? 'Mark incomplete' : 'Mark complete'}
+              >
+                {isToggling ? (
+                  <Loader2 className="h-5 w-5 text-muted animate-spin" />
+                ) : completed ? (
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted hover:text-accent transition-colors" />
+                )}
+              </button>
               <Icon className={`h-4 w-4 shrink-0 ${completed ? 'text-green-400/60' : 'text-accent'}`} />
               <button
                 onClick={() => hasDetails && toggleExpand(item.id)}
@@ -233,34 +283,33 @@ export function TodayChecklist({ items }: { items: ChecklistItem[] }) {
                   {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </button>
               )}
-              <button
-                onClick={() => toggleItem(item)}
-                disabled={isToggling}
-                className="shrink-0 disabled:opacity-40"
-                title={completed ? 'Mark incomplete' : 'Mark complete'}
-              >
-                {isToggling ? (
-                  <Loader2 className="h-5 w-5 text-muted animate-spin" />
-                ) : completed ? (
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted hover:text-accent transition-colors" />
-                )}
-              </button>
             </div>
-            {isExpanded && item.details && (
-              <div className="px-3 pb-3 pt-2 border-t border-subtle">
-                {item.type === 'run' && <RunDetails details={item.details} />}
-                {item.type === 'strength' && <StrengthDetails details={item.details} />}
-                {item.type === 'meal' && <MealDetails details={item.details} />}
-              </div>
-            )}
           </div>
         )
       })}
       {allDone && (
         <p className="text-xs text-green-400 text-center pt-1">All done for today!</p>
       )}
+
+      {/* Portal dropdown — renders at body level so nothing can clip it */}
+      {expandedItem && dropdownPos && (() => {
+        const item = items.find(i => i.id === expandedItem)
+        if (!item?.details) return null
+        return createPortal(
+          <div
+            ref={dropdownRef}
+            className="fixed z-50 rounded-lg border border-subtle bg-surface shadow-xl max-h-[50vh] overflow-y-auto"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, position: 'absolute' }}
+          >
+            <div className="px-4 py-3">
+              {item.type === 'run' && <RunDetails details={item.details} />}
+              {item.type === 'strength' && <StrengthDetails details={item.details} />}
+              {item.type === 'meal' && <MealDetails details={item.details} />}
+            </div>
+          </div>,
+          document.body
+        )
+      })()}
     </div>
   )
 }

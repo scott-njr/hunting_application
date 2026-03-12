@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiDone, unauthorized, serverError } from '@/lib/api-response'
 
 // DELETE /api/friends/[id] — remove a friend or cancel/decline a pending request
 // Either party can delete their shared friendship row (enforced by RLS)
@@ -10,7 +11,7 @@ export async function DELETE(
 ) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { id } = await params
 
@@ -20,7 +21,7 @@ export async function DELETE(
     .eq('id', id)
     .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
 
-  if (error) return NextResponse.json({ error: 'Failed to remove friendship' }, { status: 500 })
+  if (error) return serverError('Failed to remove friendship')
 
-  return NextResponse.json({ success: true })
+  return apiDone()
 }

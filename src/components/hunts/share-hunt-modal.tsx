@@ -203,7 +203,7 @@ export function ShareHuntModal({ open, onClose, huntId, huntTitle, existingRecip
                 onChange={e => { setNewEmail(e.target.value); setError(null) }}
                 onKeyDown={e => e.key === 'Enter' && addRecipient()}
                 placeholder="Email address"
-                className="flex-1 bg-elevated border border-default text-primary rounded px-3 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                className="flex-1 bg-elevated border border-default text-primary rounded px-3 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
               />
               <button
                 onClick={addRecipient}

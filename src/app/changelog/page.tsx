@@ -41,9 +41,10 @@ const MODULE_LABELS: Record<string, string> = {
 }
 
 async function getReleases(): Promise<Release[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+    ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+
+  if (!baseUrl) return []
 
   try {
     const res = await fetch(`${baseUrl}/api/issues/releases`, {

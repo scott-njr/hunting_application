@@ -1,16 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, apiError, unauthorized, notFound, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 // POST /api/fitness/plans/share — Share a plan with a friend
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { plan_id, friend_id } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { plan_id, friend_id } = body
 
   if (!plan_id || !friend_id) {
-    return NextResponse.json({ error: 'plan_id and friend_id are required' }, { status: 400 })
+    return badRequest('plan_id and friend_id are required')
   }
 
   // Verify plan belongs to the current user and is active
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'active')
     .maybeSingle()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found or not active' }, { status: 404 })
+  if (!plan) return notFound('Plan not found or not active')
 
   // Verify friend_id is an accepted friend
   const { data: friends } = await supabase
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'accepted')
 
   const isFriend = friends?.some(f => f.friend_id === friend_id)
-  if (!isFriend) return NextResponse.json({ error: 'Not a confirmed friend' }, { status: 403 })
+  if (!isFriend) return forbidden()
 
   // Check for existing share (allow re-share if previously declined)
   const { data: existing } = await supabase
@@ -43,24 +46,24 @@ export async function POST(req: NextRequest) {
 
   if (existing) {
     if (existing.status === 'pending') {
-      return NextResponse.json({ error: 'Already shared and pending' }, { status: 409 })
+      return apiError('Already shared and pending', 409)
     }
     if (existing.status === 'accepted') {
-      return NextResponse.json({ error: 'Already shared and accepted' }, { status: 409 })
+      return apiError('Already shared and accepted', 409)
     }
     // Declined — re-share by updating back to pending
     const { data: updated, error } = await supabase
       .from('fitness_shared_plans')
-      .update({ status: 'pending' as const, shared_at: new Date().toISOString(), target_plan_id: null, accepted_at: null })
+      .update({ status: 'pending' as const, created_on: new Date().toISOString(), target_plan_id: null, accepted_at: null })
       .eq('id', existing.id)
       .select()
       .single()
 
     if (error) {
-      console.error(error)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      console.error('[Fitness Share Plan] re-share error:', error)
+      return serverError()
     }
-    return NextResponse.json({ share: updated })
+    return apiOk({ share: updated })
   }
 
   // Create new share
@@ -75,25 +78,25 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Plan] insert error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ share })
+  return apiOk({ share }, 201)
 }
 
 // GET /api/fitness/plans/share — List shared plans
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const direction = req.nextUrl.searchParams.get('direction') ?? 'all'
 
   let query = supabase
     .from('fitness_shared_plans')
     .select('*')
-    .order('shared_at', { ascending: false })
+    .order('created_on', { ascending: false })
 
   if (direction === 'sent') {
     query = query.eq('source_user_id', user.id)
@@ -105,8 +108,8 @@ export async function GET(req: NextRequest) {
   const { data: shares, error } = await query
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Plan] fetch error:', error)
+    return serverError()
   }
 
   // Enrich with partner display names and plan info
@@ -148,5 +151,5 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  return NextResponse.json({ shares: enriched })
+  return apiOk({ shares: enriched })
 }

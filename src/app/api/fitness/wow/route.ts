@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiOk, unauthorized, serverError } from '@/lib/api-response'
 
 function getCurrentMonday(): string {
   const now = new Date()
@@ -15,6 +15,9 @@ function getCurrentMonday(): string {
 
 export async function GET() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return unauthorized()
+
   const weekStart = getCurrentMonday()
 
   // Try current week first
@@ -25,8 +28,8 @@ export async function GET() {
     .maybeSingle()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness WOW] fetch error:', error)
+    return serverError()
   }
 
   // Fall back to the most recent workout if none generated yet this week
@@ -40,12 +43,12 @@ export async function GET() {
       .maybeSingle()
 
     if (latestError) {
-      console.error(latestError)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      console.error('[Fitness WOW] fallback fetch error:', latestError)
+      return serverError()
     }
 
-    return NextResponse.json({ workout: latest })
+    return apiOk({ workout: latest })
   }
 
-  return NextResponse.json({ workout: data })
+  return apiOk({ workout: data })
 }

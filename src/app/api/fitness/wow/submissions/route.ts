@@ -1,7 +1,8 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { calculateWeeklyPoints } from '@/lib/fitness/leaderboard-points'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 function computeAgeGroup(dob: string | null): string | null {
   if (!dob) return null
@@ -33,7 +34,7 @@ function getCurrentMonday(): string {
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const workoutId = req.nextUrl.searchParams.get('workout_id')
 
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
       .eq('week_start', getCurrentMonday())
       .maybeSingle()
 
-    if (!workout) return NextResponse.json({ submissions: [], workout_id: null })
+    if (!workout) return apiOk({ submissions: [], workout_id: null })
     resolvedWorkoutId = workout.id
   }
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('[fitness/wow/submissions GET] fetch error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   // Enrich with user display names, age_group, and fitness_level
@@ -104,22 +105,24 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  return NextResponse.json({ submissions: enriched, workout_id: resolvedWorkoutId, scoring: scoring ?? 'time' })
+  return apiOk({ submissions: enriched, workout_id: resolvedWorkoutId, scoring: scoring ?? 'time' })
 }
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { workout_id, scaling, score_value, score_display, notes } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { workout_id, scaling, score_value, score_display, notes } = body
 
   if (!workout_id || !scaling || score_value == null || !score_display) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    return badRequest('Missing required fields')
   }
 
   if (!['rx', 'scaled', 'beginner'].includes(scaling)) {
-    return NextResponse.json({ error: 'Invalid scaling' }, { status: 400 })
+    return badRequest('Invalid scaling')
   }
 
   const admin = createServiceClient(
@@ -143,7 +146,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[fitness/wow/submissions POST] upsert error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   // Fetch workout title for the community post
@@ -186,5 +189,5 @@ export async function POST(req: NextRequest) {
   // Recalculate leaderboard points for this workout
   await calculateWeeklyPoints(workout_id, admin)
 
-  return NextResponse.json({ submission: { ...submission, community_post_id: post?.id ?? null } })
+  return apiOk({ submission: { ...submission, community_post_id: post?.id ?? null } }, 201)
 }

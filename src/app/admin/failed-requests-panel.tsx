@@ -14,7 +14,7 @@ interface FailedRequest {
   sanitized_input: string | null
   raw_response: string | null
   duration_ms: number
-  created_at: string
+  created_on: string
 }
 
 interface FailedRequestsPanelProps {
@@ -56,7 +56,7 @@ export function FailedRequestsPanel({ failures, failedCount }: FailedRequestsPan
       `**Module:** ${failure.module}`,
       `**Feature:** ${failure.feature}`,
       `**User:** ${failure.user_name || failure.user_email}`,
-      `**Timestamp:** ${new Date(failure.created_at).toLocaleString()}`,
+      `**Timestamp:** ${new Date(failure.created_on).toLocaleString()}`,
       `**Duration:** ${failure.duration_ms}ms`,
       `**Flags:** ${failure.flags.length > 0 ? failure.flags.join(', ') : 'none'}`,
       '',
@@ -119,7 +119,7 @@ export function FailedRequestsPanel({ failures, failedCount }: FailedRequestsPan
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-muted text-xs">
-                    {new Date(failure.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    {new Date(failure.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </span>
                   <ChevronDown className={cn('h-3.5 w-3.5 text-muted transition-transform', expanded === failure.id && 'rotate-180')} />
                 </div>

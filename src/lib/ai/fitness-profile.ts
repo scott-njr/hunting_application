@@ -28,16 +28,18 @@ export async function getCoachContext(
       .eq('status', 'active'),
     supabase
       .from('fitness_plan_workout_logs')
-      .select('week_number, session_number, notes, completed_at')
+      .select('week_number, session_number, notes, completed_at, plan_id, fitness_training_plans!inner(status, plan_type)')
       .eq('user_id', userId)
+      .eq('completed', true)
+      .eq('fitness_training_plans.status', 'active')
       .gte('completed_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
       .order('completed_at', { ascending: false })
       .limit(20),
     supabase
       .from('fitness_workout_submissions')
-      .select('score_display, scaling, created_at')
+      .select('score_display, scaling, created_on')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .order('created_on', { ascending: false })
       .limit(4),
   ])
 
@@ -69,17 +71,19 @@ export async function getCoachContext(
     }
   }
 
-  // Recent workout logs (last 14 days)
+  // Recent workout logs (last 14 days, active plans only)
   const logs = recentLogs.data ?? []
   if (logs.length === 0) {
     lines.push('Recent workouts (14 days): None logged')
   } else {
-    lines.push(`Recent workouts (14 days): ${logs.length} sessions logged`)
+    lines.push(`Recent workouts (14 days): ${logs.length} sessions completed`)
     const withNotes = logs.filter(l => l.notes?.trim())
     if (withNotes.length > 0) {
       lines.push('Session notes:')
       withNotes.slice(0, 5).forEach(l => {
-        lines.push(`  - Week ${l.week_number}, Session ${l.session_number}: "${l.notes}"`)
+        const planInfo = l.fitness_training_plans as unknown as { plan_type: string } | null
+        const planType = planInfo?.plan_type ?? 'unknown'
+        lines.push(`  - ${planType} plan, Week ${l.week_number}, Session ${l.session_number}: "${l.notes}"`)
       })
     }
   }
@@ -102,7 +106,7 @@ export async function getCoachContext(
   if (wow.length > 0) {
     lines.push('Recent WOW submissions:')
     wow.forEach(w => {
-      lines.push(`  - ${w.created_at}: ${w.score_display} (${w.scaling})`)
+      lines.push(`  - ${w.created_on}: ${w.score_display} (${w.scaling})`)
     })
   } else {
     lines.push('WOW participation: No recent submissions')

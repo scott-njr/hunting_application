@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { apiDone, unauthorized, forbidden, notFound, badRequest } from '@/lib/api-response'
 
 export async function POST(
   _req: Request,
@@ -9,7 +9,7 @@ export async function POST(
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   // Check admin
   const { data: member } = await supabase
@@ -19,7 +19,7 @@ export async function POST(
     .single()
 
   if (!member?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return forbidden()
   }
 
   // Fetch the issue
@@ -30,11 +30,11 @@ export async function POST(
     .single()
 
   if (issueError || !issue) {
-    return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
+    return notFound('Issue not found')
   }
 
   if (issue.status !== 'resolved') {
-    return NextResponse.json({ error: 'Issue must be resolved before notifying' }, { status: 400 })
+    return badRequest('Issue must be resolved before notifying')
   }
 
   // Get reporter email and display name
@@ -44,7 +44,7 @@ export async function POST(
   ])
 
   if (!reporter?.email) {
-    return NextResponse.json({ error: 'Reporter email not found' }, { status: 404 })
+    return notFound('Reporter email not found')
   }
 
   const reporterName = reporterProfile?.display_name ?? 'there'
@@ -59,7 +59,7 @@ export async function POST(
       text: `Hi ${reporterName},\n\nYour issue report "${issue.title}" has been resolved.\n\n${issue.resolution ? `Resolution: ${issue.resolution}` : 'The issue has been fixed.'}\n\nThank you for helping us improve Lead the Wild!\n\n— The Lead the Wild Team`,
     })
   } else {
-    console.log('[Issue Notify]', { to: reporter.email, issue: issue.title, resolution: issue.resolution })
+    console.warn(`[Issue Notify] No RESEND_API_KEY — skipped notifying reporter for issue ${id}`)
   }
 
   // Update notified_at
@@ -68,5 +68,5 @@ export async function POST(
     .update({ notified_at: new Date().toISOString() })
     .eq('id', id)
 
-  return NextResponse.json({ success: true })
+  return apiDone()
 }

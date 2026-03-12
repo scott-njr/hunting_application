@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { HuntPlanDocument } from '@/lib/pdf/hunt-plan-document'
 import { Resend } from 'resend'
 import React from 'react'
+import { apiDone, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 // Rate limit: 5 shares/hour/IP
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -36,33 +37,35 @@ export async function POST(
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
     if (isRateLimited(ip)) {
-      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+      return apiError('Too many requests. Please try again later.', 429)
     }
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return unauthorized()
 
     const { huntId } = await params
-    const { action, recipients } = await req.json() as {
+    const rawBody = await parseBody(req)
+    if (isErrorResponse(rawBody)) return rawBody
+    const { action, recipients } = rawBody as {
       action: 'download' | 'email'
       recipients?: string[]
     }
 
     if (!action || !['download', 'email'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+      return badRequest('Invalid action')
     }
 
     if (action === 'email') {
       if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-        return NextResponse.json({ error: 'At least one recipient email is required' }, { status: 400 })
+        return badRequest('At least one recipient email is required')
       }
       if (recipients.length > 10) {
-        return NextResponse.json({ error: 'Maximum 10 recipients allowed' }, { status: 400 })
+        return badRequest('Maximum 10 recipients allowed')
       }
       for (const email of recipients) {
         if (!isValidEmail(email)) {
-          return NextResponse.json({ error: `Invalid email: ${email}` }, { status: 400 })
+          return badRequest(`Invalid email: ${email}`)
         }
       }
     }
@@ -71,12 +74,12 @@ export async function POST(
     const [planResult, membersResult, locationsResult, profileResult] = await Promise.all([
       supabase.from('hunting_plans').select('*').eq('id', huntId).eq('user_id', user.id).single(),
       supabase.from('hunting_plan_members').select('display_name, email, phone, role, tag_status').eq('hunt_plan_id', huntId),
-      supabase.from('hunting_locations').select('label, description, lat, lng, scout_report').eq('hunt_plan_id', huntId).order('created_at'),
+      supabase.from('hunting_locations').select('label, description, lat, lng, scout_report').eq('hunt_plan_id', huntId).order('created_on'),
       supabase.from('user_profile').select('display_name').eq('id', user.id).single(),
     ])
 
     if (!planResult.data) {
-      return NextResponse.json({ error: 'Hunt plan not found' }, { status: 404 })
+      return notFound('Hunt plan not found')
     }
 
     const plan = planResult.data
@@ -148,12 +151,12 @@ export async function POST(
         }],
       })
     } else {
-      console.log('[Hunt Share] No RESEND_API_KEY — would email PDF to:', recipients)
+      console.warn(`[Hunt Share] No RESEND_API_KEY — skipped emailing PDF to ${recipients!.length} recipient(s)`)
     }
 
-    return NextResponse.json({ success: true, sent: recipients!.length })
+    return apiDone({ sent: recipients!.length })
   } catch (err) {
     console.error('[Hunt Share] Error:', err)
-    return NextResponse.json({ error: 'Failed to generate hunt plan PDF' }, { status: 500 })
+    return serverError('Failed to generate hunt plan PDF')
   }
 }

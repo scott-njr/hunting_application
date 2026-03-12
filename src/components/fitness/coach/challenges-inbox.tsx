@@ -25,7 +25,7 @@ interface Challenge {
   partner_name: string
   my_submission: ChallengeSubmission | null
   opponent_submission: ChallengeSubmission | null
-  created_at: string
+  created_on: string
 }
 
 export function ChallengesInbox() {

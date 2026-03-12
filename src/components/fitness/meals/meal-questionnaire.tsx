@@ -47,6 +47,8 @@ export function MealQuestionnaire() {
   const [error, setError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
 
+  const canSubmit = goal && selectedMeals.size > 0
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!goal) {
@@ -99,7 +101,7 @@ export function MealQuestionnaire() {
         <h2 className="text-primary font-bold text-lg">AI Meal Prep</h2>
       </div>
       <p className="text-secondary text-sm mb-6">
-        Tell us about your dietary goals and we&apos;ll generate a personalized 7-day meal plan with grocery list and cost estimates.
+        Tell us about your dietary goals and we&apos;ll generate a personalized 8-week meal plan with grocery list and cost estimates.
       </p>
 
       {error && (
@@ -189,7 +191,7 @@ export function MealQuestionnaire() {
 
         <button
           type="submit"
-          disabled={generating}
+          disabled={generating || !canSubmit}
           className="btn-primary w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed font-semibold rounded transition-colors"
         >
           {generating ? (

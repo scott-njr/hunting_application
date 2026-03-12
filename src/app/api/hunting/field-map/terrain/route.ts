@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
 
 const DEG = Math.PI / 180
 
@@ -12,14 +13,14 @@ const DEG = Math.PI / 180
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { searchParams } = new URL(req.url)
   const lat = parseFloat(searchParams.get('lat') ?? '')
   const lng = parseFloat(searchParams.get('lng') ?? '')
 
   if (isNaN(lat) || isNaN(lng)) {
-    return NextResponse.json({ error: 'lat and lng required' }, { status: 400 })
+    return badRequest('lat and lng required')
   }
 
   try {
@@ -46,14 +47,14 @@ export async function GET(req: NextRequest) {
     const aspectRad = Math.atan2(dZdX, dZdY)
     const slopeAspectDeg = ((aspectRad * (180 / Math.PI)) + 360) % 360
 
-    return NextResponse.json({
+    return apiOk({
       elevationFt: Math.round(elCenter * 3.28084), // meters to feet
       slopeDeg: Math.round(slopeDeg * 10) / 10,
       slopeAspectDeg: Math.round(slopeAspectDeg),
     })
   } catch (err) {
     console.error('[hunting/field-map/terrain] fetch failed:', err)
-    return NextResponse.json({
+    return apiOk({
       elevationFt: 5000,
       slopeDeg: 10,
       slopeAspectDeg: 180,

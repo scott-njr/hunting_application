@@ -22,7 +22,7 @@ type HuntApplication = {
   status: 'applied' | 'drawn' | 'not_drawn' | 'withdrawn' | 'hunt_started'
   date_applied: string | null
   notes: string | null
-  created_at: string
+  created_on: string
 }
 
 type StateGroup = {

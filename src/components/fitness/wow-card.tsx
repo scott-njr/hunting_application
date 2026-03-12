@@ -33,7 +33,7 @@ export type Workout = {
   title: string
   description: string
   workout_details: WorkoutDetails
-  created_at: string
+  created_on: string
 }
 
 interface WowCardProps {

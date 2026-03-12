@@ -22,7 +22,7 @@ interface Issue {
   ai_proposed_fix: string | null
   ai_classified_at: string | null
   github_issue_url: string | null
-  created_at: string
+  created_on: string
   members: { email: string; display_name: string | null } | null
 }
 
@@ -475,7 +475,7 @@ export default function AdminIssuesPage() {
                       <span>&middot;</span>
                       <span>{issue.category}</span>
                       <span>&middot;</span>
-                      <span>{new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <span>{new Date(issue.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

@@ -94,6 +94,10 @@ const MODULE_NAV: Record<ModuleSlug, NavSection[]> = {
   ],
   firearms: [
     { label: null, items: [{ href: '/firearms/my-firearms', label: 'My Firearms', icon: LayoutDashboard, exact: true }] },
+    { label: 'Tools', items: [
+      { href: '/firearms/shot-timer', label: 'Shot Timer', icon: Activity },
+      { href: '/firearms/matches', label: 'Matches', icon: Trophy },
+    ] },
     { label: 'Learn', items: [{ href: '/firearms/courses', label: 'Courses', icon: GraduationCap }] },
     { label: null, items: [
       { href: '/firearms/community', label: 'Community', icon: Users, exact: true, children: [

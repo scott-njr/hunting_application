@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { getFitnessProfileContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import type { Json } from '@/types/database.types'
+import { apiDone, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 export async function POST(
   req: NextRequest,
@@ -11,22 +12,21 @@ export async function POST(
 ) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { planId } = await params
-  const { day_number, meal_number, feedback } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { week_number, session_number, feedback } = body
 
-  if (!day_number || !meal_number) {
-    return NextResponse.json({ error: 'Missing day_number or meal_number' }, { status: 400 })
+  if (!week_number || !session_number) {
+    return badRequest('Missing week_number or session_number')
   }
 
   // Check module-specific quota
   const subInfo = await getUserModuleSubscriptionInfo(supabase, user.id, 'fitness')
   if (!hasModuleAIQuota(subInfo.tier, subInfo.aiQueriesThisMonth)) {
-    return NextResponse.json(
-      { error: 'quota_exceeded', message: 'Monthly AI query limit reached for Fitness. Upgrade your plan for more.' },
-      { status: 403 }
-    )
+    return apiError('quota_exceeded', 403, { message: 'Monthly AI query limit reached for Fitness. Upgrade your plan for more.' })
   }
 
   // Fetch plan and verify ownership
@@ -39,16 +39,16 @@ export async function POST(
     .eq('status', 'active')
     .single()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+  if (!plan) return notFound('Plan not found')
 
   const planData = plan.plan_data as Record<string, unknown>
-  const days = planData.days as Array<Record<string, unknown>>
-  const day = days?.find((d) => d.day_number === day_number)
-  if (!day) return NextResponse.json({ error: 'Day not found' }, { status: 404 })
+  const weeks = planData.weeks as Array<Record<string, unknown>>
+  const week = weeks?.find((w) => w.week_number === week_number)
+  if (!week) return notFound('Week not found')
 
-  const meals = day.meals as Array<Record<string, unknown>>
-  const currentMeal = meals?.find((m) => m.meal_number === meal_number)
-  if (!currentMeal) return NextResponse.json({ error: 'Meal not found' }, { status: 404 })
+  const sessions = week.sessions as Array<Record<string, unknown>>
+  const currentMeal = sessions?.find((s) => s.session_number === session_number)
+  if (!currentMeal) return notFound('Meal not found')
 
   const config = plan.config as Record<string, unknown>
   const dailyTargets = planData.daily_targets as Record<string, number> | undefined
@@ -61,6 +61,7 @@ Current meal being replaced:
 - Type: ${currentMeal.meal_type}
 - Title: ${currentMeal.title}
 - Calories: ${currentMeal.calories}
+- Day: ${currentMeal.day_name ?? ''}
 ${feedback ? `- User feedback: ${feedback}` : ''}
 
 Dietary context:
@@ -72,21 +73,27 @@ ${config.notes ? `- Allergies/notes: ${config.notes}` : ''}
 
 Return ONLY valid JSON (no markdown, no code fences) for the replacement meal:
 {
-  "meal_number": ${meal_number},
-  "meal_type": "${currentMeal.meal_type}",
+  "session_number": ${session_number},
+  "type": "meal",
   "title": "New Meal Title",
+  "meal_type": "${currentMeal.meal_type}",
+  "day_name": "${currentMeal.day_name ?? ''}",
+  "day_number": ${currentMeal.day_number ?? 1},
   "calories": 450,
   "protein_g": 25,
+  "description": "Brief description of the meal",
   "ingredients": ["ingredient 1", "ingredient 2"],
   "instructions": "Preparation steps",
   "estimated_cost_usd": 3.50
 }
 
-Keep similar calorie count to the original. Make it different and appetizing.${profileContext}`
+Keep similar calorie count to the original. Make it different and appetizing.
+Include simple quantities for main ingredients but skip fussy measurements like teaspoons of salt or pinches of spices.
+Instructions should be 1-3 sentences max — enough to know the method, not a detailed recipe.${profileContext}`
 
   const result = await aiCall({
     module: 'fitness',
-    feature: 'meal_plan_generator',
+    feature: 'fitness_meal_prep',
     userMessage: prompt,
     userId: user.id,
     maxTokens: 1024,
@@ -94,37 +101,37 @@ Keep similar calorie count to the original. Make it different and appetizing.${p
   })
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error ?? 'AI generation failed' }, { status: 500 })
+    return serverError(result.error ?? 'AI generation failed')
   }
 
   let newMeal: Record<string, unknown>
   try {
     newMeal = extractJSON(result.response)
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response. Please try again.' }, { status: 500 })
+    return serverError('Failed to parse AI response. Please try again.')
   }
 
-  // Replace the meal in plan_data
-  const updatedMeals = meals.map((m) =>
-    m.meal_number === meal_number ? newMeal : m
+  // Replace the meal session in plan_data
+  const updatedSessions = sessions.map((s) =>
+    s.session_number === session_number ? newMeal : s
   )
-  const updatedDay = { ...day, meals: updatedMeals }
-  const updatedDays = days.map((d) =>
-    d.day_number === day_number ? updatedDay : d
+  const updatedWeek = { ...week, sessions: updatedSessions }
+  const updatedWeeks = weeks.map((w) =>
+    w.week_number === week_number ? updatedWeek : w
   )
-  const updatedPlanData = { ...planData, days: updatedDays }
+  const updatedPlanData = { ...planData, weeks: updatedWeeks }
 
   const { error } = await supabase
     .from('fitness_training_plans')
     .update({ plan_data: updatedPlanData as unknown as Json })
     .eq('id', planId)
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
   await supabase.rpc('increment_module_ai_queries', {
     user_id_param: user.id,
     module_slug_param: 'fitness',
   })
 
-  return NextResponse.json({ success: true, meal: newMeal })
+  return apiDone({ meal: newMeal })
 }

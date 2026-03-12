@@ -29,11 +29,6 @@ type PlanData = {
     theme: string
     sessions: Array<Record<string, unknown>>
   }>
-  days?: Array<{
-    day_number: number
-    day_name: string
-    meals: Array<{ meal_type: string; title: string; [key: string]: unknown }>
-  }>
 }
 
 function getCurrentWeek(startedAt: string, weeksTotal: number): number {
@@ -143,7 +138,7 @@ export default async function HomePage() {
       : Promise.resolve({ data: null }),
     // Total workouts logged
     hasFitness
-      ? supabase.from('fitness_plan_workout_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+      ? supabase.from('fitness_plan_workout_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('completed', true)
       : Promise.resolve({ count: 0 }),
     // All published courses
     supabase.from('courses').select('id, module').eq('published', true),
@@ -152,15 +147,15 @@ export default async function HomePage() {
     // Community feed (sidebar)
     supabase
       .from('social_posts')
-      .select('id, user_id, content, module, created_at')
-      .order('created_at', { ascending: false })
+      .select('id, user_id, content, module, created_on')
+      .order('created_on', { ascending: false })
       .limit(10),
     // User's own posts for "top posts"
     supabase
       .from('social_posts')
-      .select('id, post_type, content, module, created_at')
+      .select('id, post_type, content, module, created_on')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .order('created_on', { ascending: false })
       .limit(20),
     // Weekly challenge (WOW)
     hasFitness
@@ -184,18 +179,18 @@ export default async function HomePage() {
 
   // Fetch workout logs if fitness plans exist
   const planIds = [runPlan?.id, strengthPlan?.id].filter(Boolean) as string[]
-  let allLogs: Array<{ plan_id: string; week_number: number; session_number: number; completed_at: string }> = []
+  let allLogs: Array<{ plan_id: string; week_number: number; session_number: number; completed: boolean; completed_at: string }> = []
   if (planIds.length > 0) {
     const { data } = await supabase
       .from('fitness_plan_workout_logs')
-      .select('plan_id, week_number, session_number, completed_at')
+      .select('plan_id, week_number, session_number, completed, completed_at')
       .in('plan_id', planIds)
     allLogs = data ?? []
   }
 
   function buildLogsByWeek(planId: string) {
     const map = new Map<number, Set<number>>()
-    for (const log of allLogs.filter((l: { plan_id: string }) => l.plan_id === planId)) {
+    for (const log of allLogs.filter((l: { plan_id: string; completed: boolean }) => l.plan_id === planId && l.completed)) {
       if (!map.has(log.week_number)) map.set(log.week_number, new Set())
       map.get(log.week_number)!.add(log.session_number)
     }
@@ -248,18 +243,18 @@ export default async function HomePage() {
   const feedProfileMap = new Map(
     (feedProfilesResult.data ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name ?? 'Unknown'])
   )
-  const sidebarPosts = feedPosts.map((p: { id: string; user_id: string; content: string; module: string; created_at: string }) => ({
+  const sidebarPosts = feedPosts.map((p: { id: string; user_id: string; content: string; module: string; created_on: string }) => ({
     id: p.id,
     module: p.module,
     displayName: feedProfileMap.get(p.user_id) ?? 'Unknown',
     content: p.content,
-    created_at: p.created_at,
+    created_on: p.created_on,
   }))
 
   // ── Process top posts ──
   const userPosts = userPostsResult.data ?? []
   const userPostIds = userPosts.map((p: { id: string }) => p.id)
-  let topPosts: Array<{ id: string; post_type: string; content: string; module: string; created_at: string; reactionCount: number; commentCount: number }> = []
+  let topPosts: Array<{ id: string; post_type: string; content: string; module: string; created_on: string; reactionCount: number; commentCount: number }> = []
 
   if (userPostIds.length > 0) {
     const [reactionsResult, commentsResult] = await Promise.all([
@@ -277,7 +272,7 @@ export default async function HomePage() {
     }
 
     topPosts = userPosts
-      .map((p: { id: string; post_type: string; content: string; module: string; created_at: string }) => ({
+      .map((p: { id: string; post_type: string; content: string; module: string; created_on: string }) => ({
         ...p,
         reactionCount: reactionCounts[p.id] ?? 0,
         commentCount: commentCounts[p.id] ?? 0,
@@ -333,7 +328,9 @@ export default async function HomePage() {
   const todayRunCount = countTodaySessions(runData, runPlan, runLogs)
   const todayStrengthCount = countTodaySessions(strengthData, strengthPlan, strengthLogs)
   const mealData2 = mealPlan?.plan_data as PlanData | null
-  const todayMealCount = mealData2?.days?.find(d => d.day_number === todayDayNum)?.meals?.length ?? 0
+  const mealCurrentWeek2 = mealPlan ? getCurrentWeek(mealPlan.started_at, mealPlan.weeks_total) : 0
+  const mealThisWeek2 = mealData2?.weeks?.find(w => w.week_number === mealCurrentWeek2)
+  const todayMealCount = mealThisWeek2?.sessions?.filter(s => (s.day_number as number) === todayDayNum)?.length ?? 0
   const hasFitnessPlans = !!(runPlan || strengthPlan || mealPlan)
   const todayFitness = hasFitnessPlans ? {
     runCount: todayRunCount,
@@ -367,21 +364,24 @@ export default async function HomePage() {
     }
   })
 
-  // Add meals to each day
-  if (mealPlan) {
-    const mealData = mealPlan.plan_data as PlanData | null
-    if (mealData?.days) {
-      for (const day of mealData.days) {
-        // day_number: 1=Mon, 2=Tue, ... 7=Sun
-        const weekDay = weekDays[day.day_number - 1]
-        if (weekDay && day.meals.length > 0) {
-          const mealNames = day.meals.map(m => m.title || m.meal_type).join(' · ')
-          weekDay.items.push({
-            type: 'meals',
-            label: mealNames,
-            href: '/fitness/my-plan',
-          })
-        }
+  // Add meals to each day from the current week
+  if (mealPlan && mealThisWeek2) {
+    // Group sessions by day_number (1=Mon..7=Sun)
+    const sessionsByDay = new Map<number, Array<Record<string, unknown>>>()
+    for (const session of mealThisWeek2.sessions) {
+      const dayNum = session.day_number as number
+      if (!sessionsByDay.has(dayNum)) sessionsByDay.set(dayNum, [])
+      sessionsByDay.get(dayNum)!.push(session)
+    }
+    for (const [dayNum, sessions] of sessionsByDay) {
+      const weekDay = weekDays[dayNum - 1]
+      if (weekDay && sessions.length > 0) {
+        const mealNames = sessions.map(s => (s.title as string) || (s.meal_type as string) || 'Meal').join(' · ')
+        weekDay.items.push({
+          type: 'meals',
+          label: mealNames,
+          href: '/fitness/my-plan',
+        })
       }
     }
   }
@@ -540,7 +540,7 @@ export default async function HomePage() {
                 const parts: string[] = []
                 if (runPlan) parts.push(`Run (Wk ${getCurrentWeek(runPlan.started_at, runPlan.weeks_total)}/${runPlan.weeks_total})`)
                 if (strengthPlan) parts.push(`Strength (Wk ${getCurrentWeek(strengthPlan.started_at, strengthPlan.weeks_total)}/${strengthPlan.weeks_total})`)
-                if (mealPlan) parts.push('Meal Plan')
+                if (mealPlan) parts.push(`Meal (Wk ${getCurrentWeek(mealPlan.started_at, mealPlan.weeks_total)}/${mealPlan.weeks_total})`)
                 if (parts.length) planSummary = parts.join(' · ')
               } else if (mod.slug === 'hunting') {
                 const tripCount = (tripsResult.data ?? []).length

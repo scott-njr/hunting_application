@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiDone, apiError, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
@@ -7,16 +8,18 @@ const GITHUB_REPO = 'scott-njr/hunting_application'
 /** POST — Trigger the Auto Fix Issue GitHub Actions workflow */
 export async function POST(req: NextRequest) {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   if (!GITHUB_TOKEN) {
-    return NextResponse.json({ error: 'GITHUB_TOKEN not configured' }, { status: 500 })
+    return serverError('GITHUB_TOKEN not configured')
   }
 
-  const { issueId, title, description, proposedFix, adminNotes, severity, pageUrl } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { issueId, title, description, proposedFix, adminNotes, severity, pageUrl } = body
 
   if (!issueId || !title || !description || !proposedFix || !severity) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    return badRequest('Missing required fields')
   }
 
   const res = await fetch(
@@ -44,11 +47,8 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) {
     const text = await res.text()
-    return NextResponse.json(
-      { error: `GitHub API error: ${res.status} — ${text}` },
-      { status: 502 }
-    )
+    return apiError(`GitHub API error: ${res.status} — ${text}`, 502)
   }
 
-  return NextResponse.json({ success: true })
+  return apiDone()
 }

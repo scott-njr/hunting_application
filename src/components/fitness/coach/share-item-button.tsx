@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Share2, Swords, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TacticalSelect } from '@/components/ui/tactical-select'
 
 interface Friend {
   friend_id: string
@@ -150,18 +151,15 @@ export function ShareItemButton({ itemType, itemSnapshot, sourcePlanId }: ShareI
                   <p className="text-muted text-sm">No friends yet. Add friends to share.</p>
                 ) : (
                   <div className="space-y-3">
-                    <select
+                    <TacticalSelect
                       value={selectedFriend}
-                      onChange={(e) => setSelectedFriend(e.target.value)}
-                      className="w-full input-field text-sm"
-                    >
-                      <option value="">Select a friend...</option>
-                      {friends.map(f => (
-                        <option key={f.friend_id} value={f.friend_id}>
-                          {f.display_name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setSelectedFriend}
+                      placeholder="Select a friend..."
+                      options={friends.map(f => ({
+                        value: f.friend_id,
+                        label: f.display_name,
+                      }))}
+                    />
 
                     {/* Scoring type for challenges */}
                     {mode === 'challenge' && (

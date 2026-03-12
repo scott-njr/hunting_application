@@ -57,14 +57,14 @@ const modules = [
     tagline: 'Safe, Confident, Competent',
     description:
       'From your first purchase to confident handling — safety fundamentals, training logs, maintenance, and state compliance.',
-    status: 'soon' as const,
-    href: null,
-    cta: 'Coming Soon',
+    status: 'live' as const,
+    href: '/firearms/courses',
+    cta: 'Get Started',
     accent: 'text-blue-400',
     iconBg: 'bg-blue-900/20',
-    border: 'border-subtle',
-    badge: 'badge-closed',
-    badgeLabel: 'Coming Soon',
+    border: 'border-blue-800/30 hover:border-blue-600/50',
+    badge: 'badge-open',
+    badgeLabel: 'Live Now',
   },
   {
     icon: Dumbbell,
@@ -87,14 +87,14 @@ const modules = [
     tagline: 'Read the Water. Land the Fish.',
     description:
       'Fly fishing, spin casting, and deep sea — species guides, water reading, gear selection, and a community of anglers.',
-    status: 'soon' as const,
-    href: null,
-    cta: 'Coming Soon',
+    status: 'live' as const,
+    href: '/fishing/courses',
+    cta: 'Get Started',
     accent: 'text-cyan-400',
     iconBg: 'bg-cyan-900/20',
-    border: 'border-subtle',
-    badge: 'badge-closed',
-    badgeLabel: 'Coming Soon',
+    border: 'border-cyan-800/30 hover:border-cyan-600/50',
+    badge: 'badge-open',
+    badgeLabel: 'Live Now',
   },
   {
     icon: Heart,
@@ -102,14 +102,14 @@ const modules = [
     tagline: 'Be Ready When It Matters',
     description:
       'Wilderness first aid, trauma response, and backcountry medical — because help is hours away.',
-    status: 'soon' as const,
-    href: null,
-    cta: 'Coming Soon',
+    status: 'live' as const,
+    href: '/medical/courses',
+    cta: 'Get Started',
     accent: 'text-red-400',
     iconBg: 'bg-red-900/20',
-    border: 'border-subtle',
-    badge: 'badge-closed',
-    badgeLabel: 'Coming Soon',
+    border: 'border-red-800/30 hover:border-red-600/50',
+    badge: 'badge-open',
+    badgeLabel: 'Live Now',
   },
   {
     icon: Anchor,
@@ -402,7 +402,7 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </AuthCtaButton>
             </AuthCta>
-            <p className="text-muted text-xs mt-2">No credit card required. Free forever plan available.</p>
+            <p className="text-muted text-xs mt-2">No credit card required. Free tier available.</p>
           </div>
         </div>
 
@@ -450,7 +450,7 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </AuthCtaButton>
             </AuthCta>
-            <p className="text-muted text-xs mt-2">No credit card required. Free forever plan available.</p>
+            <p className="text-muted text-xs mt-2">No credit card required. Free tier available.</p>
           </div>
         </div>
 
@@ -540,11 +540,11 @@ export default function LandingPage() {
               <AuthCta
                 authedHref="/home"
                 authedLabel="Go to Command Center"
-                className="bg-white hover:bg-gray-100 text-black font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
+                className="btn-primary font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
               >
                 <AuthCtaButton
                   view="signup"
-                  className="bg-white hover:bg-gray-100 text-black font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
+                  className="btn-primary font-bold rounded-lg px-6 py-2.5 text-sm transition-colors"
                 >
                   Get Started
                 </AuthCtaButton>

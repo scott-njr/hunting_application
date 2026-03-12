@@ -5,6 +5,7 @@ import {
   traceDrainageFlow,
   flowResultToBands,
 } from '@/lib/field-map/drainage'
+import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
 
 /** Grid dimensions — 15×15 = 225 sample points */
 const GRID_SIZE = 15
@@ -25,7 +26,7 @@ const USGS_3DEP_URL =
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { searchParams } = new URL(req.url)
   const lat = parseFloat(searchParams.get('lat') ?? '')
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
     : undefined
 
   if (isNaN(lat) || isNaN(lng)) {
-    return NextResponse.json({ error: 'lat and lng required' }, { status: 400 })
+    return badRequest('lat and lng required')
   }
 
   try {
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
     const result = traceDrainageFlow(grid, startRow, startCol, maxRange, uphill, windBias)
     const bands = flowResultToBands(result)
 
-    const response = NextResponse.json({
+    const response = apiOk({
       bands,
       totalLengthM: result.totalLengthM,
       elevationDropM: result.elevationDropM,
@@ -117,7 +118,7 @@ export async function GET(req: NextRequest) {
       console.error('[hunting/field-map/drainage] Error:', err)
     }
     // Return null — the client falls back to a straight cone
-    return NextResponse.json({ bands: null })
+    return apiOk({ bands: null } as Record<string, unknown>)
   }
 }
 
@@ -188,14 +189,14 @@ async function fallbackToEpqs(
   const samples = results.filter((s): s is { x: number; y: number; value: number } => s !== null)
 
   if (samples.length < fallbackSize * fallbackSize * 0.5) {
-    return NextResponse.json({ bands: null })
+    return apiOk({ bands: null } as Record<string, unknown>)
   }
 
   const grid = buildElevationGrid(samples, fallbackSize, lat, lng, cellSize)
   const result = traceDrainageFlow(grid, halfGrid, halfGrid, maxRange, uphill, windBias)
   const bands = flowResultToBands(result)
 
-  return NextResponse.json({
+  return apiOk({
     bands,
     totalLengthM: result.totalLengthM,
     elevationDropM: result.elevationDropM,

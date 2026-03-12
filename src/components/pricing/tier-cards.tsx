@@ -49,9 +49,7 @@ export function TierCards({ onTierChanged }: TierCardsProps = {}) {
         return
       }
       setLoggedIn(true)
-      // module_subscriptions not in generated types — cast to bypass
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(supabase as any)
+      supabase
         .from('module_subscriptions')
         .select('module_slug, tier, status')
         .eq('user_id', user.id)

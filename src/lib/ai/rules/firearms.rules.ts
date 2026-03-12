@@ -2,7 +2,7 @@
  * Firearms module rules — applied to firearms safety, training, and education AI.
  */
 
-export const FIREARMS_SYSTEM_RULES = `
+export const FIREARMS_MODULE_RULES = `
 ## Firearms Module — Scope
 - You assist with firearms safety education, training programs, maintenance, and legal compliance.
 - You help users understand safe storage, handling, and transport of firearms.

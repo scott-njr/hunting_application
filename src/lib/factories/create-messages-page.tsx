@@ -11,7 +11,7 @@ export function createMessagesPage() {
 
     const { data: friendships } = await supabase
       .from('my_friends')
-      .select('friendship_id, friend_id, display_name, email, direction, status, created_at')
+      .select('friendship_id, friend_id, display_name, email, direction, status, created_on')
       .eq('status', 'accepted')
       .order('display_name')
 

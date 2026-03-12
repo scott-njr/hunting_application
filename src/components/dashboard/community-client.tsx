@@ -9,35 +9,13 @@ import { cn } from '@/lib/utils'
 import { FeedPanel } from '@/components/community/feed-panel'
 import { DmPanel } from '@/components/community/dm-panel'
 import { BuddyMatchesCard } from '@/components/community/buddy-matches-card'
-
-type Friend = {
-  friendship_id: string
-  friend_id: string
-  display_name: string | null
-  email: string
-  direction: 'sent' | 'received'
-  status: 'pending' | 'accepted' | 'declined' | 'blocked'
-  created_at: string
-}
-
-type SearchResult = {
-  user_id: string
-  display_name: string | null
-  user_name: string | null
-  avatar_url: string | null
-}
+import { initials, displayLabel } from '@/lib/format'
+import type { Friend, SearchResult } from '@/types/friends'
 
 type Props = {
   initialFriends: Friend[]
   currentUserId: string
 }
-
-function initials(name: string | null, email: string): string {
-  if (name) return name.slice(0, 2).toUpperCase()
-  return email.slice(0, 2).toUpperCase()
-}
-
-function displayLabel(f: Friend) { return f.display_name || f.email }
 
 export default function CommunityClient({ initialFriends, currentUserId }: Props) {
   const [mobileTab, setMobileTab] = useState<'feed' | 'people' | 'messages'>('feed')
@@ -92,7 +70,7 @@ export default function CommunityClient({ initialFriends, currentUserId }: Props
           email: '',
           direction: 'sent',
           status: 'pending',
-          created_at: new Date().toISOString(),
+          created_on: new Date().toISOString(),
         }])
         setSearchResults(prev => prev.filter(r => r.user_id !== recipientId))
       }
@@ -204,7 +182,7 @@ export default function CommunityClient({ initialFriends, currentUserId }: Props
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search by name or email..."
-                className="w-full bg-elevated border border-default text-primary rounded pl-8 pr-3 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                className="w-full bg-elevated border border-default text-primary rounded pl-8 pr-3 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
               />
             </div>
             {friendError && <p className="mt-1 text-xs text-red-400">{friendError}</p>}

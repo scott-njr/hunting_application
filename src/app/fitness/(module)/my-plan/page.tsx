@@ -15,7 +15,7 @@ import { CatchUpButton } from '@/components/fitness/coach/catch-up-button'
 import { TodayChecklist } from './today-checklist'
 import { ExpandableText } from '@/components/ui/expandable-text'
 
-import { getCurrentWeek, getWeekMonday } from '@/lib/fitness/date-helpers'
+import { getCurrentWeek } from '@/lib/fitness/date-helpers'
 
 function getTodayDayNumber(): number {
   const day = new Date().getDay()
@@ -38,14 +38,6 @@ type PlanData = {
     week_number: number
     theme: string
     sessions: Array<Record<string, unknown>>
-  }>
-  days?: Array<{
-    day_number: number
-    day_name: string
-    meals: Array<Record<string, unknown>>
-    total_calories: number
-    total_protein_g: number
-    total_cost_usd: number
   }>
   grocery_list?: Array<{ item: string; estimated_cost_usd: number }>
   weekly_cost_usd?: number
@@ -127,19 +119,19 @@ export default async function MyPlanPage() {
 
   // Fetch logs for all active plans (including notes + dates for table view)
   const planIds = [runPlan?.id, strengthPlan?.id, mealPlan?.id].filter(Boolean) as string[]
-  let allLogs: Array<{ plan_id: string; week_number: number; session_number: number; notes: string | null; completed_at: string }> = []
+  let allLogs: Array<{ plan_id: string; week_number: number; session_number: number; notes: string | null; completed: boolean; completed_at: string }> = []
   if (planIds.length > 0) {
     const { data } = await supabase
       .from('fitness_plan_workout_logs')
-      .select('plan_id, week_number, session_number, notes, completed_at')
+      .select('plan_id, week_number, session_number, notes, completed, completed_at')
       .in('plan_id', planIds)
     allLogs = data ?? []
   }
 
-  // Build logs map per plan: planId -> Map<weekNumber, Set<sessionNumber>>
+  // Build logs map per plan: planId -> Map<weekNumber, Set<sessionNumber>> (completed only)
   function buildLogsByWeek(planId: string) {
     const map = new Map<number, Set<number>>()
-    for (const log of allLogs.filter(l => l.plan_id === planId)) {
+    for (const log of allLogs.filter(l => l.plan_id === planId && l.completed)) {
       if (!map.has(log.week_number)) map.set(log.week_number, new Set())
       map.get(log.week_number)!.add(log.session_number)
     }
@@ -148,37 +140,22 @@ export default async function MyPlanPage() {
 
   const runLogs = runPlan ? buildLogsByWeek(runPlan.id) : new Map<number, Set<number>>()
   const strengthLogs = strengthPlan ? buildLogsByWeek(strengthPlan.id) : new Map<number, Set<number>>()
-
-  // Meal logs: only count this week's entries (meals repeat weekly, old logs shouldn't carry over)
-  const thisWeekMonday = getWeekMonday(new Date())
-  const thisWeekMondayStr = thisWeekMonday.toISOString().split('T')[0]
-  const nextMonday = new Date(thisWeekMonday)
-  nextMonday.setDate(nextMonday.getDate() + 7)
-  const nextMondayStr = nextMonday.toISOString().split('T')[0]
-  const mealLogsThisWeek = mealPlan
-    ? allLogs.filter(l => l.plan_id === mealPlan.id && l.completed_at.split('T')[0] >= thisWeekMondayStr && l.completed_at.split('T')[0] < nextMondayStr)
-    : []
-  const mealLogs = new Map<number, Set<number>>()
-  for (const log of mealLogsThisWeek) {
-    if (!mealLogs.has(log.week_number)) mealLogs.set(log.week_number, new Set())
-    mealLogs.get(log.week_number)!.add(log.session_number)
-  }
+  const mealLogs = mealPlan ? buildLogsByWeek(mealPlan.id) : new Map<number, Set<number>>()
 
   const runData = runPlan?.plan_data as PlanData | null
   const strengthData = strengthPlan?.plan_data as PlanData | null
   const mealData = mealPlan?.plan_data as PlanData | null
 
   const todayDayNumber = getTodayDayNumber()
-  const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  const todayMealsRaw = mealData?.days?.find(d => d.day_number === todayDayNumber)
-  const todayMeals = todayMealsRaw ? { ...todayMealsRaw, day_name: DAY_NAMES[todayDayNumber] } : undefined
 
-  // Current week for workout plans
+  // Current week for all plans
   const runCurrentWeek = runPlan ? getCurrentWeek(runPlan.started_at, runPlan.weeks_total) : 0
   const strengthCurrentWeek = strengthPlan ? getCurrentWeek(strengthPlan.started_at, strengthPlan.weeks_total) : 0
+  const mealCurrentWeek = mealPlan ? getCurrentWeek(mealPlan.started_at, mealPlan.weeks_total) : 0
 
   const runThisWeek = runData?.weeks?.find(w => w.week_number === runCurrentWeek)
   const strengthThisWeek = strengthData?.weeks?.find(w => w.week_number === strengthCurrentWeek)
+  const mealThisWeek = mealData?.weeks?.find(w => w.week_number === mealCurrentWeek)
 
   // Determine today's specific sessions based on training day mapping
   function getTodaySessions(weekData: { week_number: number; theme: string; sessions: Array<Record<string, unknown>> } | undefined, logs: Map<number, Set<number>>, currentWeek: number): Array<Record<string, unknown> & { session_number: number; isCompleted: boolean }> {
@@ -189,15 +166,27 @@ export default async function MyPlanPage() {
     if (todayIdx === -1) return [] // no session today
     const session = weekData.sessions[todayIdx]
     if (!session) return []
-    const sessionNum = todayIdx + 1
+    // Use session_number from the plan JSON — must match what PlanTableView uses
+    // so logs are consistent between the Today checklist and the Plan Breakdown table
+    const sessionNum = (session.session_number as number) ?? (todayIdx + 1)
     const isCompleted = logs.get(currentWeek)?.has(sessionNum) ?? false
     return [{ ...session, session_number: sessionNum, isCompleted }]
   }
 
   const todayRunSessions = runThisWeek ? getTodaySessions(runThisWeek, runLogs, runCurrentWeek) : []
   const todayStrengthSessions = strengthThisWeek ? getTodaySessions(strengthThisWeek, strengthLogs, strengthCurrentWeek) : []
-  const todayMealItems = todayMeals ? (todayMeals.meals as unknown as Array<{ meal_number: number; meal_type: string; title: string; calories: number; protein_g: number }>)
-    .map(m => ({ ...m, isCompleted: mealLogs.get(todayDayNumber)?.has(m.meal_number) ?? false })) : []
+
+  // Today's meals: filter current week's sessions by today's day_number
+  type MealSession = Record<string, unknown> & { session_number: number; isCompleted: boolean }
+  const todayMealSessions: MealSession[] = mealThisWeek
+    ? (mealThisWeek.sessions as Array<Record<string, unknown>>)
+        .filter(s => (s.day_number as number) === todayDayNumber)
+        .map(s => {
+          const sessionNum = (s.session_number as number)
+          const isCompleted = mealLogs.get(mealCurrentWeek)?.has(sessionNum) ?? false
+          return { ...s, session_number: sessionNum, isCompleted }
+        })
+    : []
   // Chart data builders
   function buildChartData(planData: PlanData | null, logsByWeek: Map<number, Set<number>>) {
     const sessionsPerWeek: number[] = []
@@ -229,25 +218,23 @@ export default async function MyPlanPage() {
     }
   }
 
-  // This week's session progress (across run + strength)
+  // This week's session progress (across run + strength + meal)
   let thisWeekTotal = 0
   let thisWeekCompleted = 0
-  if (runData?.weeks && runCurrentWeek > 0) {
-    const rw = runData.weeks.find(w => w.week_number === runCurrentWeek)
-    if (rw) {
-      thisWeekTotal += rw.sessions.length
-      thisWeekCompleted += runLogs.get(runCurrentWeek)?.size ?? 0
-    }
-  }
-  if (strengthData?.weeks && strengthCurrentWeek > 0) {
-    const sw = strengthData.weeks.find(w => w.week_number === strengthCurrentWeek)
-    if (sw) {
-      thisWeekTotal += sw.sessions.length
-      thisWeekCompleted += strengthLogs.get(strengthCurrentWeek)?.size ?? 0
+  for (const { data, logs, cw } of [
+    { data: runData, logs: runLogs, cw: runCurrentWeek },
+    { data: strengthData, logs: strengthLogs, cw: strengthCurrentWeek },
+    { data: mealData, logs: mealLogs, cw: mealCurrentWeek },
+  ]) {
+    if (!data?.weeks || cw <= 0) continue
+    const wk = data.weeks.find(w => w.week_number === cw)
+    if (wk) {
+      thisWeekTotal += wk.sessions.length
+      thisWeekCompleted += logs.get(cw)?.size ?? 0
     }
   }
 
-  // Missed sessions (past weeks only)
+  // Missed sessions (past weeks only — run + strength only, meals don't count as "missed")
   let missedSessions = 0
   for (const plan of [
     { data: runData, logs: runLogs, currentWeek: runCurrentWeek },
@@ -261,17 +248,7 @@ export default async function MyPlanPage() {
     }
   }
 
-  // Build meal plan input for PlanTableView
-  const mealPlanInput = mealPlan && mealData?.days ? {
-    planId: mealPlan.id,
-    days: mealData.days.map(d => ({
-      day_number: d.day_number,
-      day_name: d.day_name,
-      meals: (d.meals as Array<{ meal_number: number; meal_type: string; title: string; calories: number; protein_g: number; ingredients?: string[]; instructions?: string }>),
-    })),
-    logsByDay: mealLogs,
-    logs: allLogs.filter(l => l.plan_id === mealPlan.id),
-  } : undefined
+  // No separate mealPlanInput — meals are now part of the plans array
 
   return (
     <div className="space-y-6">
@@ -310,7 +287,7 @@ export default async function MyPlanPage() {
             >
               <UtensilsCrossed className="h-6 w-6 text-accent mx-auto mb-2" />
               <p className="text-primary text-sm font-medium">Meal Prep</p>
-              <p className="text-muted text-xs mt-1">7-day meal plan</p>
+              <p className="text-muted text-xs mt-1">8-week meal plan</p>
             </Link>
           </div>
         </div>
@@ -393,16 +370,16 @@ export default async function MyPlanPage() {
                 isCompleted: s.isCompleted as boolean,
                 details: s as Record<string, unknown>,
               })),
-              ...todayMealItems.map(m => ({
-                id: `meal-${mealPlan!.id}-${todayDayNumber}-${m.meal_number}`,
+              ...todayMealSessions.map(s => ({
+                id: `meal-${mealPlan!.id}-${mealCurrentWeek}-${s.session_number}`,
                 planId: mealPlan!.id,
-                weekNumber: todayDayNumber,
-                sessionNumber: m.meal_number,
-                label: m.title || m.meal_type,
-                sublabel: `${m.calories} cal · ${m.protein_g}g protein`,
+                weekNumber: mealCurrentWeek,
+                sessionNumber: s.session_number,
+                label: (s.title as string) || (s.meal_type as string) || 'Meal',
+                sublabel: `${s.calories ?? ''} cal · ${s.protein_g ?? ''}g protein`,
                 type: 'meal' as const,
-                isCompleted: m.isCompleted,
-                details: m as unknown as Record<string, unknown>,
+                isCompleted: s.isCompleted,
+                details: s as Record<string, unknown>,
               })),
             ]} />
 
@@ -517,23 +494,21 @@ export default async function MyPlanPage() {
                   <UtensilsCrossed className="h-5 w-5 text-accent shrink-0" />
                   <h2 className="text-primary font-bold text-lg">Meal Plan</h2>
                 </div>
-                <ExpandableText text={mealData.goal_summary || 'AI-generated 7-day meal plan'} />
+                <ExpandableText text={mealData.goal_summary || 'AI-generated 8-week meal plan'} />
                 <div className="grid grid-cols-3 sm:gap-2 gap-1.5 text-center mt-3">
                   <div className="rounded bg-elevated p-2">
-                    <p className="text-primary text-sm font-bold">7</p>
-                    <p className="text-muted text-[10px] uppercase">Days</p>
+                    <p className="text-primary text-sm font-bold">{mealPlan.weeks_total}</p>
+                    <p className="text-muted text-[10px] uppercase">Weeks</p>
+                  </div>
+                  <div className="rounded bg-elevated p-2">
+                    <p className="text-primary text-sm font-bold">{mealCurrentWeek}</p>
+                    <p className="text-muted text-[10px] uppercase">Current</p>
                   </div>
                   <div className="rounded bg-elevated p-2">
                     <p className="text-primary text-sm font-bold">
-                      {mealData.daily_targets?.calories ?? mealData.days?.[0]?.total_calories ?? '—'}
+                      {mealData.daily_targets?.calories ?? '—'}
                     </p>
                     <p className="text-muted text-[10px] uppercase">Cal/day</p>
-                  </div>
-                  <div className="rounded bg-elevated p-2">
-                    <p className="text-primary text-sm font-bold">
-                      {mealData.weekly_cost_usd ? `$${mealData.weekly_cost_usd.toFixed(0)}` : '—'}
-                    </p>
-                    <p className="text-muted text-[10px] uppercase">Cost/wk</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 pt-3 mt-auto border-t border-subtle">
@@ -570,9 +545,17 @@ export default async function MyPlanPage() {
                     logsByWeek: strengthLogs,
                     logs: allLogs.filter(l => l.plan_id === strengthPlan.id),
                   }] : []),
+                  ...(mealPlan && mealData?.weeks ? [{
+                    planId: mealPlan.id,
+                    planType: 'meal' as const,
+                    weeks: mealData.weeks as unknown as Parameters<typeof PlanTableView>[0]['plans'][0]['weeks'],
+                    daysPerWeek: 7,
+                    startedAt: mealPlan.started_at,
+                    logsByWeek: mealLogs,
+                    logs: allLogs.filter(l => l.plan_id === mealPlan.id),
+                  }] : []),
                 ]}
-                mealPlan={mealPlanInput}
-                currentWeek={Math.max(runCurrentWeek, strengthCurrentWeek) || 1}
+                currentWeek={Math.max(runCurrentWeek, strengthCurrentWeek, mealCurrentWeek) || 1}
               />
             </div>
           )}

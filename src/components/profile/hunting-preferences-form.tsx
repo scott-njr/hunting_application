@@ -36,8 +36,8 @@ type PointsRow = {
   season: string
   points: number
   point_type: 'preference' | 'bonus'
-  created_at?: string
-  updated_at?: string
+  created_on?: string
+  updated_on?: string
   dirty?: boolean
   isNew?: boolean
 }
@@ -224,7 +224,7 @@ export default function HuntingPreferencesForm() {
       await supabase.from('hunting_points').update({
         state: row.state, state_name: row.state_name, species: row.species,
         season: row.season || 'general', points: row.points,
-        point_type: row.point_type, updated_at: new Date().toISOString(),
+        point_type: row.point_type, updated_on: new Date().toISOString(),
       }).eq('id', row.id)
     } else {
       await supabase.from('hunting_points').upsert({

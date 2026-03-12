@@ -1,6 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
 
 // Uses service role key — bypasses RLS to look up Scout users.
 // Returns minimal info only: user_id + display_name + email. Never returns sensitive data.
@@ -11,12 +12,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(req: NextRequest) {
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const email = req.nextUrl.searchParams.get('email')?.toLowerCase().trim()
   const q = req.nextUrl.searchParams.get('q')?.toLowerCase().trim()
 
-  if (!email && !q) return NextResponse.json({ found: false }, { status: 400 })
+  if (!email && !q) return badRequest('email or q parameter required')
 
   const supabase = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
       .eq('email', email)
       .maybeSingle()
 
-    if (!member) return NextResponse.json({ found: false })
+    if (!member) return apiOk({ found: false })
 
     const { data: profile } = await supabase
       .from('user_profile')
@@ -39,15 +40,15 @@ export async function GET(req: NextRequest) {
       .eq('id', member.id)
       .maybeSingle()
 
-    return NextResponse.json({ found: true, user_id: member.id, display_name: profile?.display_name ?? null, user_name: profile?.user_name ?? null })
+    return apiOk({ found: true, user_id: member.id, display_name: profile?.display_name ?? null, user_name: profile?.user_name ?? null })
   }
 
   // ── Search by display_name or email prefix (community search) ───────────────
-  if (q && q.length < 2) return NextResponse.json({ results: [] })
+  if (q && q.length < 2) return apiOk({ results: [] })
 
   // Sanitize q to prevent PostgREST filter metacharacter injection
   const sanitizedQ = (q as string).replace(/[(),."'\\]/g, '')
-  if (!sanitizedQ) return NextResponse.json({ results: [] })
+  if (!sanitizedQ) return apiOk({ results: [] })
 
   // Search user_profile by display_name or user_name
   const { data: byName } = await supabase
@@ -66,5 +67,5 @@ export async function GET(req: NextRequest) {
     results.push({ user_id: p.id, display_name: p.display_name, user_name: p.user_name ?? null, avatar_url: p.avatar_url ?? null })
   }
 
-  return NextResponse.json({ results })
+  return apiOk({ results })
 }

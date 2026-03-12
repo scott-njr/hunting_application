@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { apiOk, unauthorized, badRequest } from '@/lib/api-response'
 
 const WIND_DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
 
@@ -32,20 +33,20 @@ function getMoonData(date: Date) {
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { searchParams } = new URL(req.url)
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
 
   if (!lat || !lng) {
-    return NextResponse.json({ error: 'lat and lng required' }, { status: 400 })
+    return badRequest('lat and lng required')
   }
 
   const latNum = parseFloat(lat)
   const lngNum = parseFloat(lng)
   if (isNaN(latNum) || isNaN(lngNum)) {
-    return NextResponse.json({ error: 'lat and lng must be numbers' }, { status: 400 })
+    return badRequest('lat and lng must be numbers')
   }
 
   const moon = getMoonData(new Date())
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json()
     const current = data.current
 
-    return NextResponse.json({
+    return apiOk({
       temp_f: Math.round(current.temperature_2m),
       wind_speed_mph: Math.round(current.wind_speed_10m * 10) / 10,
       wind_direction: degreesToCompass(current.wind_direction_10m),
@@ -66,11 +67,11 @@ export async function GET(req: NextRequest) {
       pressure_inhg: Math.round(current.surface_pressure * 0.02953 * 100) / 100,
       pressure_trend: null,
       ...moon,
-    })
+    } as Record<string, unknown>)
   } catch (err) {
     console.error('[hunting/field-map/conditions] weather fetch failed:', err)
     // Return moon data even if weather fails
-    return NextResponse.json({
+    return apiOk({
       temp_f: null,
       wind_speed_mph: null,
       wind_direction: null,
@@ -78,6 +79,6 @@ export async function GET(req: NextRequest) {
       pressure_inhg: null,
       pressure_trend: null,
       ...moon,
-    })
+    } as Record<string, unknown>)
   }
 }

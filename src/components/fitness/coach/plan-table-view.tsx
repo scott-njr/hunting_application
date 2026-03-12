@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState, useRef } from 'react'
+import { Fragment, useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronUp, Info, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -12,13 +12,24 @@ interface Session {
   session_number: number
   type: string
   title: string
+  description?: string
+  // Run fields
   distance_miles?: number
   duration_min?: number
   effort_level?: string
-  description: string
+  // Strength fields
   warmup?: string
   exercises?: Array<{ name: string; sets: number; reps: string; notes?: string }>
   cooldown?: string
+  // Meal fields
+  meal_type?: string
+  day_name?: string
+  day_number?: number
+  calories?: number
+  protein_g?: number
+  ingredients?: string[]
+  instructions?: string
+  estimated_cost_usd?: number
 }
 
 interface WeekData {
@@ -37,7 +48,7 @@ interface LogRecord {
 
 interface PlanInput {
   planId: string
-  planType: 'run' | 'strength'
+  planType: 'run' | 'strength' | 'meal'
   weeks: WeekData[]
   daysPerWeek: number
   startedAt: string
@@ -45,32 +56,8 @@ interface PlanInput {
   logs: LogRecord[]
 }
 
-interface MealItem {
-  meal_number: number
-  meal_type: string
-  title: string
-  calories: number
-  protein_g: number
-  ingredients?: string[]
-  instructions?: string
-}
-
-interface MealDayData {
-  day_number: number
-  day_name: string
-  meals: MealItem[]
-}
-
-interface MealPlanInput {
-  planId: string
-  days: MealDayData[]
-  logsByDay: Map<number, Set<number>> // day_number -> Set<meal_number>
-  logs: LogRecord[]
-}
-
 interface PlanTableViewProps {
   plans: PlanInput[]
-  mealPlan?: MealPlanInput
   currentWeek?: number
 }
 
@@ -139,13 +126,6 @@ function toDayNumber(dayOfWeek: number): number {
   return dayOfWeek === 0 ? 7 : dayOfWeek
 }
 
-interface MealEntry {
-  meal: MealItem
-  dayNumber: number
-  isLogged: boolean
-  logRecord: LogRecord | undefined
-}
-
 interface DayEntry {
   date: Date
   dayOfWeek: number // 0=Sun, 1=Mon, ..., 6=Sat
@@ -156,32 +136,23 @@ interface DayEntry {
     isLogged: boolean
     logRecord: LogRecord | undefined
   }>
-  meals: MealEntry[]
-  isOffDay: boolean // no workout sessions AND no meals
+  isOffDay: boolean
   offDayPlans: PlanInput[]
   offDayLogs: Array<{ plan: PlanInput; logRecord: LogRecord | undefined }>
 }
 
-/** Build a flat list of days across all weeks, interleaving multiple plans + meals */
+/** Build a flat list of days across all weeks, interleaving multiple plans */
 function buildTimeline(
   plans: PlanInput[],
-  mealPlan?: MealPlanInput,
 ): { weeks: Array<{ weekNumber: number; theme: string; days: DayEntry[]; plans: PlanInput[] }> } {
-  if (plans.length === 0 && !mealPlan) return { weeks: [] }
+  if (plans.length === 0) return { weeks: [] }
 
   // Use the earliest started_at to determine the timeline start
   const starts = plans.map(p => parseLocalDate(p.startedAt))
-  if (starts.length === 0) {
-    // Meal-only: use current week Monday
-    starts.push(new Date())
-  }
   const earliest = new Date(Math.min(...starts.map(s => s.getTime())))
   const weekMonday = getWeekMonday(earliest)
 
-  // Find max weeks across all plans (meal plan = 1 week repeated)
-  const maxWeeks = plans.length > 0
-    ? Math.max(...plans.map(p => p.weeks.length))
-    : 1
+  const maxWeeks = Math.max(...plans.map(p => p.weeks.length))
 
   const result: Array<{ weekNumber: number; theme: string; days: DayEntry[]; plans: PlanInput[] }> = []
 
@@ -204,62 +175,61 @@ function buildTimeline(
       const dayOfWeek = date.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
 
       const sessions: DayEntry['sessions'] = []
-      let hasWorkout = false
+      let hasContent = false
 
       for (const plan of plans) {
-        const trainingDays = TRAINING_DAYS[plan.daysPerWeek] ?? TRAINING_DAYS[3]
         const pw = plan.weeks.find(wk => wk.week_number === weekNumber)
         if (!pw) continue
 
-        if (trainingDays.includes(dayOfWeek)) {
-          hasWorkout = true
-          const dayIndex = trainingDays.indexOf(dayOfWeek)
-          const session = pw.sessions[dayIndex]
-          if (session) {
+        if (plan.planType === 'meal') {
+          // Meal plans: match sessions by day_number
+          const dayNum = toDayNumber(dayOfWeek)
+          const daySessions = pw.sessions.filter(s => s.day_number === dayNum)
+          if (daySessions.length > 0) {
+            hasContent = true
             const weekLogged = plan.logsByWeek.get(weekNumber) ?? new Set<number>()
-            const logRecord = plan.logs.find(
-              l => l.plan_id === plan.planId && l.week_number === weekNumber && l.session_number === session.session_number
-            )
-            sessions.push({
-              plan,
-              session,
-              weekNumber,
-              isLogged: weekLogged.has(session.session_number),
-              logRecord,
-            })
+            for (const session of daySessions) {
+              const logRecord = plan.logs.find(
+                l => l.plan_id === plan.planId && l.week_number === weekNumber && l.session_number === session.session_number
+              )
+              sessions.push({
+                plan,
+                session,
+                weekNumber,
+                isLogged: weekLogged.has(session.session_number),
+                logRecord,
+              })
+            }
+          }
+        } else {
+          // Run/strength: use TRAINING_DAYS mapping
+          const trainingDays = TRAINING_DAYS[plan.daysPerWeek] ?? TRAINING_DAYS[3]
+          if (trainingDays.includes(dayOfWeek)) {
+            hasContent = true
+            const dayIndex = trainingDays.indexOf(dayOfWeek)
+            const session = pw.sessions[dayIndex]
+            if (session) {
+              const weekLogged = plan.logsByWeek.get(weekNumber) ?? new Set<number>()
+              const logRecord = plan.logs.find(
+                l => l.plan_id === plan.planId && l.week_number === weekNumber && l.session_number === session.session_number
+              )
+              sessions.push({
+                plan,
+                session,
+                weekNumber,
+                isLogged: weekLogged.has(session.session_number),
+                logRecord,
+              })
+            }
           }
         }
       }
-
-      // Meal entries for this day of week (repeating weekly)
-      const meals: MealEntry[] = []
-      if (mealPlan) {
-        const dayNum = toDayNumber(dayOfWeek)
-        const mealDay = mealPlan.days.find(md => md.day_number === dayNum)
-        if (mealDay) {
-          const dayLogged = mealPlan.logsByDay.get(dayNum) ?? new Set<number>()
-          for (const meal of mealDay.meals) {
-            const logRecord = mealPlan.logs.find(
-              l => l.plan_id === mealPlan.planId && l.week_number === dayNum && l.session_number === meal.meal_number
-            )
-            meals.push({
-              meal,
-              dayNumber: dayNum,
-              isLogged: dayLogged.has(meal.meal_number),
-              logRecord,
-            })
-          }
-        }
-      }
-
-      const hasMeals = meals.length > 0
-      const hasContent = hasWorkout || hasMeals
 
       const offDayLogs: DayEntry['offDayLogs'] = []
       const offDayPlans: PlanInput[] = []
       if (!hasContent) {
         if (dayOfWeek === 0) {
-          for (const plan of plans) {
+          for (const plan of plans.filter(p => p.planType !== 'meal')) {
             const logRecord = plan.logs.find(
               l => l.plan_id === plan.planId && l.week_number === weekNumber && l.session_number === 0
             )
@@ -273,7 +243,6 @@ function buildTimeline(
         date,
         dayOfWeek,
         sessions,
-        meals,
         isOffDay: !hasContent,
         offDayPlans,
         offDayLogs,
@@ -316,18 +285,24 @@ function SessionRow({
   const [noteText, setNoteText] = useState(logRecord?.notes ?? '')
   const [expanded, setExpanded] = useState(false)
 
-  const typeColor = getTypeColor(plan.planType === 'strength' ? 'strength' : session.type)
+  // Sync logged state with server data after router.refresh()
+  useEffect(() => { setLogged(isLogged) }, [isLogged])
+
+  const typeColor = getTypeColor(plan.planType === 'meal' ? 'meal' : plan.planType === 'strength' ? 'strength' : session.type)
   const isStrength = plan.planType === 'strength' && session.exercises
+  const isMeal = plan.planType === 'meal'
 
   async function handleLog() {
     setLogging(true)
     if (logged) {
+      // Uncheck: toggle completed to false (preserves notes)
       const res = await fetch(`/api/fitness/plans/${plan.planId}/logs`, {
-        method: 'DELETE',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           week_number: weekNumber,
           session_number: session.session_number,
+          completed: false,
         }),
       })
       if (res.ok) {
@@ -335,6 +310,7 @@ function SessionRow({
         router.refresh()
       }
     } else {
+      // Check: upsert with completed=true
       const res = await fetch(`/api/fitness/plans/${plan.planId}/logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -347,7 +323,6 @@ function SessionRow({
       if (res.ok) {
         setLogged(true)
         setShowNoteInput(false)
-        setNoteText('')
         router.refresh()
       }
     }
@@ -415,9 +390,11 @@ function SessionRow({
           <td className="px-2 py-2">
             <span className={cn(
               'text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wider',
-              plan.planType === 'run' ? 'bg-emerald-950/30 text-emerald-300' : 'bg-orange-950/30 text-orange-300'
+              plan.planType === 'run' ? 'bg-emerald-950/30 text-emerald-300'
+                : plan.planType === 'meal' ? 'bg-stone-800/30 text-stone-300'
+                : 'bg-orange-950/30 text-orange-300'
             )}>
-              {plan.planType === 'run' ? 'Run' : 'Str'}
+              {plan.planType === 'run' ? 'Run' : plan.planType === 'meal' ? 'Meal' : 'Str'}
             </span>
           </td>
         )}
@@ -428,7 +405,7 @@ function SessionRow({
             'text-xs px-1.5 py-0.5 rounded border capitalize whitespace-nowrap',
             typeColor.badge
           )}>
-            {session.type.replace(/_/g, ' ')}
+            {isMeal ? (session.meal_type ?? 'meal') : session.type.replace(/_/g, ' ')}
           </span>
         </td>
 
@@ -449,8 +426,11 @@ function SessionRow({
           </button>
         </td>
 
-        {/* Distance / Duration */}
+        {/* Distance / Duration / Calories */}
         <td className="px-2 py-2 text-xs text-muted whitespace-nowrap">
+          {isMeal && session.calories != null && (
+            <span>{session.calories} cal</span>
+          )}
           {plan.planType === 'run' && (
             <>
               {session.distance_miles ? <span>{session.distance_miles} mi</span> : null}
@@ -463,8 +443,11 @@ function SessionRow({
           )}
         </td>
 
-        {/* Effort / Exercise count */}
+        {/* Effort / Exercise count / Protein */}
         <td className="px-2 py-2 text-xs text-muted">
+          {isMeal && session.protein_g != null && (
+            <span>{session.protein_g}g protein</span>
+          )}
           {plan.planType === 'run' && session.effort_level && (
             <span className="truncate max-w-[120px] block" title={session.effort_level}>
               {session.effort_level}
@@ -498,7 +481,7 @@ function SessionRow({
         <tr className="border-b border-subtle">
           <td colSpan={colSpan} className="px-2 py-3 bg-elevated/20">
             <div className="pl-8 space-y-2 text-sm max-w-2xl">
-              <p className="text-secondary">{session.description}</p>
+              {session.description && <p className="text-secondary">{session.description}</p>}
               {isStrength && (
                 <>
                   {session.warmup && (
@@ -524,6 +507,26 @@ function SessionRow({
                     <div>
                       <span className="text-muted text-xs font-medium uppercase">Cooldown</span>
                       <p className="text-secondary text-xs">{session.cooldown}</p>
+                    </div>
+                  )}
+                </>
+              )}
+              {isMeal && (
+                <>
+                  {session.ingredients && session.ingredients.length > 0 && (
+                    <div>
+                      <span className="text-muted text-xs font-medium uppercase">Ingredients</span>
+                      <ul className="mt-1 space-y-0.5">
+                        {session.ingredients.map((ing, i) => (
+                          <li key={i} className="text-secondary text-xs">&bull; {ing}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {session.instructions && (
+                    <div>
+                      <span className="text-muted text-xs font-medium uppercase">Instructions</span>
+                      <p className="text-secondary text-xs mt-1">{session.instructions}</p>
                     </div>
                   )}
                 </>
@@ -558,250 +561,6 @@ function SessionRow({
           </td>
         </tr>
       )}
-    </>
-  )
-}
-
-// ─── Meal Row ────────────────────────────────────────────────────────────────────
-
-function MealRow({
-  mealEntry,
-  planId,
-  showPlanBadge,
-  showDate,
-  date,
-  colSpan,
-}: {
-  mealEntry: MealEntry
-  planId: string
-  showPlanBadge: boolean
-  showDate: boolean
-  date: Date
-  colSpan: number
-}) {
-  const router = useRouter()
-  const [logging, setLogging] = useState(false)
-  const [logged, setLogged] = useState(mealEntry.isLogged)
-  const [expanded, setExpanded] = useState(false)
-  const [showNoteInput, setShowNoteInput] = useState(false)
-  const [noteText, setNoteText] = useState(mealEntry.logRecord?.notes ?? '')
-  const { meal, dayNumber, logRecord } = mealEntry
-
-  const typeColor = getTypeColor('meal')
-  const hasRecipe = (meal.ingredients && meal.ingredients.length > 0) || meal.instructions
-
-  async function handleLog() {
-    setLogging(true)
-    if (logged) {
-      const res = await fetch(`/api/fitness/plans/${planId}/logs`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          week_number: dayNumber,
-          session_number: meal.meal_number,
-        }),
-      })
-      if (res.ok) {
-        setLogged(false)
-        router.refresh()
-      }
-    } else {
-      const res = await fetch(`/api/fitness/plans/${planId}/logs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          week_number: dayNumber,
-          session_number: meal.meal_number,
-        }),
-      })
-      if (res.ok) {
-        setLogged(true)
-        router.refresh()
-      }
-    }
-    setLogging(false)
-  }
-
-  async function handleSaveNote() {
-    setLogging(true)
-    const res = await fetch(`/api/fitness/plans/${planId}/logs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        week_number: dayNumber,
-        session_number: meal.meal_number,
-        notes: noteText.trim() || null,
-      }),
-    })
-    if (res.ok) {
-      if (!logged) setLogged(true)
-      setShowNoteInput(false)
-      router.refresh()
-    }
-    setLogging(false)
-  }
-
-  return (
-    <>
-    <tr className={cn(
-      'border-b border-subtle border-l-4 transition-colors',
-      typeColor.border,
-      logged ? 'bg-green-950/10' : 'hover:bg-elevated/30'
-    )}>
-      {/* Checkbox */}
-      <td className="px-2 py-2 text-center w-9">
-        <button
-          onClick={handleLog}
-          disabled={logging}
-          className={cn(
-            'h-5 w-5 rounded-full mx-auto flex items-center justify-center transition-colors disabled:opacity-40',
-            logged
-              ? 'bg-green-500/20 hover:bg-red-500/20'
-              : 'border border-subtle hover:border-accent'
-          )}
-          title={logged ? 'Unmark' : 'Mark complete'}
-        >
-          {logging ? (
-            <span className="h-3 w-3 border border-accent/30 border-t-accent rounded-full animate-spin" />
-          ) : logged ? (
-            <Check className="h-3 w-3 text-green-400" />
-          ) : null}
-        </button>
-      </td>
-
-      {/* Date */}
-      <td className="px-2 py-2 whitespace-nowrap">
-        {showDate && (
-          <span className={cn('text-xs', logged ? 'text-muted' : 'text-secondary')}>
-            {formatDate(date)}
-          </span>
-        )}
-      </td>
-
-      {/* Plan badge */}
-      {showPlanBadge && (
-        <td className="px-2 py-2">
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wider bg-stone-800/30 text-stone-300">
-            Meal
-          </span>
-        </td>
-      )}
-
-      {/* Type badge */}
-      <td className="px-2 py-2">
-        <span className={cn(
-          'text-xs px-1.5 py-0.5 rounded border capitalize whitespace-nowrap',
-          typeColor.badge
-        )}>
-          {meal.meal_type}
-        </span>
-      </td>
-
-      {/* Title */}
-      <td className="px-2 py-2">
-        {hasRecipe ? (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className={cn(
-              'text-sm text-left flex items-center gap-1',
-              logged ? 'text-muted line-through' : 'text-primary hover:text-accent'
-            )}
-          >
-            {meal.title}
-            {expanded
-              ? <ChevronUp className="h-3 w-3 text-muted flex-shrink-0" />
-              : <ChevronDown className="h-3 w-3 text-muted flex-shrink-0" />
-            }
-          </button>
-        ) : (
-          <span className={cn(
-            'text-sm',
-            logged ? 'text-muted line-through' : 'text-primary'
-          )}>
-            {meal.title}
-          </span>
-        )}
-      </td>
-
-      {/* Calories (repurpose Dist/Dur column) */}
-      <td className="px-2 py-2 text-xs text-muted whitespace-nowrap">
-        {meal.calories} cal
-      </td>
-
-      {/* Protein (repurpose Effort column) */}
-      <td className="px-2 py-2 text-xs text-muted">
-        {meal.protein_g}g protein
-      </td>
-
-      {/* Log info */}
-      <td className="px-2 py-2">
-        <div className="text-xs space-y-1">
-          {logged && logRecord?.notes && (
-            <p className="text-secondary truncate max-w-[140px]" title={logRecord.notes}>
-              {logRecord.notes}
-            </p>
-          )}
-          <button
-            onClick={() => setShowNoteInput(!showNoteInput)}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-subtle text-muted hover:text-secondary hover:border-default text-[11px] transition-colors"
-          >
-            {logged && logRecord?.notes ? 'Edit Note' : '+ Add Note'}
-          </button>
-        </div>
-      </td>
-    </tr>
-
-    {/* Note input row */}
-    {showNoteInput && (
-      <tr className="border-b border-subtle">
-        <td colSpan={colSpan} className="px-2 py-2 bg-elevated/30">
-          <div className="flex items-center gap-2 max-w-md pl-8">
-            <input
-              type="text"
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              className="flex-1 input-field text-xs py-1.5"
-              placeholder="How was this meal? (optional)"
-              onKeyDown={(e) => e.key === 'Enter' && handleSaveNote()}
-              autoFocus
-            />
-            <button
-              onClick={handleSaveNote}
-              disabled={logging}
-              className="btn-primary px-3 py-1.5 text-xs rounded disabled:opacity-40 whitespace-nowrap"
-            >
-              {logging ? 'Saving...' : logged ? 'Save Note' : 'Complete'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    )}
-
-    {/* Expanded recipe row */}
-    {expanded && hasRecipe && (
-      <tr className="border-b border-subtle">
-        <td colSpan={colSpan} className="px-2 py-3 bg-elevated/20">
-          <div className="pl-8 space-y-2 text-sm max-w-2xl">
-            {meal.ingredients && meal.ingredients.length > 0 && (
-              <div>
-                <span className="text-muted text-xs font-medium uppercase">Ingredients</span>
-                <ul className="mt-1 space-y-0.5">
-                  {meal.ingredients.map((ing, i) => (
-                    <li key={i} className="text-secondary text-xs">&bull; {ing}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {meal.instructions && (
-              <div>
-                <span className="text-muted text-xs font-medium uppercase">Instructions</span>
-                <p className="text-secondary text-xs mt-1">{meal.instructions}</p>
-              </div>
-            )}
-          </div>
-        </td>
-      </tr>
-    )}
     </>
   )
 }
@@ -930,20 +689,19 @@ function SimpleOffDayRow({ date, showPlanBadge }: { date: Date; showPlanBadge: b
 
 // ─── Main Table Component ───────────────────────────────────────────────────────
 
-export function PlanTableView({ plans, mealPlan, currentWeek }: PlanTableViewProps) {
+export function PlanTableView({ plans, currentWeek }: PlanTableViewProps) {
   const [legendOpen, setLegendOpen] = useState(false)
   const currentWeekRef = useRef<HTMLTableRowElement>(null)
 
   // No auto-scroll — page should load at the top
 
   const hasRunPlan = plans.some(p => p.planType === 'run')
-  const hasMealPlan = !!mealPlan
   // Show plan badge column when there are multiple plan types
-  const planTypeCount = plans.length + (hasMealPlan ? 1 : 0)
+  const planTypeCount = new Set(plans.map(p => p.planType)).size
   const showPlanBadge = planTypeCount > 1
   const colSpan = showPlanBadge ? 9 : 8
 
-  const timeline = buildTimeline(plans, mealPlan)
+  const timeline = buildTimeline(plans)
 
   return (
     <div className="rounded-lg border border-subtle bg-surface overflow-hidden">
@@ -1010,13 +768,6 @@ export function PlanTableView({ plans, mealPlan, currentWeek }: PlanTableViewPro
                   completedSessions += pw.sessions.filter(s => weekLogged.has(s.session_number)).length
                 }
               }
-              // Count meal completions for the week
-              if (mealPlan) {
-                for (const day of week.days) {
-                  totalSessions += day.meals.length
-                  completedSessions += day.meals.filter(m => m.isLogged).length
-                }
-              }
               const pct = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0
               const weekStart = week.days[0]?.date
               const weekEnd = week.days[6]?.date
@@ -1063,18 +814,16 @@ export function PlanTableView({ plans, mealPlan, currentWeek }: PlanTableViewPro
 
                   {/* Day rows */}
                   {week.days.map((day) => {
-                    const allItems = [...day.sessions, ...day.meals]
-                    const hasContent = allItems.length > 0
+                    const hasContent = day.sessions.length > 0
 
                     if (hasContent) {
                       let dateShown = false
                       const rows: React.ReactNode[] = []
 
-                      // Workout sessions first
                       for (const entry of day.sessions) {
                         rows.push(
                           <SessionRow
-                            key={`${day.date.toISOString()}-${entry.plan.planId}-${entry.session.session_number}`}
+                            key={`w${entry.weekNumber}-${entry.plan.planId}-s${entry.session.session_number}`}
                             session={entry.session}
                             weekNumber={entry.weekNumber}
                             plan={entry.plan}
@@ -1084,22 +833,6 @@ export function PlanTableView({ plans, mealPlan, currentWeek }: PlanTableViewPro
                             showPlanBadge={showPlanBadge}
                             colSpan={colSpan}
                             showDate={!dateShown}
-                          />
-                        )
-                        dateShown = true
-                      }
-
-                      // Meal rows after workouts
-                      for (const mealEntry of day.meals) {
-                        rows.push(
-                          <MealRow
-                            key={`${day.date.toISOString()}-meal-${mealEntry.meal.meal_number}`}
-                            mealEntry={mealEntry}
-                            planId={mealPlan!.planId}
-                            showPlanBadge={showPlanBadge}
-                            showDate={!dateShown}
-                            date={day.date}
-                            colSpan={colSpan}
                           />
                         )
                         dateShown = true

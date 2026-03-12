@@ -1,4 +1,8 @@
-export const BUG_TRIAGE_RULES = `
+/**
+ * Admin module rules — bug triage and internal tooling AI.
+ */
+
+export const ADMIN_BUG_TRIAGE_RULES = `
 ## Bug Report Triage
 
 You are classifying bug reports for a Next.js + Supabase web application called Lead the Wild.

@@ -11,7 +11,7 @@ interface AdminUser {
   display_name: string | null
   is_admin: boolean
   onboarding_completed: boolean
-  created_at: string
+  created_on: string
   subscriptions?: { module_slug: string; tier: string; status: string }[]
 }
 
@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted text-xs">
-                      {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(user.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <button

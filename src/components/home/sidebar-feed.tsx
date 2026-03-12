@@ -1,34 +1,15 @@
 import Link from 'next/link'
 import { Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const MODULE_BADGE_COLORS: Record<string, string> = {
-  hunting: 'bg-emerald-500/15 text-emerald-400',
-  archery: 'bg-blue-500/15 text-blue-400',
-  firearms: 'bg-red-500/15 text-red-400',
-  medical: 'bg-pink-500/15 text-pink-400',
-  fishing: 'bg-cyan-500/15 text-cyan-400',
-  fitness: 'bg-amber-500/15 text-amber-400',
-}
-
-function timeAgo(dateStr: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (seconds < 60) return 'just now'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d`
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
+import { timeAgo } from '@/lib/format'
+import { MODULE_BADGE_COLORS } from '@/lib/modules'
 
 interface FeedPost {
   id: string
   module: string
   displayName: string
   content: string
-  created_at: string
+  created_on: string
 }
 
 export function SidebarFeed({ posts }: { posts: FeedPost[] }) {
@@ -59,7 +40,7 @@ export function SidebarFeed({ posts }: { posts: FeedPost[] }) {
                   {post.module}
                 </span>
                 <span className="text-xs text-primary font-medium">{post.displayName}</span>
-                <span className="text-[10px] text-muted ml-auto">{timeAgo(post.created_at)}</span>
+                <span className="text-[10px] text-muted ml-auto">{timeAgo(post.created_on, { compact: true })}</span>
               </div>
               <p className="text-muted text-xs line-clamp-1">{post.content}</p>
             </Link>

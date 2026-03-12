@@ -32,6 +32,7 @@ export default async function BaselinePage() {
       <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-6 items-start">
         {/* Left column */}
         <div className="space-y-6">
+          <BaselineLogForm />
           {hasHistory ? (
             <BaselineHistory tests={baselineTests} />
           ) : (
@@ -39,12 +40,12 @@ export default async function BaselinePage() {
               Log your first baseline test to start tracking progress.
             </div>
           )}
-          <BaselineLogForm />
           {hasHistory && <BaselineChart tests={baselineTests} />}
         </div>
 
         {/* Right column */}
         <div className="space-y-4">
+          <BaselineProtocol />
           {/* Tests completed count */}
           <div className="rounded-lg border border-subtle bg-surface p-4 flex items-center gap-3">
             <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-accent/15">
@@ -57,7 +58,6 @@ export default async function BaselinePage() {
               </div>
             </div>
           </div>
-          <BaselineProtocol />
         </div>
       </div>
     </div>

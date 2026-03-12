@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Share2, X } from 'lucide-react'
+import { TacticalSelect } from '@/components/ui/tactical-select'
 
 interface Friend {
   friend_id: string
@@ -82,18 +83,15 @@ export function SharePlanButton({ planId }: { planId: string }) {
                   <p className="text-muted text-sm">No friends yet. Add friends to share plans.</p>
                 ) : (
                   <div className="space-y-3">
-                    <select
+                    <TacticalSelect
                       value={selectedFriend}
-                      onChange={(e) => setSelectedFriend(e.target.value)}
-                      className="w-full input-field text-sm"
-                    >
-                      <option value="">Select a friend...</option>
-                      {friends.map(f => (
-                        <option key={f.friend_id} value={f.friend_id}>
-                          {f.display_name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setSelectedFriend}
+                      placeholder="Select a friend..."
+                      options={friends.map(f => ({
+                        value: f.friend_id,
+                        label: f.display_name,
+                      }))}
+                    />
 
                     {error && <p className="text-red-400 text-xs">{error}</p>}
 

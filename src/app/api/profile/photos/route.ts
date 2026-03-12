@@ -1,28 +1,28 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { apiOk, unauthorized, badRequest, serverError } from '@/lib/api-response'
 
 const MAX_PHOTOS = 6
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey) {
     console.error('[profile-photos] SUPABASE_SERVICE_ROLE_KEY is not set')
-    return NextResponse.json({ error: 'Server config error' }, { status: 500 })
+    return serverError('Server config error')
   }
 
   const formData = await request.formData()
   const file = formData.get('file') as File | null
 
   if (!file || !file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'Image file required' }, { status: 400 })
+    return badRequest('Image file required')
   }
   if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: 'Image must be under 5MB' }, { status: 400 })
+    return badRequest('Image must be under 5MB')
   }
 
   const admin = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   const currentPhotos: string[] = profile?.photo_urls ?? []
   if (currentPhotos.length >= MAX_PHOTOS) {
-    return NextResponse.json({ error: `Maximum ${MAX_PHOTOS} photos allowed` }, { status: 400 })
+    return badRequest(`Maximum ${MAX_PHOTOS} photos allowed`)
   }
 
   // Upload to storage
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
   if (uploadErr) {
     console.error('[profile-photos] upload error:', uploadErr)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   const { data: { publicUrl } } = admin.storage
@@ -67,22 +67,22 @@ export async function POST(request: Request) {
 
   if (dbErr) {
     console.error('[profile-photos] db error:', dbErr)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ photo_urls: updatedPhotos })
+  return apiOk({ photo_urls: updatedPhotos })
 }
 
 export async function DELETE(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceKey) return NextResponse.json({ error: 'Server config error' }, { status: 500 })
+  if (!serviceKey) return serverError('Server config error')
 
   const { url: photoUrl } = await request.json()
-  if (!photoUrl) return NextResponse.json({ error: 'URL required' }, { status: 400 })
+  if (!photoUrl) return badRequest('URL required')
 
   const admin = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
 
@@ -109,8 +109,8 @@ export async function DELETE(request: Request) {
 
   if (dbErr) {
     console.error('[profile-photos] delete db error:', dbErr)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ photo_urls: updatedPhotos })
+  return apiOk({ photo_urls: updatedPhotos })
 }

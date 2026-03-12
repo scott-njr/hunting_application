@@ -36,8 +36,7 @@ export default function SubscriptionsPage() {
         router.push('/auth/login')
         return
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(supabase as any)
+      supabase
         .from('module_subscriptions')
         .select('tier, status')
         .eq('user_id', user.id)

@@ -3,16 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, Send } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-type Friend = {
-  friendship_id: string
-  friend_id: string
-  display_name: string | null
-  email: string
-  direction: 'sent' | 'received'
-  status: 'pending' | 'accepted' | 'declined' | 'blocked'
-  created_at: string
-}
+import { timeAgo, initials } from '@/lib/format'
+import type { Friend } from '@/types/friends'
 
 type Message = {
   id: string
@@ -20,24 +12,7 @@ type Message = {
   recipient_id: string
   content: string
   read_at: string | null
-  created_at: string
-}
-
-function timeAgo(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function initials(name: string | null, email: string): string {
-  if (name) return name.slice(0, 2).toUpperCase()
-  return email.slice(0, 2).toUpperCase()
+  created_on: string
 }
 
 export function DmPanel({
@@ -110,7 +85,7 @@ export function DmPanel({
               <div key={msg.id} className={cn('flex', isOwn ? 'justify-end' : 'justify-start')}>
                 <div className={cn('max-w-[80%] px-3 py-2 rounded-lg text-sm', isOwn ? 'bg-accent text-primary' : 'bg-elevated text-secondary')}>
                   <p>{msg.content}</p>
-                  <p className={cn('text-xs mt-1', isOwn ? 'text-accent-hover' : 'text-muted')}>{timeAgo(msg.created_at)}</p>
+                  <p className={cn('text-xs mt-1', isOwn ? 'text-accent-hover' : 'text-muted')}>{timeAgo(msg.created_on)}</p>
                 </div>
               </div>
             )
@@ -126,7 +101,7 @@ export function DmPanel({
           onChange={e => setNewMessage(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
           placeholder="Message..."
-          className="flex-1 bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+          className="flex-1 bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-base sm:text-sm focus:border-accent focus:outline-none placeholder:text-muted"
         />
         <button onClick={sendMessage} disabled={!newMessage.trim() || sending} className="text-accent-hover disabled:opacity-40 transition-colors">
           <Send className="w-4 h-4" />

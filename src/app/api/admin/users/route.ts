@@ -1,10 +1,11 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiOk, apiDone, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 export async function GET(req: NextRequest) {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   const search = req.nextUrl.searchParams.get('search') ?? ''
   const page = parseInt(req.nextUrl.searchParams.get('page') ?? '1')
@@ -18,8 +19,8 @@ export async function GET(req: NextRequest) {
 
   let query = admin
     .from('members')
-    .select('id, email, is_admin, onboarding_completed, created_at', { count: 'exact' })
-    .order('created_at', { ascending: false })
+    .select('id, email, is_admin, onboarding_completed, created_on', { count: 'exact' })
+    .order('created_on', { ascending: false })
     .range(offset, offset + limit - 1)
 
   if (search) {
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   const { data, count, error } = await query
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
   // Fetch display names and module subscriptions for all returned users
   const userIds = (data ?? []).map(u => u.id)
@@ -57,23 +58,24 @@ export async function GET(req: NextRequest) {
     subscriptions: subsByUser.get(u.id) ?? [],
   }))
 
-  return NextResponse.json({ users, total: count, page, limit })
+  return apiOk({ users, total: count, page, limit })
 }
 
 export async function PATCH(req: NextRequest) {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { userId, field, value } = body
 
   if (!userId || !field) {
-    return NextResponse.json({ error: 'Missing userId or field' }, { status: 400 })
+    return badRequest('Missing userId or field')
   }
 
   const allowedFields = ['is_admin']
   if (!allowedFields.includes(field)) {
-    return NextResponse.json({ error: 'Field not allowed' }, { status: 400 })
+    return badRequest('Field not allowed')
   }
 
   const admin = createServiceClient(
@@ -86,7 +88,7 @@ export async function PATCH(req: NextRequest) {
     .update({ [field]: value })
     .eq('id', userId)
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
-  return NextResponse.json({ ok: true })
+  return apiDone()
 }

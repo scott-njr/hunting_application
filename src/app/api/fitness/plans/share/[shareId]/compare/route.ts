@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, notFound } from '@/lib/api-response'
 
 // GET /api/fitness/plans/share/[shareId]/compare — Comparison data for shared plan
 export async function GET(
@@ -8,7 +9,7 @@ export async function GET(
 ) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { shareId } = await params
 
@@ -21,7 +22,7 @@ export async function GET(
     .maybeSingle()
 
   if (!share || !share.target_plan_id) {
-    return NextResponse.json({ error: 'Shared plan not found or not accepted' }, { status: 404 })
+    return notFound('Shared plan not found or not accepted')
   }
 
   // Fetch both plans (cross-plan RLS policies allow this)
@@ -39,7 +40,7 @@ export async function GET(
   ])
 
   if (!sourceResult.data || !targetResult.data) {
-    return NextResponse.json({ error: 'One or both plans no longer exist' }, { status: 404 })
+    return notFound('One or both plans no longer exist')
   }
 
   // Fetch both plans' logs (cross-plan RLS policies allow this)
@@ -47,6 +48,7 @@ export async function GET(
     .from('fitness_plan_workout_logs')
     .select('plan_id, week_number, session_number, notes, completed_at')
     .in('plan_id', [share.source_plan_id, share.target_plan_id])
+    .eq('completed', true)
 
   const logs = allLogs ?? []
   const sourceLogs = logs.filter(l => l.plan_id === share.source_plan_id)
@@ -103,7 +105,7 @@ export async function GET(
   const sourceTotalCompleted = sourceLogs.filter(l => l.session_number > 0).length
   const targetTotalCompleted = targetLogs.filter(l => l.session_number > 0).length
 
-  return NextResponse.json({
+  return apiOk({
     share_id: share.id,
     plan_type: sourceResult.data.plan_type,
     goal: sourceResult.data.goal,

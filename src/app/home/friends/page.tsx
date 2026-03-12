@@ -6,30 +6,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-
-type Friend = {
-  friendship_id: string
-  friend_id: string
-  display_name: string | null
-  email: string
-  direction: 'sent' | 'received'
-  status: 'pending' | 'accepted' | 'declined' | 'blocked'
-  created_at: string
-}
-
-type SearchResult = {
-  user_id: string
-  display_name: string | null
-  user_name: string | null
-  avatar_url: string | null
-}
-
-function initials(name: string | null, email: string): string {
-  if (name) return name.slice(0, 2).toUpperCase()
-  return email.slice(0, 2).toUpperCase()
-}
-
-function displayLabel(f: Friend) { return f.display_name || f.email }
+import { initials, displayLabel } from '@/lib/format'
+import type { Friend, SearchResult } from '@/types/friends'
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([])
@@ -72,9 +50,12 @@ export default function FriendsPage() {
       setSearching(true)
       try {
         const res = await fetch(`/api/users/find?q=${encodeURIComponent(searchQuery)}`)
+        if (!res.ok) return
         const data = await res.json()
         const existingIds = new Set([currentUserId, ...friends.map(f => f.friend_id)])
         setSearchResults((data.results ?? []).filter((r: SearchResult) => !existingIds.has(r.user_id)))
+      } catch {
+        // network error — silently ignore search failure
       } finally { setSearching(false) }
     }, 400)
     return () => { if (searchRef.current) clearTimeout(searchRef.current) }
@@ -99,7 +80,7 @@ export default function FriendsPage() {
           email: '',
           direction: 'sent' as const,
           status: 'pending' as const,
-          created_at: new Date().toISOString(),
+          created_on: new Date().toISOString(),
         }])
         setSearchResults(prev => prev.filter(r => r.user_id !== recipientId))
       }

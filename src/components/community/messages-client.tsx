@@ -3,23 +3,8 @@
 import { useState } from 'react'
 import { MessageSquare } from 'lucide-react'
 import { DmPanel } from '@/components/community/dm-panel'
-
-type Friend = {
-  friendship_id: string
-  friend_id: string
-  display_name: string | null
-  email: string
-  direction: 'sent' | 'received'
-  status: 'pending' | 'accepted' | 'declined' | 'blocked'
-  created_at: string
-}
-
-function initials(name: string | null, email: string): string {
-  if (name) return name.slice(0, 2).toUpperCase()
-  return email.slice(0, 2).toUpperCase()
-}
-
-function displayLabel(f: Friend) { return f.display_name || f.email }
+import { initials, displayLabel } from '@/lib/format'
+import type { Friend } from '@/types/friends'
 
 export function MessagesClient({
   friends,

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { getScoutContext } from '@/lib/ai/hunting-profile'
+import { apiOk, apiError, apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 import type { WizardInputs, ChatMessage } from '@/components/hunting/draw-research/types'
 
 const STATE_LABELS: Record<string, string> = {
@@ -15,19 +16,17 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return unauthorized()
 
     // Module-specific quota check
     const subInfo = await getUserModuleSubscriptionInfo(supabase, user.id, 'hunting')
 
     if (!hasModuleAIQuota(subInfo.tier, subInfo.aiQueriesThisMonth)) {
-      return NextResponse.json(
-        { error: 'quota_exceeded', message: 'Monthly AI query limit reached for Hunting. Upgrade your plan for more.' },
-        { status: 403 },
-      )
+      return apiError('quota_exceeded', 403, { message: 'Monthly AI query limit reached for Hunting. Upgrade your plan for more.' })
     }
 
-    const body = await req.json()
+    const body = await parseBody(req)
+    if (isErrorResponse(body)) return body
 
     // ── Mode 1: Generate initial recommendations ──
     if (body.wizardInputs && !body.message) {
@@ -44,10 +43,10 @@ export async function POST(req: NextRequest) {
       return handleUpdate(supabase, user.id, body.reportId, body.rankings, body.sharedWith)
     }
 
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    return badRequest('Invalid request')
   } catch (err) {
     console.error('[unit-scout] Error:', err)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    return serverError()
   }
 }
 
@@ -82,7 +81,7 @@ Return ONLY a valid JSON object matching the format described in your instructio
 
   const result = await aiCall({
     module: 'hunting',
-    feature: 'unit_scout',
+    feature: 'hunting_unit_scout',
     userId,
     userMessage,
     context,
@@ -90,7 +89,7 @@ Return ONLY a valid JSON object matching the format described in your instructio
   })
 
   if (!result.success || !result.response) {
-    return NextResponse.json({ error: 'AI generation failed' }, { status: 500 })
+    return serverError('AI generation failed')
   }
 
   // Parse JSON
@@ -108,10 +107,7 @@ Return ONLY a valid JSON object matching the format described in your instructio
   }
 
   if (parseFailed) {
-    return NextResponse.json(
-      { error: 'Failed to parse AI response' },
-      { status: 422 },
-    )
+    return apiError('Failed to parse AI response', 422)
   }
 
   // Save report to DB
@@ -136,7 +132,7 @@ Return ONLY a valid JSON object matching the format described in your instructio
 
   if (insertErr) {
     console.error('[unit-scout] Insert error:', insertErr)
-    return NextResponse.json({ error: 'Failed to save report' }, { status: 500 })
+    return serverError('Failed to save report')
   }
 
   // Increment module-specific quota
@@ -145,7 +141,7 @@ Return ONLY a valid JSON object matching the format described in your instructio
     module_slug_param: 'hunting',
   })
 
-  return NextResponse.json({
+  return apiOk({
     reportId: report.id,
     recommendations,
     summary,
@@ -169,7 +165,7 @@ async function handleChat(
     .single()
 
   if (!report) {
-    return NextResponse.json({ error: 'Report not found' }, { status: 404 })
+    return notFound('Report not found')
   }
 
   const wizard = report.wizard_inputs as unknown as WizardInputs
@@ -187,14 +183,14 @@ async function handleChat(
 
   const result = await aiCall({
     module: 'hunting',
-    feature: 'unit_scout',
+    feature: 'hunting_unit_scout',
     userId,
     userMessage,
     maxTokens: 2000,
   })
 
   if (!result.success || !result.response) {
-    return NextResponse.json({ error: 'AI response failed' }, { status: 500 })
+    return serverError('AI response failed')
   }
 
   // Persist chat to DB
@@ -210,7 +206,7 @@ async function handleChat(
     .update({
       // @ts-expect-error — Json type mismatch; Record<string, unknown> works at runtime
       chat_history: updatedHistory as unknown as Record<string, unknown>,
-      updated_at: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
     })
     .eq('id', reportId)
 
@@ -220,7 +216,7 @@ async function handleChat(
     module_slug_param: 'hunting',
   })
 
-  return NextResponse.json({ response: result.response })
+  return apiOk({ response: result.response })
 }
 
 async function handleUpdate(
@@ -230,7 +226,7 @@ async function handleUpdate(
   rankings?: string[],
   sharedWith?: string[],
 ) {
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  const updates: Record<string, unknown> = { updated_on: new Date().toISOString() }
 
   if (rankings !== undefined) updates.user_rankings = rankings
   if (sharedWith !== undefined) {
@@ -245,8 +241,8 @@ async function handleUpdate(
     .eq('user_id', userId)
 
   if (error) {
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+    return serverError('Update failed')
   }
 
-  return NextResponse.json({ ok: true })
+  return apiDone()
 }

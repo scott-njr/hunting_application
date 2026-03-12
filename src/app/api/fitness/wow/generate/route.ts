@@ -1,7 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
+import { apiOk, apiError, unauthorized, forbidden, serverError } from '@/lib/api-response'
 
 function getCurrentMonday(): string {
   const now = new Date()
@@ -65,12 +65,12 @@ Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
 export async function POST() {
   // Dev-only — production uses Vercel cron at /api/cron/wow
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Use /api/cron/wow in production' }, { status: 403 })
+    return forbidden()
   }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const weekStart = getCurrentMonday()
 
@@ -87,13 +87,13 @@ export async function POST() {
     .maybeSingle()
 
   if (existing) {
-    return NextResponse.json({ error: 'Workout already exists for this week' }, { status: 409 })
+    return apiError('Workout already exists for this week', 409)
   }
 
   // Generate workout via AI
   const result = await aiCall({
     module: 'fitness',
-    feature: 'wow_generator',
+    feature: 'fitness_wow_generator',
     userMessage: WOW_PROMPT,
     userId: user.id,
     maxTokens: 2048,
@@ -101,7 +101,7 @@ export async function POST() {
   })
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error ?? 'AI generation failed' }, { status: 500 })
+    return serverError(result.error ?? 'AI generation failed')
   }
 
   // Parse the AI response
@@ -109,7 +109,7 @@ export async function POST() {
   try {
     parsed = extractJSON(result.response) as typeof parsed
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+    return serverError('Failed to parse AI response')
   }
 
   // Insert into DB
@@ -125,9 +125,9 @@ export async function POST() {
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness WOW Generate] insert error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ workout })
+  return apiOk({ workout })
 }

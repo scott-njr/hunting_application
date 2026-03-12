@@ -105,6 +105,7 @@ export function PlanQuestionnaire({ planType }: PlanQuestionnaireProps) {
   }
 
   const isRun = planType === 'run'
+  const canSubmit = goal && (isRun ? currentMileage : true)
 
   const progressSteps = isRun
     ? ['Analyzing your goals…', 'Designing your program…', 'Building weekly sessions…', 'Finalizing your plan…']
@@ -203,7 +204,7 @@ export function PlanQuestionnaire({ planType }: PlanQuestionnaireProps) {
 
         <button
           type="submit"
-          disabled={generating}
+          disabled={generating || !canSubmit}
           className="btn-primary w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed font-semibold rounded transition-colors"
         >
           {generating ? (

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, notFound, forbidden, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 // POST /api/fitness/challenges/[challengeId]/submit — Submit or update a challenge score
 export async function POST(
@@ -8,13 +9,15 @@ export async function POST(
 ) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { challengeId } = await params
-  const { score_value, score_display, scaling, notes } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { score_value, score_display, scaling, notes } = body
 
   if (score_value == null || !score_display) {
-    return NextResponse.json({ error: 'score_value and score_display are required' }, { status: 400 })
+    return badRequest('score_value and score_display are required')
   }
 
   // Verify user is a participant and challenge is accepted
@@ -26,11 +29,11 @@ export async function POST(
     .maybeSingle()
 
   if (!challenge) {
-    return NextResponse.json({ error: 'Challenge not found or not active' }, { status: 404 })
+    return notFound('Challenge not found or not active')
   }
 
   if (challenge.challenger_id !== user.id && challenge.challenged_id !== user.id) {
-    return NextResponse.json({ error: 'Not a participant in this challenge' }, { status: 403 })
+    return forbidden()
   }
 
   // Upsert submission
@@ -44,7 +47,7 @@ export async function POST(
         score_display,
         scaling: (scaling ?? 'rx') as 'rx' | 'scaled' | 'beginner',
         notes: notes?.trim() || null,
-        submitted_at: new Date().toISOString(),
+        created_on: new Date().toISOString(),
       },
       { onConflict: 'challenge_id,user_id' }
     )
@@ -52,8 +55,8 @@ export async function POST(
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Challenge Submit] upsert error:', error)
+    return serverError()
   }
 
   // Check if both parties have submitted — mark challenge completed
@@ -73,5 +76,5 @@ export async function POST(
       .eq('id', challengeId)
   }
 
-  return NextResponse.json({ submission })
+  return apiOk({ submission }, 201)
 }

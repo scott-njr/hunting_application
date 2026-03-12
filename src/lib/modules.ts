@@ -28,6 +28,15 @@ export const MODULE_TIER_COLORS: Record<ModuleTier, string> = {
   pro: 'tier-pro',
 }
 
+export const MODULE_BADGE_COLORS: Record<string, string> = {
+  hunting: 'bg-emerald-500/15 text-emerald-400',
+  archery: 'bg-blue-500/15 text-blue-400',
+  firearms: 'bg-red-500/15 text-red-400',
+  medical: 'bg-pink-500/15 text-pink-400',
+  fishing: 'bg-cyan-500/15 text-cyan-400',
+  fitness: 'bg-amber-500/15 text-amber-400',
+}
+
 export function hasModuleAccess(userTier: ModuleTier, requiredTier: ModuleTier): boolean {
   return MODULE_TIER_RANK[userTier] >= MODULE_TIER_RANK[requiredTier]
 }

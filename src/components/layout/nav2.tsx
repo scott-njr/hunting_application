@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const nav2Links = [
-  { label: 'Command Center', href: '/home' },
+  { label: 'Command Center', href: '/dashboard' },
   { label: 'Hunting', href: '/hunting' },
   { label: 'Archery', href: '/archery' },
   { label: 'Fishing', href: '/fishing' },

@@ -1,22 +1,14 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { verifyAdmin } from '@/lib/admin-utils'
+import { apiOk, forbidden } from '@/lib/api-response'
 
 // Claude Sonnet 4.6 pricing
 const INPUT_COST_PER_TOKEN = 3 / 1_000_000   // $3 per 1M input tokens
 const OUTPUT_COST_PER_TOKEN = 15 / 1_000_000  // $15 per 1M output tokens
 
 export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { data: member } = await supabase
-    .from('members')
-    .select('is_admin')
-    .eq('id', user.id)
-    .maybeSingle()
-  if (!member?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const adminUser = await verifyAdmin()
+  if (!adminUser) return forbidden()
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -53,7 +45,7 @@ export async function GET() {
         const totalCostDollars = totalCostCents / 100
         const projected = dayOfMonth > 0 ? (totalCostDollars / dayOfMonth) * daysInMonth : 0
 
-        return NextResponse.json({
+        return apiOk({
           source: 'console',
           actualCost: totalCostDollars,
           projectedCost: projected,
@@ -75,7 +67,7 @@ export async function GET() {
   const { data: responses } = await admin
     .from('ai_responses')
     .select('tokens_input, tokens_output')
-    .gte('created_at', monthStart)
+    .gte('created_on', monthStart)
 
   let totalInputTokens = 0
   let totalOutputTokens = 0
@@ -87,7 +79,7 @@ export async function GET() {
   const actualCost = (totalInputTokens * INPUT_COST_PER_TOKEN) + (totalOutputTokens * OUTPUT_COST_PER_TOKEN)
   const projected = dayOfMonth > 0 ? (actualCost / dayOfMonth) * daysInMonth : 0
 
-  return NextResponse.json({
+  return apiOk({
     source: 'tokens',
     actualCost,
     projectedCost: projected,

@@ -22,7 +22,7 @@ interface Issue {
   github_issue_url: string | null
   admin_deploy_notes: string | null
   admin_notes: string | null
-  created_at: string
+  created_on: string
   members: { email: string; display_name: string | null } | null
 }
 
@@ -34,7 +34,7 @@ interface DeployEntry {
   status: 'triggered' | 'building' | 'success' | 'failed'
   github_pr_url: string | null
   admin_notes: string | null
-  created_at: string
+  created_on: string
   completed_at: string | null
 }
 
@@ -245,7 +245,7 @@ export default function AdminDeploysPage() {
                       <span>&middot;</span>
                       <span>{issue.category}</span>
                       <span>&middot;</span>
-                      <span>{new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <span>{new Date(issue.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                       {issue.github_issue_url && (
                         <a
                           href={issue.github_issue_url}
@@ -380,7 +380,7 @@ export default function AdminDeploysPage() {
                         {deploy.admin_notes || `Deploy #${deploy.id.slice(0, 8)}`}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
-                        <span>{new Date(deploy.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                        <span>{new Date(deploy.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                         {deploy.severity && (
                           <>
                             <span>&middot;</span>

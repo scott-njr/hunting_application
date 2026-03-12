@@ -60,8 +60,19 @@ export default function RootLayout({
               '@type': 'Organization',
               name: 'Praevius',
               url: 'https://praevius.com',
+              logo: 'https://lead-the-wild.vercel.app/logo.png',
               description: 'Lead the Wild — a multi-module outdoor skills platform for hunting, archery, firearms, fishing, fitness, and more.',
-              sameAs: [],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Lead the Wild',
+              url: 'https://lead-the-wild.vercel.app',
             }),
           }}
         />

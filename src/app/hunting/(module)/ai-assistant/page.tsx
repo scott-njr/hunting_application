@@ -20,12 +20,12 @@ export default async function DrawResearchAIPage() {
         .from('hunting_draw_research_reports')
         .select('*')
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false }),
+        .order('updated_on', { ascending: false }),
       supabase
         .from('hunting_draw_research_reports')
         .select('*')
         .contains('shared_with', [user.id])
-        .order('updated_at', { ascending: false }),
+        .order('updated_on', { ascending: false }),
       Promise.all([
         supabase
           .from('user_profile')
@@ -99,8 +99,8 @@ export default async function DrawResearchAIPage() {
       userRankings: (r.user_rankings as string[] | null) ?? null,
       status: (r.status as DrawResearchReport['status']) ?? 'draft',
       sharedWith: (r.shared_with as string[]) ?? [],
-      createdAt: r.created_at as string,
-      updatedAt: r.updated_at as string,
+      createdAt: r.created_on as string,
+      updatedAt: r.updated_on as string,
     }
   }
 

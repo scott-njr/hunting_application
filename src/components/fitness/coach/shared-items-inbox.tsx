@@ -10,7 +10,7 @@ interface SharedItem {
   item_type: 'run_session' | 'strength_session' | 'meal'
   item_snapshot: Record<string, unknown>
   message: string | null
-  created_at: string
+  created_on: string
 }
 
 const ITEM_TYPE_LABELS: Record<string, string> = {

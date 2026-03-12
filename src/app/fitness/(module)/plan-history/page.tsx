@@ -29,7 +29,7 @@ export default async function PlanHistoryPage({ searchParams }: { searchParams: 
   // Fetch abandoned plans
   const { data: plans } = await supabase
     .from('fitness_training_plans')
-    .select('id, goal, weeks_total, started_at, config, created_at')
+    .select('id, goal, weeks_total, started_at, config, created_on')
     .eq('user_id', user.id)
     .eq('plan_type', planType as 'run' | 'strength' | 'meal')
     .eq('status', 'abandoned')
@@ -42,6 +42,7 @@ export default async function PlanHistoryPage({ searchParams }: { searchParams: 
         .from('fitness_plan_workout_logs')
         .select('plan_id')
         .in('plan_id', planIds)
+        .eq('completed', true)
     : { data: [] }
 
   const logCounts = new Map<string, number>()

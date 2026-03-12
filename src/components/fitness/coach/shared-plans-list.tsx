@@ -11,7 +11,7 @@ interface ShareRecord {
   partner_name: string
   plan_type: string | null
   plan_goal: string | null
-  shared_at: string
+  created_on: string
 }
 
 export function SharedPlansList() {

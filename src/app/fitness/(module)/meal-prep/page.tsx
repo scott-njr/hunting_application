@@ -25,7 +25,7 @@ export default async function MealPrepPage() {
           <div className="flex items-center gap-3">
             <UtensilsCrossed className="h-5 w-5 text-accent" />
             <span className="text-primary text-sm font-medium">
-              Active 7-day meal plan
+              Active 8-week meal plan
             </span>
           </div>
           <Link

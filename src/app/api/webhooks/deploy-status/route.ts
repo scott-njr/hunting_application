@@ -1,6 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { apiDone, unauthorized } from '@/lib/api-response'
 
 const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
@@ -34,14 +34,14 @@ export async function POST(req: Request) {
   // Verify GitHub signature
   const signature = req.headers.get('x-hub-signature-256')
   if (!verifySignature(rawBody, signature)) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    return unauthorized()
   }
 
   const event = req.headers.get('x-github-event')
 
   // Only handle workflow_run events
   if (event !== 'workflow_run') {
-    return NextResponse.json({ ok: true, skipped: true })
+    return apiDone({ skipped: true })
   }
 
   const payload = JSON.parse(rawBody)
@@ -49,12 +49,12 @@ export async function POST(req: Request) {
 
   // Only process completed runs
   if (action !== 'completed') {
-    return NextResponse.json({ ok: true, skipped: true })
+    return apiDone({ skipped: true })
   }
 
   // Only process our auto-fix workflow
   if (workflow_run.name !== 'Auto Fix Issue') {
-    return NextResponse.json({ ok: true, skipped: true })
+    return apiDone({ skipped: true })
   }
 
   const branch: string = workflow_run.head_branch ?? ''
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   // Extract issue_id from branch name: "auto-fix/{uuid}"
   const issueIdMatch = branch.match(/^auto-fix\/(.+)$/)
   if (!issueIdMatch) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'Not an auto-fix branch' })
+    return apiDone({ skipped: true, reason: 'Not an auto-fix branch' })
   }
 
   const issueId = issueIdMatch[1]
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     .select('id')
     .eq('issue_id', issueId)
     .in('status', ['triggered', 'building'])
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
     .limit(1)
     .single()
 
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
     }
   }
 
-  console.log(`[Deploy Status] Issue ${issueId}: ${deployStatus} (run: ${runUrl})`)
+  console.warn(`[Deploy Status] Issue ${issueId}: ${deployStatus} (run: ${runUrl})`)
 
-  return NextResponse.json({ ok: true, issueId, status: deployStatus })
+  return apiDone({ issueId, status: deployStatus })
 }

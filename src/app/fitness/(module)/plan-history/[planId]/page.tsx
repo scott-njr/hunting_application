@@ -51,6 +51,7 @@ export default async function PlanHistoryComparePage({ params }: { params: Promi
     .from('fitness_plan_workout_logs')
     .select('plan_id, week_number, session_number')
     .in('plan_id', planIds)
+    .eq('completed', true)
 
   const logs = allLogs ?? []
 

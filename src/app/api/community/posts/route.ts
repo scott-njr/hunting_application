@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 export async function GET(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { searchParams } = new URL(req.url)
   const postType = searchParams.get('type')
@@ -12,9 +12,9 @@ export async function GET(req: Request) {
 
   let query = supabase
     .from('social_posts')
-    .select('id, user_id, post_type, entity_name, content, module, metadata, created_at')
+    .select('id, user_id, post_type, entity_name, content, module, metadata, created_on')
     .eq('module', postModule)
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
     .limit(50)
 
   if (postType && postType !== 'all') {
@@ -24,9 +24,9 @@ export async function GET(req: Request) {
   const { data: posts, error } = await query
   if (error) {
     console.error('[community/posts GET] fetch error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
-  if (!posts || posts.length === 0) return NextResponse.json({ posts: [] })
+  if (!posts || posts.length === 0) return apiOk({ posts: [] })
 
   const postIds = posts.map(p => p.id)
   const userIds = [...new Set(posts.map(p => p.user_id))]
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
 
   const likedSet = new Set((userReactionsResult.data ?? []).map(r => r.post_id))
 
-  return NextResponse.json({
+  return apiOk({
     posts: posts.map(p => ({
       ...p,
       display_name: nameMap[p.user_id] ?? null,
@@ -76,23 +76,29 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const body = await req.json()
-  const { post_type, entity_name, content, module: postModule } = body
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { post_type, entity_name, content, module: postModule } = body as {
+    post_type: string
+    entity_name: string
+    content: string
+    module: string
+  }
   const safeModule = String(postModule ?? 'hunting').trim() as 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
 
   const trimmedContent = String(content ?? '').trim()
   if (!trimmedContent) {
-    return NextResponse.json({ error: 'Content is required' }, { status: 400 })
+    return badRequest('Content is required')
   }
   if (trimmedContent.length > 5000) {
-    return NextResponse.json({ error: 'Content must be 5000 characters or fewer' }, { status: 400 })
+    return badRequest('Content must be 5000 characters or fewer')
   }
 
   const validTypes = ['discussion', 'unit_review', 'hunt_report', 'guide_review']
   if (!validTypes.includes(post_type)) {
-    return NextResponse.json({ error: 'Invalid post type' }, { status: 400 })
+    return badRequest('Invalid post type')
   }
 
   const safeEntityName = String(entity_name ?? '').trim().slice(0, 200) || null
@@ -106,12 +112,12 @@ export async function POST(req: Request) {
       content: trimmedContent,
       module: safeModule,
     })
-    .select('id, user_id, post_type, entity_name, content, module, created_at')
+    .select('id, user_id, post_type, entity_name, content, module, created_on')
     .single()
 
   if (error) {
     console.error('[community/posts POST] insert error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   const { data: profile } = await supabase
@@ -120,7 +126,7 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .maybeSingle()
 
-  return NextResponse.json({
+  return apiOk({
     post: {
       ...post,
       display_name: profile?.display_name ?? null,
@@ -130,5 +136,5 @@ export async function POST(req: Request) {
       reaction_count: 0,
       liked_by_me: false,
     },
-  })
+  }, 201)
 }
