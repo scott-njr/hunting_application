@@ -27,9 +27,8 @@ export function SpyModeOverlay({ flash }: SpyModeOverlayProps) {
 
   return (
     <div
-      className="fixed inset-0 z-40 pointer-events-none"
+      className="fixed inset-0 z-40 pointer-events-none bg-accent/60"
       style={{
-        backgroundColor: 'rgba(124, 154, 110, 0.6)',
         animation: 'spy-flash 300ms ease-out forwards',
       }}
     >

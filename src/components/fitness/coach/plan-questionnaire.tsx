@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Sparkles } from 'lucide-react'
 import { TacticalSelect } from '@/components/ui/tactical-select'
 import { AIProgressModal } from '@/components/ui/ai-progress-modal'
+import { AlertBanner } from '@/components/ui/alert-banner'
+import { EXERCISE_DISCLAIMER } from '@/lib/fitness/constants'
 
 interface PlanQuestionnaireProps {
   planType: 'run' | 'strength'
@@ -129,11 +131,7 @@ export function PlanQuestionnaire({ planType }: PlanQuestionnaireProps) {
         Tell us about your goals and we&apos;ll generate a personalized {isRun ? '8-week running' : '8-week strength training'} plan.
       </p>
 
-      {error && (
-        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -225,7 +223,7 @@ export function PlanQuestionnaire({ planType }: PlanQuestionnaireProps) {
       </form>
 
       <p className="text-muted text-xs mt-4">
-        AI-generated plan is general guidance. Consult a physician before starting any new exercise program.
+        {EXERCISE_DISCLAIMER}
       </p>
     </div>
     </>

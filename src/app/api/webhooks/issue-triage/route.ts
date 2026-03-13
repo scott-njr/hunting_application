@@ -1,7 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { timingSafeEqual } from 'crypto'
-import { apiDone, unauthorized, badRequest, parseBody, isErrorResponse } from '@/lib/api-response'
+import { apiDone, unauthorized, badRequest, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
@@ -12,7 +12,7 @@ function secureCompare(a: string, b: string): boolean {
   return timingSafeEqual(Buffer.from(a), Buffer.from(b))
 }
 
-export async function POST(req: Request) {
+export const POST = withHandler(async (req: Request) => {
   // 1. Verify webhook secret
   const secret = req.headers.get('x-webhook-secret')
   if (!WEBHOOK_SECRET || !secret || !secureCompare(secret, WEBHOOK_SECRET)) {
@@ -153,4 +153,4 @@ ${record.description}`,
   }
 
   return apiDone({ severity, githubIssueUrl })
-}
+})

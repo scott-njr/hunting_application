@@ -9,6 +9,7 @@ import { AvatarUpload } from '@/components/profile/avatar-upload'
 import { PhotoGallery } from '@/components/profile/photo-gallery'
 import { US_STATES } from '@/components/profile/profile-constants'
 import { INPUT_CLASS, Divider } from '@/components/profile/profile-ui'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 type IdentityForm = {
   first_name: string
@@ -188,7 +189,7 @@ export default function IdentityForm() {
         )}
       </div>
 
-      {error && <div className="mb-2 p-2 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">{error}</div>}
+      {error && <AlertBanner variant="error" message={error} className="mb-2 p-2" />}
 
       <div className="glass-card border border-subtle rounded-lg p-3 space-y-2.5 mb-2">
         <div className="flex items-center justify-between">

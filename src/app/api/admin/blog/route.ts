@@ -41,7 +41,7 @@ export const POST = withHandler(async (req: NextRequest) => {
 
   const body = await parseBody(req)
   if (isErrorResponse(body)) return body
-  const { title, slug, content, excerpt, cover_image_url, category, status } = body
+  const { title, slug, content, excerpt, cover_image_url, category, status, targets } = body
 
   if (!title || !slug || !category) {
     return badRequest('Title, slug, and category are required')
@@ -61,6 +61,7 @@ export const POST = withHandler(async (req: NextRequest) => {
     category,
     status: status ?? 'draft',
     author_id: adminUser.id,
+    targets: Array.isArray(targets) && targets.length > 0 ? targets : ['public'],
   }
 
   // Auto-set published_on when publishing

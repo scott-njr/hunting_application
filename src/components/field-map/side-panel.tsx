@@ -215,7 +215,7 @@ export function SidePanel({
               value={formData.label}
               onChange={e => onFormChange({ ...formData, label: e.target.value })}
               placeholder="e.g. Oak Ridge Draw"
-              className="input-field w-full !py-1.5 !text-sm"
+              className="input-field w-full !py-1.5 sm:!text-sm"
             />
           </div>
 
@@ -227,7 +227,7 @@ export function SidePanel({
               value={formData.notes}
               onChange={e => onFormChange({ ...formData, notes: e.target.value })}
               placeholder="Observations..."
-              className="input-field w-full resize-none !py-1.5 !text-sm"
+              className="input-field w-full resize-none !py-1.5 sm:!text-sm"
             />
           </div>
 
@@ -239,7 +239,7 @@ export function SidePanel({
                 type="datetime-local"
                 value={formData.observed_at}
                 onChange={e => onFormChange({ ...formData, observed_at: e.target.value })}
-                className="input-field w-full !py-1.5 !text-sm"
+                className="input-field w-full !py-1.5 sm:!text-sm"
               />
             </div>
           )}
@@ -511,7 +511,7 @@ function MetadataInput({
             value={strVal}
             onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
             placeholder={field.placeholder}
-            className="input-field w-full !py-1.5 !text-sm"
+            className="input-field w-full !py-1.5 sm:!text-sm"
           />
         </div>
       )
@@ -524,7 +524,7 @@ function MetadataInput({
             value={strVal}
             onChange={e => onChange(e.target.value)}
             placeholder={field.placeholder}
-            className="input-field w-full !py-1.5 !text-sm"
+            className="input-field w-full !py-1.5 sm:!text-sm"
           />
         </div>
       )
@@ -536,7 +536,7 @@ function MetadataInput({
             type="date"
             value={strVal}
             onChange={e => onChange(e.target.value)}
-            className="input-field w-full !py-1.5 !text-sm"
+            className="input-field w-full !py-1.5 sm:!text-sm"
           />
         </div>
       )

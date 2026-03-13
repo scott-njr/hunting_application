@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { TacticalSelect } from '@/components/ui/tactical-select'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import { TierCards } from '@/components/pricing/tier-cards'
 import {
   ChevronRight, ChevronLeft, User, CreditCard,
@@ -138,7 +139,7 @@ export default function OnboardingPage() {
       .update({ onboarding_completed: true })
       .eq('id', user.id)
 
-    router.push('/')
+    router.push('/home')
     router.refresh()
   }
 
@@ -172,11 +173,7 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {error && (
-          <div className="p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm mb-6">
-            {error}
-          </div>
-        )}
+        {error && <AlertBanner variant="error" message={error} className="mb-6" />}
 
         {/* Step 1: Profile Setup */}
         {step === 1 && (

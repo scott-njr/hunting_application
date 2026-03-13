@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { TrendingUp } from 'lucide-react'
+import { CHART_THEME, PLAN_BAR_COLORS } from '@/lib/chart-theme'
 
 interface PlanProgressChartProps {
   weeksTotal: number
@@ -28,17 +29,17 @@ export function PlanProgressChart({ weeksTotal, sessionsPerWeek, completedPerWee
 
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <XAxis dataKey="week" stroke="#8a8577" fontSize={12} />
-          <YAxis stroke="#8a8577" fontSize={12} allowDecimals={false} />
+          <XAxis dataKey="week" stroke={CHART_THEME.axisStroke} fontSize={12} />
+          <YAxis stroke={CHART_THEME.axisStroke} fontSize={12} allowDecimals={false} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1a1a17', border: '1px solid #2a2a25', borderRadius: '8px' }}
-            labelStyle={{ color: '#f0ece4' }}
+            contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '8px' }}
+            labelStyle={{ color: CHART_THEME.labelColor }}
             formatter={(value, name) => [value, name === 'completed' ? 'Completed' : 'Expected']}
           />
-          <Bar dataKey="expected" fill="#2a2a25" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="expected" fill={PLAN_BAR_COLORS.expected} radius={[4, 4, 0, 0]} />
           <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, i) => (
-              <Cell key={i} fill={entry.completed >= entry.expected ? '#7c9a6e' : '#c4880c'} />
+              <Cell key={i} fill={entry.completed >= entry.expected ? PLAN_BAR_COLORS.completed : PLAN_BAR_COLORS.partial} />
             ))}
           </Bar>
         </BarChart>
@@ -47,7 +48,7 @@ export function PlanProgressChart({ weeksTotal, sessionsPerWeek, completedPerWee
       <div className="flex items-center gap-4 mt-2 text-xs text-muted justify-center">
         <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-[#2a2a25]" /> Expected</span>
         <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-accent" /> Completed</span>
-        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-[#c4880c]" /> Partial</span>
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-urgency" /> Partial</span>
       </div>
     </div>
   )

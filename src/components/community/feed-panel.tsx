@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import {
   MessageSquare, Send, FileText, Map, Star, BookOpen,
-  ThumbsUp, MessageCircle, Trash2, Trophy,
+  ThumbsUp, MessageCircle, Trash2, Trophy, Newspaper, ArrowRight,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { timeAgo } from '@/lib/format'
+import { SCALING_BADGE } from '@/lib/fitness/constants'
 
 type Post = {
   id: string
@@ -23,6 +24,10 @@ type Post = {
   reaction_count: number
   liked_by_me: boolean
   metadata: Record<string, unknown> | null
+  is_blog?: boolean
+  blog_title?: string
+  blog_slug?: string
+  blog_cover_image_url?: string | null
 }
 
 type Comment = {
@@ -99,6 +104,9 @@ for (const mod of Object.values(MODULE_POST_TYPES)) {
     ALL_POST_TYPE_COLORS[key] = cfg.color
   }
 }
+ALL_POST_TYPE_LABELS['blog'] = 'Blog'
+ALL_POST_TYPE_ICONS['blog'] = Newspaper
+ALL_POST_TYPE_COLORS['blog'] = 'text-purple-400 bg-purple-900/30'
 
 export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId: string; module?: string }) {
   const [posts, setPosts] = useState<Post[]>([])
@@ -219,18 +227,18 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
       {/* Filter + create */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1 flex-wrap">
-          {['all', ...postTypeKeys].map(t => (
+          {['all', ...postTypeKeys, 'blog'].map(t => (
             <button
               key={t}
               onClick={() => setFeedFilter(t)}
               className={cn(
-                'text-xs px-2.5 py-1 rounded-full transition-colors',
+                'text-xs px-2.5 py-1.5 rounded-full transition-colors min-h-[36px]',
                 feedFilter === t
                   ? 'bg-accent text-primary'
                   : 'bg-elevated text-secondary hover:bg-strong hover:text-primary'
               )}
             >
-              {t === 'all' ? 'All' : postTypes[t]?.label ?? t}
+              {t === 'all' ? 'All' : t === 'blog' ? 'Blog' : postTypes[t]?.label ?? t}
             </button>
           ))}
         </div>
@@ -307,6 +315,33 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
       ) : (
         <div className="space-y-3">
           {posts.map(post => {
+            // Blog announcement card — read-only, no comments/likes
+            if (post.is_blog) {
+              return (
+                <Link key={post.id} href={`/blog/${post.blog_slug}`} className="block bg-elevated border border-subtle rounded-lg hover:border-default transition-colors group">
+                  {post.blog_cover_image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={post.blog_cover_image_url} alt={post.blog_title ?? 'Blog post'} className="w-full h-40 object-cover rounded-t-lg" />
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded text-purple-400 bg-purple-900/30">
+                        <Newspaper className="w-3 h-3" />
+                        Blog
+                      </span>
+                      <span className="text-muted text-xs">{timeAgo(post.created_on)}</span>
+                      <span className="text-muted text-xs ml-auto">by {post.display_name ?? 'Lead the Wild'}</span>
+                    </div>
+                    <h3 className="text-primary text-sm font-semibold mb-1 group-hover:text-accent transition-colors">{post.blog_title}</h3>
+                    {post.content && <p className="text-secondary text-xs leading-relaxed line-clamp-2">{post.content}</p>}
+                    <span className="inline-flex items-center gap-1 text-xs text-accent mt-2 group-hover:gap-2 transition-all">
+                      Read more <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </Link>
+              )
+            }
+
             const Icon = ALL_POST_TYPE_ICONS[post.post_type] ?? BookOpen
             const isExpanded = expandedPostId === post.id
             const comments = postComments[post.id] ?? []
@@ -348,11 +383,9 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                             </div>
                             <span className={cn(
                               'text-xs font-bold px-2 py-0.5 rounded shrink-0',
-                              meta.scaling === 'rx' ? 'bg-green-500/20 text-green-400' :
-                              meta.scaling === 'scaled' ? 'bg-amber-500/20 text-amber-400' :
-                              'bg-blue-500/20 text-blue-400'
+                              SCALING_BADGE[meta.scaling as keyof typeof SCALING_BADGE]?.className ?? SCALING_BADGE.scaled.className
                             )}>
-                              {meta.scaling === 'rx' ? 'RX' : meta.scaling === 'scaled' ? 'Scaled' : 'Beginner'}
+                              {SCALING_BADGE[meta.scaling as keyof typeof SCALING_BADGE]?.label ?? meta.scaling}
                             </span>
                             <span className="text-primary font-mono text-sm font-semibold shrink-0">{meta.score_display}</span>
                           </div>

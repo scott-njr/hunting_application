@@ -29,3 +29,19 @@ export const BLOG_STATUS_OPTIONS = [
   { value: 'published', label: 'Published' },
   { value: 'archived', label: 'Archived' },
 ]
+
+/** Blog post publish targets */
+export const BLOG_TARGET_OPTIONS = [
+  { value: 'public', label: 'Public Blog' },
+  { value: 'hunting', label: 'Hunting' },
+  { value: 'archery', label: 'Archery' },
+  { value: 'firearms', label: 'Firearms' },
+  { value: 'fishing', label: 'Fishing' },
+  { value: 'fitness', label: 'Fitness' },
+  { value: 'medical', label: 'Medical' },
+]
+
+/** Target value → display label */
+export const BLOG_TARGET_LABELS: Record<string, string> = Object.fromEntries(
+  BLOG_TARGET_OPTIONS.map(o => [o.value, o.label])
+)

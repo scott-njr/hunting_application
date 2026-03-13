@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { BlogEditor } from '@/components/blog/blog-editor'
 import { TacticalSelect } from '@/components/ui/tactical-select'
-import { generateSlug, BLOG_CATEGORY_OPTIONS, BLOG_STATUS_OPTIONS } from '@/lib/blog-utils'
+import { generateSlug, BLOG_CATEGORY_OPTIONS, BLOG_STATUS_OPTIONS, BLOG_TARGET_OPTIONS } from '@/lib/blog-utils'
 import { X, Upload, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import type { Database } from '@/types/database.types'
 
 type BlogPostRow = Database['public']['Tables']['blog_post']['Row']
@@ -28,6 +29,7 @@ export function BlogPostForm({ initialData }: BlogPostFormProps) {
   const [coverUrl, setCoverUrl] = useState(initialData?.cover_image_url ?? '')
   const [content, setContent] = useState(initialData?.content ?? '')
   const [status, setStatus] = useState(initialData?.status ?? 'draft')
+  const [targets, setTargets] = useState<string[]>(initialData?.targets ?? ['public'])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -65,6 +67,7 @@ export function BlogPostForm({ initialData }: BlogPostFormProps) {
     if (!title.trim()) { setError('Title is required'); return }
     if (!slug.trim()) { setError('Slug is required'); return }
     if (!category) { setError('Category is required'); return }
+    if (targets.length === 0) { setError('Select at least one publish target'); return }
 
     const finalStatus = publishOverride ? 'published' : status
 
@@ -78,6 +81,7 @@ export function BlogPostForm({ initialData }: BlogPostFormProps) {
         cover_image_url: coverUrl || null,
         category,
         status: finalStatus,
+        targets,
       }
 
       const url = isEdit ? `/api/admin/blog/${initialData.id}` : '/api/admin/blog'
@@ -106,11 +110,7 @@ export function BlogPostForm({ initialData }: BlogPostFormProps) {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="px-4 py-3 rounded-lg" />}
 
       {/* Title */}
       <div>
@@ -164,6 +164,56 @@ export function BlogPostForm({ initialData }: BlogPostFormProps) {
             options={BLOG_STATUS_OPTIONS}
           />
         </div>
+      </div>
+
+      {/* Publish To */}
+      <div>
+        <label className="block text-xs font-semibold text-secondary uppercase tracking-wide mb-1.5">
+          Publish To
+        </label>
+        <div className="flex flex-wrap gap-3">
+          {BLOG_TARGET_OPTIONS.map(opt => {
+            const checked = targets.includes(opt.value)
+            return (
+              <label
+                key={opt.value}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors',
+                  checked
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-default bg-elevated text-secondary hover:border-strong'
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => {
+                    setTargets(prev =>
+                      prev.includes(opt.value)
+                        ? prev.filter(t => t !== opt.value)
+                        : [...prev, opt.value]
+                    )
+                  }}
+                  className="sr-only"
+                />
+                <span className={cn(
+                  'h-4 w-4 rounded border flex items-center justify-center shrink-0',
+                  checked ? 'bg-accent border-accent' : 'border-default'
+                )}>
+                  {checked && (
+                    <svg className="h-3 w-3 text-base" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
+                {opt.label}
+              </label>
+            )
+          })}
+        </div>
+        <p className="text-muted text-xs mt-1.5">
+          Select where this post appears. &quot;Public Blog&quot; shows on /blog. Module targets appear in that module&apos;s community feed.
+        </p>
       </div>
 
       {/* Excerpt */}

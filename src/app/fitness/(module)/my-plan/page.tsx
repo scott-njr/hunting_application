@@ -16,6 +16,7 @@ import { TodayChecklist } from './today-checklist'
 import { ExpandableText } from '@/components/ui/expandable-text'
 
 import { getCurrentWeek } from '@/lib/fitness/date-helpers'
+import { EXERCISE_DISCLAIMER } from '@/lib/fitness/constants'
 
 function getTodayDayNumber(): number {
   const day = new Date().getDay()
@@ -564,7 +565,7 @@ export default async function MyPlanPage() {
           <SharedPlansList />
 
           <p className="text-muted text-xs text-center">
-            AI-generated plans are general guidance. Consult a physician before starting any new exercise or diet program.
+            {EXERCISE_DISCLAIMER}
           </p>
         </>
       )}

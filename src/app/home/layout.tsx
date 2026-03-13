@@ -31,7 +31,7 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
           memberEmail={user.email ?? ''}
           memberTier={memberTier}
         />
-        <main className="flex-1 min-w-0 px-4 py-4 pt-16 sm:px-6 sm:py-6 sm:pt-18 lg:p-8 lg:pt-8">
+        <main className="flex-1 min-w-0 px-4 py-4 sm:px-6 sm:py-6 lg:p-8">
           {children}
         </main>
       </div>

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Pencil, Eye, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BLOG_CATEGORY_LABELS } from '@/lib/blog-utils'
+import { BLOG_CATEGORY_LABELS, BLOG_TARGET_LABELS } from '@/lib/blog-utils'
 import type { Database } from '@/types/database.types'
 
 type BlogPostRow = Database['public']['Tables']['blog_post']['Row'] & { author_name: string }
@@ -53,6 +53,7 @@ export function BlogPostsTable({ posts }: BlogPostsTableProps) {
             <th className="text-left py-3 px-4 font-semibold">Title</th>
             <th className="text-left py-3 px-4 font-semibold">Category</th>
             <th className="text-left py-3 px-4 font-semibold">Status</th>
+            <th className="text-left py-3 px-4 font-semibold">Targets</th>
             <th className="text-left py-3 px-4 font-semibold">Published</th>
             <th className="text-left py-3 px-4 font-semibold">Author</th>
             <th className="text-right py-3 px-4 font-semibold">Actions</th>
@@ -74,6 +75,18 @@ export function BlogPostsTable({ posts }: BlogPostsTableProps) {
                 <span className={cn('inline-block px-2 py-0.5 rounded text-xs capitalize', STATUS_STYLES[post.status])}>
                   {post.status}
                 </span>
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex flex-wrap gap-1">
+                  {(post.targets ?? ['public']).map(t => (
+                    <span key={t} className={cn(
+                      'inline-block px-1.5 py-0.5 rounded text-[10px] font-medium',
+                      t === 'public' ? 'bg-accent/15 text-accent' : 'bg-purple-500/15 text-purple-400'
+                    )}>
+                      {BLOG_TARGET_LABELS[t] ?? t}
+                    </span>
+                  ))}
+                </div>
               </td>
               <td className="py-3 px-4 text-muted text-xs">
                 {post.published_on

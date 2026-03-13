@@ -1,6 +1,7 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { CHART_THEME, PLAN_BAR_COLORS } from '@/lib/chart-theme'
 
 interface WeekComparison {
   week_number: number
@@ -28,18 +29,18 @@ export function PlanComparisonChart({ weeks, sourceName, targetName }: PlanCompa
     <div className="rounded-lg border border-subtle bg-surface p-6">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <XAxis dataKey="week" stroke="#8a8577" fontSize={12} />
-          <YAxis stroke="#8a8577" fontSize={12} allowDecimals={false} />
+          <XAxis dataKey="week" stroke={CHART_THEME.axisStroke} fontSize={12} />
+          <YAxis stroke={CHART_THEME.axisStroke} fontSize={12} allowDecimals={false} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1a1a17', border: '1px solid #2a2a25', borderRadius: '8px' }}
-            labelStyle={{ color: '#f0ece4' }}
+            contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '8px' }}
+            labelStyle={{ color: CHART_THEME.labelColor }}
           />
           <Legend
-            wrapperStyle={{ fontSize: '12px', color: '#8a8577' }}
+            wrapperStyle={{ fontSize: '12px', color: CHART_THEME.axisStroke }}
           />
-          <Bar dataKey="expected" fill="#2a2a25" radius={[4, 4, 0, 0]} name="Expected" />
-          <Bar dataKey={sourceName} fill="#7c9a6e" radius={[4, 4, 0, 0]} />
-          <Bar dataKey={targetName} fill="#60a5fa" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="expected" fill={PLAN_BAR_COLORS.expected} radius={[4, 4, 0, 0]} name="Expected" />
+          <Bar dataKey={sourceName} fill={PLAN_BAR_COLORS.completed} radius={[4, 4, 0, 0]} />
+          <Bar dataKey={targetName} fill={PLAN_BAR_COLORS.target} radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

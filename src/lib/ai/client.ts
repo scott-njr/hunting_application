@@ -230,3 +230,173 @@ export async function aiCall(options: AICallOptions): Promise<AICallResult> {
     }
   }
 }
+
+// ─── Vision AI call (image + text) ──────────────────────────────────────────
+
+export interface AIVisionCallOptions {
+  module: AIModule
+  feature: AIFeature
+  /** Text prompt describing what to analyze */
+  userMessage: string
+  /** Base64-encoded image data */
+  imageBase64: string
+  /** MIME type of the image */
+  imageMediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+  /** Additional context for system prompt */
+  context?: string
+  userId: string
+  maxTokens?: number
+  model?: string
+}
+
+/**
+ * Make a guardrailed AI call with an image. Same guardrails as aiCall() but
+ * sends the image as a content block alongside the text prompt.
+ */
+export async function aiVisionCall(options: AIVisionCallOptions): Promise<AICallResult> {
+  const {
+    module,
+    feature,
+    userMessage,
+    imageBase64,
+    imageMediaType,
+    context,
+    userId,
+    maxTokens = 2048,
+    model = 'claude-sonnet-4-6',
+  } = options
+
+  const startTime = Date.now()
+  const allFlags: string[] = ['vision']
+
+  // 1. Rate limit check
+  if (!checkRateLimit(userId)) {
+    return {
+      success: false,
+      response: '',
+      flags: ['rate_limited'],
+      error: 'Too many requests. Please wait a moment and try again.',
+    }
+  }
+
+  // 2. Validate text input (image bypasses text sanitization)
+  const inputResult = validateInput(userMessage)
+  allFlags.push(...inputResult.flags)
+
+  if (!inputResult.safe) {
+    logAIInteraction({
+      userId,
+      module,
+      feature,
+      inputLength: userMessage.length,
+      outputLength: 0,
+      flags: allFlags,
+      timestamp: new Date().toISOString(),
+      durationMs: Date.now() - startTime,
+    })
+    return {
+      success: false,
+      response: '',
+      flags: allFlags,
+      error: 'Your request could not be processed. Please rephrase and try again.',
+    }
+  }
+
+  // 3. Build system prompt with guardrails
+  const systemPrompt = buildSystemPrompt(module, feature, context)
+
+  // 4. Call the model with image + text content blocks
+  try {
+    const client = getClient()
+    const message = await client.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: imageMediaType,
+              data: imageBase64,
+            },
+          },
+          { type: 'text', text: inputResult.sanitized },
+        ],
+      }],
+    })
+
+    const rawResponse = message.content[0].type === 'text' ? message.content[0].text : ''
+
+    if (message.stop_reason === 'max_tokens') {
+      allFlags.push('truncated')
+      console.warn('[AI TRUNCATED]', { module, feature, outputTokens: message.usage.output_tokens, maxTokens })
+    }
+
+    // 5. Validate output
+    const outputResult = validateOutput(rawResponse)
+    allFlags.push(...outputResult.flags)
+
+    const durationMs = Date.now() - startTime
+
+    // 6. Log (console + bronze layer — text prompt only, not the image)
+    logAIInteraction({
+      userId,
+      module,
+      feature,
+      inputLength: inputResult.sanitized.length,
+      outputLength: outputResult.sanitized.length,
+      flags: allFlags,
+      timestamp: new Date().toISOString(),
+      durationMs,
+    })
+
+    logBronze({
+      userId,
+      module,
+      feature,
+      inputLength: inputResult.sanitized.length,
+      rawResponse,
+      tokensInput: message.usage.input_tokens,
+      tokensOutput: message.usage.output_tokens,
+      flags: allFlags,
+      durationMs,
+      sanitizedInput: inputResult.sanitized,
+    })
+
+    return {
+      success: true,
+      response: outputResult.sanitized,
+      flags: allFlags,
+      tokensUsed: {
+        input: message.usage.input_tokens,
+        output: message.usage.output_tokens,
+      },
+    }
+  } catch (err) {
+    const errMsg = String(err)
+    const isBillingError = errMsg.includes('credit balance') || errMsg.includes('billing') || errMsg.includes('payment')
+
+    logAIInteraction({
+      userId,
+      module,
+      feature,
+      inputLength: inputResult.sanitized.length,
+      outputLength: 0,
+      flags: [...allFlags, isBillingError ? 'billing_error' : 'api_error'],
+      timestamp: new Date().toISOString(),
+      durationMs: Date.now() - startTime,
+    })
+
+    return {
+      success: false,
+      response: '',
+      flags: allFlags,
+      error: isBillingError
+        ? 'AI is temporarily unavailable. Your data was saved — try again later.'
+        : 'Something went wrong with the AI service. Please try again.',
+    }
+  }
+}

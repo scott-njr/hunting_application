@@ -91,7 +91,7 @@ export function ModuleSwitcher({ currentModule, onNavigate, moduleHrefs, label, 
                 <Link
                   href="/home"
                   onClick={handleLinkClick}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-secondary hover:bg-elevated hover:text-primary transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-secondary hover:bg-elevated hover:text-primary transition-colors min-h-[44px]"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   <span>Command Center</span>
@@ -131,7 +131,7 @@ export function ModuleSwitcher({ currentModule, onNavigate, moduleHrefs, label, 
                   href={href}
                   onClick={handleLinkClick}
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 text-sm transition-colors',
+                    'w-full flex items-center justify-between px-3 py-2 text-sm transition-colors min-h-[44px]',
                     isCurrent
                       ? 'text-accent-hover bg-accent-dim'
                       : 'text-secondary hover:bg-elevated hover:text-primary'

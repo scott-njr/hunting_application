@@ -66,10 +66,11 @@ export default async function BlogPage({
   const { category: filterCategory } = await searchParams
   const supabase = await createClient()
 
-  // RLS filters to published only
+  // RLS filters to published only; also filter to posts targeting public blog
   let query = supabase
     .from('blog_post')
     .select('id, title, slug, excerpt, cover_image_url, category, published_on')
+    .contains('targets', ['public'])
     .order('published_on', { ascending: false })
     .limit(9)
 

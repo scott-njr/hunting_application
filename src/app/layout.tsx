@@ -60,7 +60,7 @@ export default function RootLayout({
               '@type': 'Organization',
               name: 'Praevius',
               url: 'https://praevius.com',
-              logo: 'https://praevius.com/logo.png',
+              logo: 'https://praevius.com/favicon.ico',
               description: 'Lead the Wild — a multi-module outdoor skills platform for hunting, archery, firearms, fishing, fitness, and more.',
             }),
           }}

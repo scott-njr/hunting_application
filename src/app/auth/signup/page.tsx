@@ -6,6 +6,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { safeRedirect } from '@/lib/safe-redirect'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 function SignupForm() {
   const searchParams = useSearchParams()
@@ -84,11 +85,7 @@ function SignupForm() {
       <h1 className="text-xl font-semibold text-primary mb-1">Create your free account</h1>
       <p className="text-muted text-sm mb-6">No credit card. No commitment.</p>
 
-      {error && (
-        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
       <form onSubmit={handleSignup} className="space-y-4">
         <div>

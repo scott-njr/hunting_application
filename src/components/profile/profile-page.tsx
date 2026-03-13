@@ -3,6 +3,7 @@
 import IdentityForm from '@/components/profile/identity-form'
 import HuntingPreferencesForm from '@/components/profile/hunting-preferences-form'
 import FitnessProfileForm from '@/components/profile/fitness-profile-form'
+import FirearmsProfileForm from '@/components/profile/firearms-profile-form'
 
 function ModuleProfilePlaceholder({ moduleSlug }: { moduleSlug: string }) {
   const label = moduleSlug.charAt(0).toUpperCase() + moduleSlug.slice(1)
@@ -20,6 +21,7 @@ function ModuleProfilePlaceholder({ moduleSlug }: { moduleSlug: string }) {
 export default function ProfilePage({ moduleSlug }: { moduleSlug?: string } = {}) {
   if (moduleSlug === 'hunting') return <HuntingPreferencesForm />
   if (moduleSlug === 'fitness') return <FitnessProfileForm />
+  if (moduleSlug === 'firearms') return <FirearmsProfileForm />
   if (moduleSlug) return <ModuleProfilePlaceholder moduleSlug={moduleSlug} />
   return <IdentityForm />
 }

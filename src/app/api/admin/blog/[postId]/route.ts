@@ -43,7 +43,7 @@ export const PATCH = withHandler(async (
   // Allowlist: only permit known blog_post fields
   const ALLOWED_FIELDS = [
     'title', 'slug', 'excerpt', 'content', 'cover_image_url',
-    'status', 'published_on', 'meta_title', 'meta_description',
+    'status', 'published_on', 'meta_title', 'meta_description', 'targets',
   ] as const
   const body: Record<string, unknown> = {}
   for (const key of ALLOWED_FIELDS) {

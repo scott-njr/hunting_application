@@ -85,8 +85,15 @@ export function withHandler<T extends (...args: any[]) => Promise<Response>>(han
 export function validateOrigin(req: NextRequest): NextResponse | null {
   const origin = req.headers.get('origin')
   const host = req.headers.get('host')
-  if (origin && host && !origin.includes(host)) {
-    return apiError('Cross-origin request blocked', 403)
+  if (origin && host) {
+    try {
+      const originHost = new URL(origin).host
+      if (originHost !== host) {
+        return apiError('Cross-origin request blocked', 403)
+      }
+    } catch {
+      return apiError('Cross-origin request blocked', 403)
+    }
   }
   return null
 }

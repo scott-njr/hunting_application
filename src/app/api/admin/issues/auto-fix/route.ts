@@ -47,7 +47,8 @@ export const POST = withHandler(async (req: NextRequest) => {
 
   if (!res.ok) {
     const text = await res.text()
-    return apiError(`GitHub API error: ${res.status} — ${text}`, 502)
+    console.error(`[auto-fix] GitHub API error ${res.status}:`, text)
+    return apiError('External service error', 502)
   }
 
   return apiDone()

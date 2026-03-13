@@ -8,6 +8,7 @@ import { CheckCircle, ChevronDown, ChevronUp, Trash2, Plus, AlertTriangle, Penci
 import { TacticalSelect } from '@/components/ui/tactical-select'
 import { US_STATES, SEASONS, SPECIES, HUNT_STYLES, SEASON_OPTS } from '@/components/profile/profile-constants'
 import { INPUT_CLASS, Chip, Divider, SectionHeader } from '@/components/profile/profile-ui'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -270,7 +271,7 @@ export default function HuntingPreferencesForm() {
         )}
       </div>
 
-      {error && <div className="mb-2 p-2 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">{error}</div>}
+      {error && <AlertBanner variant="error" message={error} className="mb-2 p-2" />}
 
       {/* Identity Summary (read-only) */}
       <div className="glass-card border border-subtle rounded-lg p-3 space-y-2 mb-2">

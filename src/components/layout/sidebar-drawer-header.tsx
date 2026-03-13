@@ -17,7 +17,7 @@ export function SidebarDrawerHeader({ onClose }: SidebarDrawerHeaderProps) {
       <button
         type="button"
         onClick={onClose}
-        className="p-2.5 text-muted hover:text-primary transition-colors"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-primary transition-colors"
       >
         <X className="h-5 w-5" />
       </button>

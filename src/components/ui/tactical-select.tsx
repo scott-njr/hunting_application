@@ -83,7 +83,7 @@ export function TacticalSelect({
               type="button"
               onClick={() => { onChange(opt.value); setOpen(false) }}
               className={cn(
-                'w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors',
+                'w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors min-h-[44px]',
                 opt.value === value
                   ? 'bg-elevated text-primary'
                   : 'text-secondary hover:bg-elevated hover:text-primary'

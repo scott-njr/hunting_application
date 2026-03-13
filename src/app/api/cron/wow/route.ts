@@ -1,7 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
-import { apiOk, unauthorized, serverError } from '@/lib/api-response'
+import { apiOk, unauthorized, serverError, withHandler } from '@/lib/api-response'
 
 function getCurrentMonday(): string {
   const now = new Date()
@@ -62,7 +62,7 @@ Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
   }
 }`
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   // Verify the request is from Vercel Cron
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -125,4 +125,4 @@ export async function GET(req: NextRequest) {
   }
 
   return apiOk({ workout })
-}
+})

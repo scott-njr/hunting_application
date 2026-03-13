@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, Trash2, ChevronDown, ChevronRight, Trophy, Target, Loader2 } from 'lucide-react'
+import { Clock, Trash2, ChevronDown, ChevronRight, Trophy, Target, Loader2, Camera } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ExportButton } from './export-button'
 import { ShotWaveform } from './shot-waveform'
+import { TargetUploadButton } from './target-upload-button'
 import type { Database } from '@/types/database.types'
 
 type ShotSession = Database['public']['Tables']['firearms_shot_session']['Row']
@@ -82,6 +83,8 @@ export function SessionHistory({ sessions, onLoad, onDelete }: SessionHistoryPro
   )
 }
 
+type TargetAnalysisData = { text: string; generated_at: string; dominant_hand?: string }
+
 function SessionCard({
   session,
   onLoad,
@@ -96,9 +99,35 @@ function SessionCard({
   const [expanded, setExpanded] = useState(false)
   const [strings, setStrings] = useState<StringDetail[] | null>(null)
   const [loading, setLoading] = useState(false)
+  const [analyzingTarget, setAnalyzingTarget] = useState(false)
+  const [targetPhotoUrl, setTargetPhotoUrl] = useState<string | null>(session.target_photo_url)
+  const [targetAnalysis, setTargetAnalysis] = useState<TargetAnalysisData | null>(
+    session.target_analysis as TargetAnalysisData | null
+  )
 
   const hasScoring = showScoring && session.status && (session.alpha > 0 || session.bravo > 0 || session.charlie > 0 || session.delta > 0 || (session.miss ?? 0) > 0)
   const isMatch = !!session.match_id
+
+  async function handleTargetUpload(file: File) {
+    setAnalyzingTarget(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`/api/firearms/shot-timer/${session.id}/target-analysis`, {
+        method: 'POST',
+        body: formData,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTargetPhotoUrl(data.analysis.photo_url)
+        setTargetAnalysis({ text: data.analysis.text, generated_at: new Date().toISOString() })
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setAnalyzingTarget(false)
+    }
+  }
 
   async function toggleExpand() {
     if (expanded) {
@@ -148,6 +177,9 @@ function SessionCard({
                 )}>
                   {session.status === 'review' ? 'Complete' : session.status.toUpperCase()}
                 </span>
+              )}
+              {targetPhotoUrl && (
+                <span title="Target photo analyzed"><Camera className="h-3 w-3 text-accent shrink-0" /></span>
               )}
               {expanded
                 ? <ChevronDown className="h-3 w-3 text-muted shrink-0" />
@@ -261,6 +293,29 @@ function SessionCard({
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Target Photo + AI Analysis */}
+          {targetPhotoUrl && targetAnalysis && (
+            <div className="bg-surface border border-accent/30 rounded-lg p-3 space-y-3">
+              <h4 className="text-accent font-bold text-xs flex items-center gap-2">
+                <Camera className="h-3.5 w-3.5" />
+                Target Analysis
+              </h4>
+              <img
+                src={targetPhotoUrl}
+                alt="Target"
+                className="rounded-lg max-h-48 mx-auto"
+              />
+              <div className="text-secondary text-xs whitespace-pre-wrap leading-relaxed">
+                {targetAnalysis.text}
+              </div>
+            </div>
+          )}
+
+          {/* Upload target photo (course sessions without a target photo) */}
+          {hasScoring && !targetPhotoUrl && (
+            <TargetUploadButton onUpload={handleTargetUpload} analyzing={analyzingTarget} />
           )}
 
           {/* Actions */}

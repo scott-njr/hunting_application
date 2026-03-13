@@ -5,6 +5,7 @@ import {
   X, FileDown, Mail, Plus, Trash2, Loader2,
   CheckCircle, MapPin, Users, Package, AlertCircle, Shield,
 } from 'lucide-react'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 interface ShareHuntModalProps {
   open: boolean
@@ -228,11 +229,7 @@ export function ShareHuntModal({ open, onClose, huntId, huntTitle, existingRecip
           </button>
 
           {/* Feedback */}
-          {error && (
-            <div className="p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-xs">
-              {error}
-            </div>
-          )}
+          {error && <AlertBanner variant="error" message={error} className="text-xs" />}
           {success && (
             <div className="flex items-center gap-2 p-3 rounded bg-green-950/50 border border-green-500/30 text-green-400 text-xs">
               <CheckCircle className="h-3.5 w-3.5 shrink-0" />

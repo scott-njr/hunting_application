@@ -7,7 +7,7 @@ import { apiDone, apiError, unauthorized, badRequest, serverError, parseBody, is
 
 // Manual tier selection — will be replaced by Stripe checkout when payments are wired.
 // SECURITY: In production with Stripe, this route must verify payment before upgrading.
-// For now, only allow upgrades in development or when ALLOW_FREE_TIER_SELECTION is set.
+// Non-production without Stripe: allow free tier selection for testing.
 
 const VALID_SLUGS = ALL_MODULES.map(m => m.slug)
 const VALID_TIERS: ModuleTier[] = ['free', 'basic', 'pro']
@@ -26,14 +26,11 @@ export async function POST(req: NextRequest) {
       return badRequest('Invalid tier')
     }
 
-    // Block paid tier upgrades unless explicitly allowed (pre-Stripe development mode)
-    // Double-guard: even if env var is accidentally set in production, block upgrades
-    if (tier !== 'free') {
-      if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_SECRET_KEY) {
+    // Block paid tier upgrades in production unless Stripe is configured.
+    // Non-production: allow free tier switching for testing.
+    if (tier !== 'free' && !process.env.STRIPE_SECRET_KEY) {
+      if (process.env.NODE_ENV === 'production') {
         return apiError('Payment required. Tier upgrades require Stripe integration.', 402)
-      }
-      if (!process.env.ALLOW_FREE_TIER_SELECTION && !process.env.STRIPE_SECRET_KEY) {
-        return apiError('Payment required. Tier upgrades are not available without a valid subscription.', 402)
       }
     }
 

@@ -24,6 +24,7 @@ export type Database = {
           status: 'draft' | 'published' | 'archived'
           author_id: string | null
           published_on: string | null
+          targets: string[]
           created_on: string
           updated_on: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           status?: 'draft' | 'published' | 'archived'
           author_id?: string | null
           published_on?: string | null
+          targets?: string[]
           created_on?: string
           updated_on?: string
         }
@@ -50,6 +52,7 @@ export type Database = {
           category?: 'field_reports' | 'gear_reviews' | 'strategy_breakdowns' | 'scouting_intel' | 'community_stories' | 'how_to_guides'
           status?: 'draft' | 'published' | 'archived'
           published_on?: string | null
+          targets?: string[]
           updated_on?: string
         }
         Relationships: []
@@ -1413,6 +1416,25 @@ export type Database = {
           }
         ]
       }
+      firearms_profile: {
+        Row: {
+          id: string
+          dominant_hand: 'left' | 'right' | null
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id: string
+          dominant_hand?: 'left' | 'right' | null
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          dominant_hand?: 'left' | 'right' | null
+          updated_on?: string
+        }
+        Relationships: []
+      }
       firearms_shot_session: {
         Row: {
           id: string
@@ -1443,6 +1465,8 @@ export type Database = {
           miss: number
           match_id: string | null
           match_member_id: string | null
+          target_photo_url: string | null
+          target_analysis: Json | null
           created_on: string
           updated_on: string
         }
@@ -1475,6 +1499,8 @@ export type Database = {
           miss?: number
           match_id?: string | null
           match_member_id?: string | null
+          target_photo_url?: string | null
+          target_analysis?: Json | null
           created_on?: string
           updated_on?: string
         }
@@ -1505,6 +1531,8 @@ export type Database = {
           miss?: number
           match_id?: string | null
           match_member_id?: string | null
+          target_photo_url?: string | null
+          target_analysis?: Json | null
           updated_on?: string
         }
         Relationships: []

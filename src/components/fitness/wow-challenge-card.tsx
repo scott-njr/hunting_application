@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock, Dumbbell, Target, Send, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SCALING_BADGE, SCALING_ACTIVE_RING, WOW_DISCLAIMER } from '@/lib/fitness/constants'
+import type { ScalingLevel } from '@/lib/fitness/constants'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import type { Workout } from './wow-card'
 
 type ExistingSubmission = {
@@ -19,35 +22,13 @@ interface WowChallengeCardProps {
   existing: ExistingSubmission
 }
 
-const SCALING_LEVELS = ['rx', 'scaled', 'beginner'] as const
-type ScalingKey = typeof SCALING_LEVELS[number]
-
-const SCALING_STYLES: Record<ScalingKey, { active: string; badge: string }> = {
-  rx: {
-    active: 'bg-green-500/20 text-green-400 ring-1 ring-green-500/40',
-    badge: 'bg-green-500/20 text-green-400',
-  },
-  scaled: {
-    active: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40',
-    badge: 'bg-amber-500/20 text-amber-400',
-  },
-  beginner: {
-    active: 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/40',
-    badge: 'bg-blue-500/20 text-blue-400',
-  },
-}
-
-const SCALING_LABELS: Record<ScalingKey, string> = {
-  rx: 'RX',
-  scaled: 'Scaled',
-  beginner: 'Beginner',
-}
+const SCALING_LEVELS: ScalingLevel[] = ['rx', 'scaled', 'beginner']
 
 export function WowChallengeCard({ workout, scoringType, existing }: WowChallengeCardProps) {
   const router = useRouter()
   const details = workout.workout_details
 
-  const [scaling, setScaling] = useState<ScalingKey>(existing?.scaling ?? 'scaled')
+  const [scaling, setScaling] = useState<ScalingLevel>(existing?.scaling ?? 'scaled')
   const [scoreDisplay, setScoreDisplay] = useState(existing?.score_display ?? '')
   const [notes, setNotes] = useState(existing?.notes ?? '')
   const [saving, setSaving] = useState(false)
@@ -142,11 +123,11 @@ export function WowChallengeCard({ workout, scoringType, existing }: WowChalleng
               className={cn(
                 'py-3 rounded text-xs font-semibold transition-colors min-h-[44px]',
                 scaling === s
-                  ? SCALING_STYLES[s].active
+                  ? `${SCALING_BADGE[s].className} ${SCALING_ACTIVE_RING[s]}`
                   : 'bg-elevated text-secondary hover:text-primary'
               )}
             >
-              {SCALING_LABELS[s]}
+              {SCALING_BADGE[s].label}
             </button>
           ))}
         </div>
@@ -154,7 +135,7 @@ export function WowChallengeCard({ workout, scoringType, existing }: WowChalleng
         {/* Selected scaling movements */}
         <div className="rounded-lg border border-subtle bg-elevated/50 p-4 mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className={cn('text-xs font-bold uppercase px-2 py-0.5 rounded', SCALING_STYLES[scaling].badge)}>
+            <span className={cn('text-xs font-bold uppercase px-2 py-0.5 rounded', SCALING_BADGE[scaling].className)}>
               {selectedScale.label}
             </span>
             <span className="text-muted text-xs">{selectedScale.description}</span>
@@ -194,11 +175,7 @@ export function WowChallengeCard({ workout, scoringType, existing }: WowChalleng
           </h3>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Score input */}
@@ -247,7 +224,7 @@ export function WowChallengeCard({ workout, scoringType, existing }: WowChalleng
         </form>
 
         <p className="text-muted text-xs italic mt-4">
-          This workout is AI-generated general guidance. Consult a physician before starting any new exercise program. You assume all risk of injury.
+          {WOW_DISCLAIMER}
         </p>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { Fragment, useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronUp, Info, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TYPE_COLORS } from '@/lib/fitness/constants'
 import { parseLocalDate, getWeekMonday } from '@/lib/fitness/date-helpers'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -75,17 +76,7 @@ const TRAINING_DAYS: Record<number, number[]> = {
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/** Color coding for session types — border-l + bg tint */
-const TYPE_COLORS: Record<string, { border: string; bg: string; badge: string }> = {
-  easy_run:     { border: 'border-l-green-500', bg: '', badge: 'bg-green-950/30 text-green-300 border-green-500/30' },
-  tempo_run:    { border: 'border-l-amber-500', bg: '', badge: 'bg-amber-950/30 text-amber-300 border-amber-500/30' },
-  intervals:    { border: 'border-l-red-400', bg: '', badge: 'bg-red-950/30 text-red-300 border-red-400/30' },
-  long_run:     { border: 'border-l-blue-400', bg: '', badge: 'bg-blue-950/30 text-blue-300 border-blue-400/30' },
-  recovery_run: { border: 'border-l-violet-400', bg: '', badge: 'bg-violet-950/30 text-violet-300 border-violet-400/30' },
-  cross_train:  { border: 'border-l-cyan-400', bg: '', badge: 'bg-cyan-950/30 text-cyan-300 border-cyan-400/30' },
-  strength:     { border: 'border-l-orange-400', bg: '', badge: 'bg-orange-950/30 text-orange-300 border-orange-400/30' },
-  meal:         { border: 'border-l-stone-400', bg: '', badge: 'bg-stone-800/30 text-stone-300 border-stone-400/30' },
-}
+// TYPE_COLORS imported from @/lib/fitness/constants
 
 const DEFAULT_TYPE_COLOR = { border: 'border-l-accent', bg: '', badge: 'bg-surface border-subtle text-muted' }
 

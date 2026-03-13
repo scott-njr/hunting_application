@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 import { cn } from '@/lib/utils'
+import { CHAT_DISCLAIMER } from '@/lib/fitness/constants'
 
 type Message = {
   id: string
@@ -241,7 +242,7 @@ export function FitnessCoachChat({ userId: _userId }: { userId: string }) {
       </div>
 
       <p className="text-muted text-xs text-center mt-3">
-        AI guidance only. Consult a physician before changing your exercise program.
+        {CHAT_DISCLAIMER}
       </p>
     </>
   )

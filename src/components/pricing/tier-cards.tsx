@@ -7,6 +7,7 @@ import { ALL_MODULES, MODULE_TIER_LABELS, MODULE_TIER_PRICES as TIER_PRICES, typ
 import { Crosshair, Target, Shield, Heart, Fish, Dumbbell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthModal } from '@/components/auth/auth-modal-provider'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 const MODULE_ICONS: Record<ModuleSlug, React.ElementType> = {
   hunting: Crosshair,
@@ -218,11 +219,7 @@ export function TierCards({ onTierChanged }: TierCardsProps = {}) {
       })}
 
       {/* Error message */}
-      {error && (
-        <div className="mx-4 p-3 bg-red-950/30 border border-red-500/20 rounded text-xs text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="mx-4 text-xs" />}
 
       {/* Save button */}
       {loggedIn && !loading && (

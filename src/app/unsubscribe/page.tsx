@@ -121,7 +121,7 @@ export default function UnsubscribePage() {
         </Suspense>
 
         <div className="mt-8 pt-4 border-t border-subtle text-center">
-          <a href="https://leadthewild.co" className="text-accent text-xs hover:underline">
+          <a href="/" className="text-accent text-xs hover:underline">
             Lead the Wild
           </a>
         </div>

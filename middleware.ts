@@ -26,8 +26,15 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/') && request.method !== 'GET') {
     const origin = request.headers.get('origin')
     const host = request.headers.get('host')
-    if (origin && host && !origin.includes(host)) {
-      return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+    if (origin && host) {
+      try {
+        const originHost = new URL(origin).host
+        if (originHost !== host) {
+          return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+        }
+      } catch {
+        return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+      }
     }
   }
 

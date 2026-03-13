@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { type AmplitudeSample, type RejectedDetection } from './shot-timer-types'
 
 interface ShotWaveformProps {
@@ -39,7 +39,16 @@ export function ShotWaveform({
   rejectedDetections = [],
   amplitudeThreshold,
   height = WAVEFORM_HEIGHT,
+  live = false,
 }: ShotWaveformProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to keep the latest waveform data visible during live recording
+  useEffect(() => {
+    if (live && scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
+    }
+  }, [live, amplitudeSamples])
   const { path, viewWidth, timeMax, xScale } = useMemo(() => {
     if (amplitudeSamples.length === 0) {
       return { path: '', viewWidth: 600, timeMax: 0, xScale: (_t: number) => 0 }
@@ -78,7 +87,7 @@ export function ShotWaveform({
   const visibleRejections = rejectedDetections
 
   return (
-    <div className="bg-elevated border border-subtle rounded-lg p-2 overflow-x-auto">
+    <div ref={scrollRef} className="bg-elevated border border-subtle rounded-lg p-2 overflow-x-auto">
       <svg
         width={viewWidth}
         height={height + 20}
@@ -237,25 +246,25 @@ export function ShotWaveform({
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 mt-1.5 px-1 text-[10px] font-mono">
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-0.5 bg-[#7c9a6e] rounded" />
-          <span className="text-[#7c9a6e]">Waveform</span>
+          <span className="inline-block w-3 h-0.5 bg-accent rounded" />
+          <span className="text-accent">Waveform</span>
         </span>
         {amplitudeThreshold !== undefined && (
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-0.5 bg-[#c4880c] rounded" style={{ borderTop: '1px dashed #c4880c' }} />
-            <span className="text-[#c4880c]">Threshold</span>
+            <span className="inline-block w-3 h-0.5 bg-urgency rounded" style={{ borderTop: '1px dashed #c4880c' }} />
+            <span className="text-urgency">Threshold</span>
           </span>
         )}
         {shotTimesMs.length > 0 && (
           <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#ef4444]" />
-            <span className="text-[#ef4444]">Shot</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-error" />
+            <span className="text-error">Shot</span>
           </span>
         )}
         {visibleRejections.length > 0 && (
           <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#c4880c]" />
-            <span className="text-[#c4880c]">Muted (beep)</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-urgency" />
+            <span className="text-urgency">Muted (beep)</span>
           </span>
         )}
       </div>

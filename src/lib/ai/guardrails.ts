@@ -2,7 +2,7 @@ import { BASE_SYSTEM_RULES, BASE_RESPONSE_RULES } from './rules/base.rules'
 import { HUNTING_MODULE_RULES, HUNTING_SCOUT_RULES, HUNTING_DRAW_RULES, HUNTING_UNIT_SCOUT_RULES } from './rules/hunting.rules'
 import { FITNESS_MODULE_RULES } from './rules/fitness.rules'
 import { FITNESS_COACH_RULES } from './rules/fitness-coach.rules'
-import { FIREARMS_MODULE_RULES } from './rules/firearms.rules'
+import { FIREARMS_MODULE_RULES, FIREARMS_TARGET_ANALYSIS_RULES } from './rules/firearms.rules'
 import { ADMIN_BUG_TRIAGE_RULES } from './rules/admin.rules'
 
 // ─── Module types ──────────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ export type AIFeature =
   | 'fitness_meal_prep'
   | 'fitness_coach_chat'
   | 'firearms_education'
+  | 'firearms_target_analysis'
   | 'admin_bug_triage'
   | 'general_chat'
 
@@ -35,6 +36,7 @@ const FEATURE_RULES: Partial<Record<AIFeature, string>> = {
   hunting_draw_assistant: HUNTING_DRAW_RULES,
   hunting_unit_scout: HUNTING_UNIT_SCOUT_RULES,
   fitness_coach_chat: FITNESS_COACH_RULES,
+  firearms_target_analysis: FIREARMS_TARGET_ANALYSIS_RULES,
   admin_bug_triage: ADMIN_BUG_TRIAGE_RULES,
 }
 

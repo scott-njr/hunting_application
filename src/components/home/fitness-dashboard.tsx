@@ -6,6 +6,7 @@ import {
   LineChart, Line, Legend,
 } from 'recharts'
 import { Activity, Dumbbell, TrendingUp, UtensilsCrossed, Flame } from 'lucide-react'
+import { CHART_THEME, PLAN_BAR_COLORS, BASELINE_LINE_COLORS } from '@/lib/chart-theme'
 
 interface BaselineTest {
   tested_at: string
@@ -55,17 +56,17 @@ function MiniPlanChart({ data, label, icon: Icon }: { data: ChartData; label: st
       </div>
       <ResponsiveContainer width="100%" height={130}>
         <BarChart data={chartData} margin={{ top: 2, right: 2, left: -20, bottom: 2 }}>
-          <XAxis dataKey="week" stroke="#8a8577" fontSize={9} />
-          <YAxis stroke="#8a8577" fontSize={9} allowDecimals={false} />
+          <XAxis dataKey="week" stroke={CHART_THEME.axisStroke} fontSize={9} />
+          <YAxis stroke={CHART_THEME.axisStroke} fontSize={9} allowDecimals={false} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1a1a17', border: '1px solid #2a2a25', borderRadius: '8px', fontSize: '11px' }}
-            labelStyle={{ color: '#f0ece4' }}
+            contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '8px', fontSize: '11px' }}
+            labelStyle={{ color: CHART_THEME.labelColor }}
             formatter={(value, name) => [value, name === 'completed' ? 'Done' : 'Target']}
           />
-          <Bar dataKey="expected" fill="#2a2a25" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="expected" fill={PLAN_BAR_COLORS.expected} radius={[2, 2, 0, 0]} />
           <Bar dataKey="completed" radius={[2, 2, 0, 0]}>
             {chartData.map((entry, i) => (
-              <Cell key={i} fill={entry.completed >= entry.expected ? '#7c9a6e' : '#c4880c'} />
+              <Cell key={i} fill={entry.completed >= entry.expected ? PLAN_BAR_COLORS.completed : PLAN_BAR_COLORS.partial} />
             ))}
           </Bar>
         </BarChart>
@@ -124,22 +125,22 @@ export function FitnessDashboard({ baselineTests, runChart, strengthChart, hasMe
               }))}
               margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
             >
-              <XAxis dataKey="date" stroke="#8a8577" fontSize={10} />
-              <YAxis yAxisId="reps" stroke="#8a8577" fontSize={10} />
-              <YAxis yAxisId="time" orientation="right" stroke="#8a8577" fontSize={10} reversed tickFormatter={formatRunTime} />
+              <XAxis dataKey="date" stroke={CHART_THEME.axisStroke} fontSize={10} />
+              <YAxis yAxisId="reps" stroke={CHART_THEME.axisStroke} fontSize={10} />
+              <YAxis yAxisId="time" orientation="right" stroke={CHART_THEME.axisStroke} fontSize={10} reversed tickFormatter={formatRunTime} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1a1a17', border: '1px solid #2a2a25', borderRadius: '8px', fontSize: '11px' }}
-                labelStyle={{ color: '#f0ece4' }}
+                contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '8px', fontSize: '11px' }}
+                labelStyle={{ color: CHART_THEME.labelColor }}
                 formatter={(value, name) => {
                   if (name === 'Run Time') return [formatRunTime(value as number), name]
                   return [value, name]
                 }}
               />
-              <Legend wrapperStyle={{ color: '#c4bfb3', fontSize: '10px' }} />
-              <Line yAxisId="reps" type="monotone" dataKey="pushups" name="Pushups" stroke="#7c9a6e" strokeWidth={2} dot={{ r: 3 }} />
-              <Line yAxisId="reps" type="monotone" dataKey="situps" name="Situps" stroke="#c4880c" strokeWidth={2} dot={{ r: 3 }} />
-              <Line yAxisId="reps" type="monotone" dataKey="pullups" name="Pullups" stroke="#6b8cce" strokeWidth={2} dot={{ r: 3 }} />
-              <Line yAxisId="time" type="monotone" dataKey="runTime" name="Run Time" stroke="#ce6b6b" strokeWidth={2} dot={{ r: 3 }} />
+              <Legend wrapperStyle={{ color: CHART_THEME.legendColor, fontSize: '10px' }} />
+              <Line yAxisId="reps" type="monotone" dataKey="pushups" name="Pushups" stroke={BASELINE_LINE_COLORS.pushups} strokeWidth={2} dot={{ r: 3 }} />
+              <Line yAxisId="reps" type="monotone" dataKey="situps" name="Situps" stroke={BASELINE_LINE_COLORS.situps} strokeWidth={2} dot={{ r: 3 }} />
+              <Line yAxisId="reps" type="monotone" dataKey="pullups" name="Pullups" stroke={BASELINE_LINE_COLORS.pullups} strokeWidth={2} dot={{ r: 3 }} />
+              <Line yAxisId="time" type="monotone" dataKey="runTime" name="Run Time" stroke={BASELINE_LINE_COLORS.runTime} strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

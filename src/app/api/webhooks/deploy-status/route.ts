@@ -1,6 +1,6 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
-import { apiDone, unauthorized } from '@/lib/api-response'
+import { apiDone, unauthorized, withHandler } from '@/lib/api-response'
 
 const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
@@ -28,7 +28,7 @@ function verifySignature(payload: string, signature: string | null): boolean {
  * Fires when the "Auto Fix Issue" workflow completes.
  * Updates deploy_log status and resolves the linked issue on success.
  */
-export async function POST(req: Request) {
+export const POST = withHandler(async (req: Request) => {
   const rawBody = await req.text()
 
   // Verify GitHub signature
@@ -146,4 +146,4 @@ export async function POST(req: Request) {
   console.warn(`[Deploy Status] Issue ${issueId}: ${deployStatus} (run: ${runUrl})`)
 
   return apiDone({ issueId, status: deployStatus })
-}
+})

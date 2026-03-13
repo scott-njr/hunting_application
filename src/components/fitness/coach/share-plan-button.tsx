@@ -31,28 +31,32 @@ export function SharePlanButton({ planId }: { planId: string }) {
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/fitness/plans/share', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan_id: planId, friend_id: selectedFriend }),
-    })
+    try {
+      const res = await fetch('/api/fitness/plans/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_id: planId, friend_id: selectedFriend }),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (!res.ok) {
-      setError(data.error ?? 'Failed to share')
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to share')
+        return
+      }
+
+      setSuccess(true)
+      setTimeout(() => {
+        setOpen(false)
+        setSuccess(false)
+        setSelectedFriend('')
+        router.refresh()
+      }, 1500)
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    setSuccess(true)
-    setLoading(false)
-    setTimeout(() => {
-      setOpen(false)
-      setSuccess(false)
-      setSelectedFriend('')
-      router.refresh()
-    }, 1500)
   }
 
   return (
@@ -66,8 +70,8 @@ export function SharePlanButton({ planId }: { planId: string }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-surface border border-subtle rounded-lg p-5 w-full max-w-sm mx-4 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => { setOpen(false); setError(''); setSuccess(false) }}>
+          <div className="bg-surface border border-subtle rounded-lg p-5 w-full max-w-sm mx-4 max-h-[90dvh] overflow-y-auto space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-primary font-bold text-sm">Share Plan with Friend</h3>
               <button onClick={() => { setOpen(false); setError(''); setSuccess(false) }} className="text-muted hover:text-secondary">

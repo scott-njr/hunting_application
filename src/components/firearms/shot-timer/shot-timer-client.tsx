@@ -19,6 +19,7 @@ import { SessionHistory } from './session-history'
 import { ShotWaveform } from './shot-waveform'
 import { CourseOfFirePanel } from './course-of-fire'
 import { ScoringModal } from './scoring-modal'
+import { TargetUploadButton } from './target-upload-button'
 import { CalibrationMode } from './calibration-mode'
 import type { Database } from '@/types/database.types'
 
@@ -70,6 +71,8 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
   const [bandEnergies, setBandEnergies] = useState<number[]>([0, 0, 0, 0, 0])
   const [rejectedDetections, setRejectedDetections] = useState<RejectedDetection[]>([])
   const [sessionError, setSessionError] = useState<string | null>(null)
+  const [targetAnalysis, setTargetAnalysis] = useState<{ text: string; photoUrl: string } | null>(null)
+  const [analyzingTarget, setAnalyzingTarget] = useState(false)
 
   const {
     state,
@@ -406,10 +409,37 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
     }
   }
 
+  /** Upload target photo and get AI analysis */
+  async function handleTargetUpload(file: File) {
+    if (!currentSessionId) return
+    setAnalyzingTarget(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`/api/firearms/shot-timer/${currentSessionId}/target-analysis`, {
+        method: 'POST',
+        body: formData,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTargetAnalysis({ text: data.analysis.text, photoUrl: data.analysis.photo_url })
+      } else {
+        const data = await res.json().catch(() => null)
+        setSessionError(data?.error ?? 'Failed to analyze target photo')
+      }
+    } catch {
+      setSessionError('Failed to upload target photo')
+    } finally {
+      setAnalyzingTarget(false)
+    }
+  }
+
   /** Dismiss the results panel, reset, and go to history */
   function handleDismissResults() {
     setCourseResults(null)
     setCurrentSessionId(null)
+    setTargetAnalysis(null)
+    setAnalyzingTarget(false)
     sessionStartedRef.current = false
     prevStringCountRef.current = 0
     setActiveCourse(null)
@@ -623,6 +653,25 @@ export function ShotTimerClient({ userId, userName, initialSessions, matchContex
                   </div>
                 )}
               </div>
+
+              {/* Target Analysis Section */}
+              {!targetAnalysis && !matchContext && (
+                <TargetUploadButton onUpload={handleTargetUpload} analyzing={analyzingTarget} />
+              )}
+
+              {targetAnalysis && (
+                <div className="bg-elevated border border-subtle rounded-lg p-3 space-y-3">
+                  <h4 className="text-accent font-bold text-sm">Target Analysis</h4>
+                  <img
+                    src={targetAnalysis.photoUrl}
+                    alt="Target"
+                    className="rounded-lg max-h-48 mx-auto"
+                  />
+                  <div className="text-secondary text-sm whitespace-pre-wrap leading-relaxed">
+                    {targetAnalysis.text}
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={handleDismissResults}

@@ -2,12 +2,8 @@
 
 import { Medal, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const SCALING_BADGE: Record<string, { label: string; className: string }> = {
-  rx: { label: 'RX', className: 'bg-green-500/20 text-green-400' },
-  scaled: { label: 'Scaled', className: 'bg-amber-500/20 text-amber-400' },
-  beginner: { label: 'Beginner', className: 'bg-blue-500/20 text-blue-400' },
-}
+import { SCALING_BADGE } from '@/lib/fitness/constants'
+import type { ScalingLevel } from '@/lib/fitness/constants'
 
 export type LeaderboardRowData = {
   rank: number
@@ -87,12 +83,12 @@ export function LeaderboardRow({ data }: { data: LeaderboardRowData }) {
       </div>
 
       {/* Scaling badge (weekly view) */}
-      {scaling && SCALING_BADGE[scaling] && (
+      {scaling && SCALING_BADGE[scaling as ScalingLevel] && (
         <span className={cn(
           'text-xs font-bold px-2 py-0.5 rounded flex-shrink-0',
-          SCALING_BADGE[scaling].className
+          SCALING_BADGE[scaling as ScalingLevel].className
         )}>
-          {SCALING_BADGE[scaling].label}
+          {SCALING_BADGE[scaling as ScalingLevel].label}
         </span>
       )}
 
