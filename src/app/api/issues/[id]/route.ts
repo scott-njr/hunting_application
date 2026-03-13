@@ -1,14 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiOk, unauthorized, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(
+export const GET = withHandler(async (
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   // Check if user is admin
   const { data: member } = await supabase
@@ -23,31 +23,32 @@ export async function GET(
     .eq('id', id)
     .single()
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
-  if (!issue) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (error) return serverError()
+  if (!issue) return notFound()
 
   // Non-admin users can only see their own issues
   if (!member?.is_admin && issue.user_id !== user.id) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return notFound()
   }
 
   // Strip admin-only fields for non-admin users
   if (!member?.is_admin) {
     const { admin_notes: _, ai_proposed_fix: __, ...safeIssue } = issue
-    return NextResponse.json({ issue: safeIssue })
+    return apiOk({ issue: safeIssue })
   }
 
-  return NextResponse.json({ issue })
-}
+  return apiOk({ issue })
+})
 
-export async function PATCH(
+
+export const PATCH = withHandler(async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   // Check admin
   const { data: member } = await supabase
@@ -57,10 +58,11 @@ export async function PATCH(
     .single()
 
   if (!member?.is_admin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return forbidden()
   }
 
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { status, resolution, admin_notes, release_tag } = body
 
   const updates: Record<string, unknown> = {}
@@ -68,7 +70,7 @@ export async function PATCH(
   if (status) {
     const validStatuses = ['open', 'in_progress', 'resolved', 'wont_fix']
     if (!validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+      return badRequest('Invalid status')
     }
     updates.status = status
     if (status === 'resolved') {
@@ -82,7 +84,7 @@ export async function PATCH(
   if (release_tag !== undefined) updates.release_tag = String(release_tag).trim().slice(0, 50) || null
 
   if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'No updates provided' }, { status: 400 })
+    return badRequest('No updates provided')
   }
 
   const { data: issue, error } = await supabase
@@ -92,7 +94,8 @@ export async function PATCH(
     .select('*')
     .single()
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
-  return NextResponse.json({ issue })
-}
+  return apiOk({ issue })
+})
+

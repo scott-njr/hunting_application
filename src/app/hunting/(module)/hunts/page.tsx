@@ -166,7 +166,7 @@ type HuntPlan = {
   emergency_contact_phone: string | null
   print_recipients: unknown
   gear_list: unknown | null
-  created_at: string
+  created_on: string
 }
 
 type GearItem = {
@@ -182,8 +182,8 @@ type HuntMember = {
   email: string | null
   role: string
   is_scout_user: boolean
-  added_at: string
-  updated_at: string
+  created_on: string
+  updated_on: string
 }
 
 type HuntLocation = {
@@ -200,8 +200,8 @@ type HuntLocation = {
     sections?: { key: string; title: string; rows: { label: string; value: string }[] }[]
     truncated?: boolean
   } | null
-  created_at: string
-  updated_at: string
+  created_on: string
+  updated_on: string
 }
 
 /** Try to recover structured sections from a scout_report that has raw JSON in .text but empty .sections */
@@ -365,7 +365,7 @@ function HuntsInner() {
       .from('hunting_plans')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .order('created_on', { ascending: false })
     if (data) setHunts(data)
     setLoading(false)
   }, [router])
@@ -650,9 +650,9 @@ function HuntsInner() {
     const supabase = createClient()
     const { data } = await supabase
       .from('hunting_plan_members')
-      .select('id, display_name, email, role, is_scout_user, added_at, updated_at')
+      .select('id, display_name, email, role, is_scout_user, created_on, updated_on')
       .eq('hunt_plan_id', huntId)
-      .order('updated_at', { ascending: false })
+      .order('updated_on', { ascending: false })
     if (data) setHuntMembers(prev => ({ ...prev, [huntId]: data }))
   }
 
@@ -686,7 +686,7 @@ function HuntsInner() {
       .from('hunting_locations')
       .select('*')
       .eq('hunt_plan_id', huntId)
-      .order('created_at')
+      .order('created_on')
     if (data) setHuntLocations(prev => ({ ...prev, [huntId]: data as HuntLocation[] }))
   }
 
@@ -1138,7 +1138,7 @@ function HuntsInner() {
                       value={friendSearch}
                       onChange={e => setFriendSearch(e.target.value)}
                       placeholder="Search your circle…"
-                      className="w-full bg-elevated border border-default text-primary rounded px-3 py-1.5 text-sm focus:border-accent focus:outline-none placeholder:text-muted mb-2"
+                      className="w-full bg-elevated border border-default text-primary rounded px-3 py-1.5 text-base sm:text-sm focus:border-accent focus:outline-none placeholder:text-muted mb-2"
                     />
                     <div className="bg-elevated border border-subtle rounded overflow-hidden max-h-40 overflow-y-auto">
                       {friends
@@ -1194,7 +1194,7 @@ function HuntsInner() {
                         onChange={e => setExternalEmail(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && confirmExternalRecipient()}
                         placeholder="Email for print recipient"
-                        className="flex-1 bg-elevated border border-default text-primary rounded px-3 py-1.5 text-sm focus:border-accent focus:outline-none placeholder:text-muted"
+                        className="flex-1 bg-elevated border border-default text-primary rounded px-3 py-1.5 text-base sm:text-sm focus:border-accent focus:outline-none placeholder:text-muted"
                         autoFocus
                       />
                       <button type="button" onClick={confirmExternalRecipient}
@@ -1513,14 +1513,14 @@ function HuntsInner() {
                             value={newLocLabel}
                             onChange={e => setNewLocLabel(e.target.value)}
                             placeholder="Label (e.g. A, B, Camp Creek)"
-                            className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                            className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
                           />
                           <input
                             type="text"
                             value={newLocDesc}
                             onChange={e => setNewLocDesc(e.target.value)}
                             placeholder="Description (drainage, landmark, road name…)"
-                            className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                            className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
                           />
                           {/* Interactive map — click to drop pin */}
                           <LocationPickerMap
@@ -1593,14 +1593,14 @@ function HuntsInner() {
                                     value={editLocLabel}
                                     onChange={e => setEditLocLabel(e.target.value)}
                                     placeholder="Label (e.g. A, B, Camp Creek)"
-                                    className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                                    className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
                                   />
                                   <input
                                     type="text"
                                     value={editLocDesc}
                                     onChange={e => setEditLocDesc(e.target.value)}
                                     placeholder="Description (drainage, landmark, road name…)"
-                                    className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                                    className="w-full bg-elevated border border-default text-primary rounded px-2.5 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
                                   />
                                   <LocationPickerMap
                                     lat={editLocLat ? parseFloat(editLocLat) : null}

@@ -1,20 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, badRequest, notFound, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/friends/respond — accept or decline an incoming friend request
 // Body: { friendship_id: string, action: 'accept' | 'decline' }
 // Only the recipient can respond (enforced by RLS)
 
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { friendship_id, action } = body
 
   if (!friendship_id || !['accept', 'decline'].includes(action)) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    return badRequest('Invalid request')
   }
 
   const newStatus = action === 'accept' ? 'accepted' : 'declined'
@@ -30,9 +32,10 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[friends/respond POST] update error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
-  if (!data) return NextResponse.json({ error: 'Request not found or already responded' }, { status: 404 })
+  if (!data) return notFound('Request not found or already responded')
 
-  return NextResponse.json({ friendship: data })
-}
+  return apiOk({ friendship: data })
+})
+

@@ -105,7 +105,7 @@ export function AccountDropdown({ userId, email, onSignOut }: AccountDropdownPro
       {/* Trigger */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-sm text-secondary hover:text-primary transition-colors rounded-lg px-2 py-1.5 hover:bg-surface"
+        className="flex items-center gap-2 text-sm text-secondary hover:text-primary transition-colors rounded-lg px-2 py-1.5 hover:bg-surface min-h-[44px]"
       >
         {profile?.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element

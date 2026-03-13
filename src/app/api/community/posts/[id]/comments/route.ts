@@ -1,26 +1,26 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiOk, apiDone, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // GET /api/community/posts/[id]/comments
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withHandler(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { id: postId } = await params
 
   const { data: comments, error } = await supabase
     .from('social_comments')
-    .select('id, post_id, user_id, content, created_at')
+    .select('id, post_id, user_id, content, created_on')
     .eq('post_id', postId)
-    .order('created_at', { ascending: true })
+    .order('created_on', { ascending: true })
     .limit(100)
 
   if (error) {
     console.error('[community/posts/comments GET] fetch error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
-  if (!comments || comments.length === 0) return NextResponse.json({ comments: [] })
+  if (!comments || comments.length === 0) return apiOk({ comments: [] })
 
   const userIds = [...new Set(comments.map(c => c.user_id))]
   const { data: profiles } = await supabase
@@ -37,7 +37,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     avatarMap[p.id] = p.avatar_url
   }
 
-  return NextResponse.json({
+  return apiOk({
     comments: comments.map(c => ({
       ...c,
       display_name: nameMap[c.user_id] ?? null,
@@ -45,30 +45,32 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       avatar_url: avatarMap[c.user_id] ?? null,
     })),
   })
-}
+})
+
 
 // POST /api/community/posts/[id]/comments
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withHandler(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { id: postId } = await params
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const trimmed = String(body.content ?? '').trim()
 
-  if (!trimmed) return NextResponse.json({ error: 'Content is required' }, { status: 400 })
-  if (trimmed.length > 1000) return NextResponse.json({ error: 'Comment must be 1000 characters or fewer' }, { status: 400 })
+  if (!trimmed) return badRequest('Content is required')
+  if (trimmed.length > 1000) return badRequest('Comment must be 1000 characters or fewer')
 
   const { data: comment, error } = await supabase
     .from('social_comments')
     .insert({ post_id: postId, user_id: user.id, content: trimmed })
-    .select('id, post_id, user_id, content, created_at')
+    .select('id, post_id, user_id, content, created_on')
     .single()
 
   if (error) {
     console.error('[community/posts/comments POST] insert error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   const { data: profile } = await supabase
@@ -77,19 +79,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .eq('id', user.id)
     .maybeSingle()
 
-  return NextResponse.json({ comment: { ...comment, display_name: profile?.display_name ?? null, user_name: profile?.user_name ?? null, avatar_url: profile?.avatar_url ?? null } })
-}
+  return apiOk({ comment: { ...comment, display_name: profile?.display_name ?? null, user_name: profile?.user_name ?? null, avatar_url: profile?.avatar_url ?? null } }, 201)
+})
+
 
 // DELETE /api/community/posts/[id]/comments?comment_id=xxx
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withHandler(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   await params // satisfy params type
   const { searchParams } = new URL(req.url)
   const commentId = searchParams.get('comment_id')
-  if (!commentId) return NextResponse.json({ error: 'comment_id required' }, { status: 400 })
+  if (!commentId) return badRequest('comment_id required')
 
   const { error } = await supabase
     .from('social_comments')
@@ -99,7 +102,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   if (error) {
     console.error('[community/posts/comments DELETE] delete error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
-  return NextResponse.json({ ok: true })
-}
+  return apiDone()
+})
+

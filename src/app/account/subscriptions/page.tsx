@@ -8,13 +8,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { TierCards } from '@/components/pricing/tier-cards'
-import { MODULE_TIER_RANK, MODULE_TIER_LABELS, type ModuleTier } from '@/lib/modules'
-
-const TIER_PRICES: Record<ModuleTier, string> = {
-  free: '$0',
-  basic: '$9',
-  pro: '$19',
-}
+import { MODULE_TIER_RANK, MODULE_TIER_LABELS, MODULE_TIER_PRICES, type ModuleTier } from '@/lib/modules'
 
 interface SubscriptionState {
   highestTier: ModuleTier
@@ -36,8 +30,7 @@ export default function SubscriptionsPage() {
         router.push('/auth/login')
         return
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(supabase as any)
+      supabase
         .from('module_subscriptions')
         .select('tier, status')
         .eq('user_id', user.id)
@@ -120,8 +113,8 @@ export default function SubscriptionsPage() {
               <p className="text-xs text-muted mt-1">Your account tier is the highest of your module tiers.</p>
             </div>
             <p className="text-2xl font-bold text-primary">
-              {TIER_PRICES[currentTier]}
-              <span className="text-sm text-muted font-normal">{currentTier === 'free' ? '' : '/mo'}</span>
+              {MODULE_TIER_PRICES[currentTier].amount}
+              <span className="text-sm text-muted font-normal">{MODULE_TIER_PRICES[currentTier].period === 'forever' ? '' : MODULE_TIER_PRICES[currentTier].period}</span>
             </p>
           </div>
 

@@ -11,7 +11,7 @@ interface UserDetail {
   email: string
   display_name: string | null
   is_admin: boolean
-  created_at: string
+  created_on: string
 }
 
 interface Subscription {
@@ -27,7 +27,7 @@ interface Plan {
   goal: string | null
   weeks_total: number
   started_at: string
-  created_at: string
+  created_on: string
 }
 
 const PLAN_STATUS_OPTIONS = [
@@ -128,7 +128,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ user
             </div>
             <div className="flex items-center gap-2 mt-1 text-xs text-muted">
               <Calendar className="h-3.5 w-3.5" />
-              <span>Joined {new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+              <span>Joined {new Date(member.created_on).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

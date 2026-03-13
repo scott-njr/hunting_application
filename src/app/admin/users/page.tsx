@@ -11,7 +11,7 @@ interface AdminUser {
   display_name: string | null
   is_admin: boolean
   onboarding_completed: boolean
-  created_at: string
+  created_on: string
   subscriptions?: { module_slug: string; tier: string; status: string }[]
 }
 
@@ -30,16 +30,21 @@ export default function AdminUsersPage() {
     let cancelled = false
     async function loadUsers() {
       setLoading(true)
-      const params = new URLSearchParams({ page: String(page) })
-      if (search) params.set('search', search)
+      try {
+        const params = new URLSearchParams({ page: String(page) })
+        if (search) params.set('search', search)
 
-      const res = await fetch(`/api/admin/users?${params}`)
-      if (!cancelled && res.ok) {
-        const data = await res.json()
-        setUsers(data.users)
-        setTotal(data.total)
+        const res = await fetch(`/api/admin/users?${params}`)
+        if (!cancelled && res.ok) {
+          const data = await res.json()
+          setUsers(data.users)
+          setTotal(data.total)
+        }
+      } catch {
+        // Network error — leave current state
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-      if (!cancelled) setLoading(false)
     }
     loadUsers()
     return () => { cancelled = true }
@@ -139,7 +144,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted text-xs">
-                      {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(user.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <button

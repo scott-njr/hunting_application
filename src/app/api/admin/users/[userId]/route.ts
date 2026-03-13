@@ -1,10 +1,11 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiOk, apiDone, forbidden, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+export const GET = withHandler(async (_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   const { userId } = await params
 
@@ -16,7 +17,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ use
   const [{ data: member }, { data: profile }, { data: subscriptions }, { data: plans }] = await Promise.all([
     admin
       .from('members')
-      .select('id, email, is_admin, created_at')
+      .select('id, email, is_admin, created_on')
       .eq('id', userId)
       .single(),
     admin
@@ -31,35 +32,37 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ use
       .eq('status', 'active'),
     admin
       .from('fitness_training_plans')
-      .select('id, plan_type, status, goal, weeks_total, started_at, created_at')
+      .select('id, plan_type, status, goal, weeks_total, started_at, created_on')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false }),
+      .order('created_on', { ascending: false }),
   ])
 
-  if (!member) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  if (!member) return notFound('User not found')
 
-  return NextResponse.json({
+  return apiOk({
     member: { ...member, display_name: profile?.display_name ?? null },
     subscriptions: subscriptions ?? [],
     plans: plans ?? [],
   })
-}
+})
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+
+export const PATCH = withHandler(async (req: NextRequest, { params }: { params: Promise<{ userId: string }> }) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   const { userId } = await params
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { planId, status } = body
 
   if (!planId || !status) {
-    return NextResponse.json({ error: 'Missing planId or status' }, { status: 400 })
+    return badRequest('Missing planId or status')
   }
 
   const validStatuses = ['active', 'completed', 'abandoned']
   if (!validStatuses.includes(status)) {
-    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    return badRequest('Invalid status')
   }
 
   const admin = createServiceClient(
@@ -73,7 +76,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
     .eq('id', planId)
     .eq('user_id', userId)
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
-  return NextResponse.json({ ok: true })
-}
+  return apiDone()
+})
+

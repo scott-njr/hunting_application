@@ -1,19 +1,22 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiDone, forbidden, badRequest, notFound, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
 /** POST — Manually trigger AI triage on an existing issue */
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
-  const { issueId } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { issueId } = body
   if (!issueId) {
-    return NextResponse.json({ error: 'issueId required' }, { status: 400 })
+    return badRequest('issueId required')
   }
 
   const admin = createServiceClient(
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error || !record) {
-    return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
+    return notFound('Issue not found')
   }
 
   // AI classification
@@ -39,19 +42,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await aiCall({
-      module: 'system',
-      feature: 'bug_triage',
+      module: 'admin',
+      feature: 'admin_bug_triage',
       userId: 'system',
       maxTokens: 512,
       userMessage: `Classify this bug report and propose a fix.
 
-Title: ${record.title}
-Category: ${record.category}
-Module: ${record.module}
-Page URL: ${record.page_url ?? 'not provided'}
+<title>${record.title}</title>
+<category>${record.category}</category>
+<module>${record.module}</module>
+<page_url>${record.page_url ?? 'not provided'}</page_url>
 
-Description:
-${record.description}`,
+<description>
+${record.description}
+</description>`,
     })
 
     if (result.success) {
@@ -68,7 +72,7 @@ ${record.description}`,
     }
   } catch (err) {
     console.error('[Issue Triage] AI classification failed:', err)
-    return NextResponse.json({ error: 'AI classification failed' }, { status: 500 })
+    return serverError('AI classification failed')
   }
 
   // Update issue with triage data
@@ -139,12 +143,12 @@ ${record.description}`,
     }
   }
 
-  return NextResponse.json({
-    ok: true,
+  return apiDone({
     severity,
     proposedFix,
     reasoning,
     githubIssueUrl,
-    ai_classified_at: updateData.ai_classified_at,
+    ai_classified_at: updateData.ai_classified_at as string,
   })
-}
+})
+

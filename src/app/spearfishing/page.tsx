@@ -37,5 +37,5 @@ export default createNav2Page({
     { icon: Fish, title: 'Gear Management', description: 'Track spearguns, wetsuits, fins, and accessories. Log maintenance, replacements, and what works in different conditions.' },
     { icon: Users, title: 'Community', description: 'Connect with divers in your area. Share reports, find dive buddies, and learn from experienced spearos.' },
   ],
-  cta: { href: '/spearfishing', name: 'Spearfishing', inlineInAbout: false },
+  cta: { href: '/auth/signup', name: 'Spearfishing', inlineInAbout: false },
 })

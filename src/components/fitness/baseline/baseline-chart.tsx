@@ -2,6 +2,7 @@
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { TrendingUp } from 'lucide-react'
+import { CHART_THEME, BASELINE_LINE_COLORS } from '@/lib/chart-theme'
 import type { BaselineTest } from './baseline-history'
 
 function formatRunTime(seconds: number): string {
@@ -31,35 +32,35 @@ export function BaselineChart({ tests }: { tests: BaselineTest[] }) {
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <XAxis dataKey="date" stroke="#8a8577" fontSize={12} />
+          <XAxis dataKey="date" stroke={CHART_THEME.axisStroke} fontSize={12} />
           <YAxis
             yAxisId="reps"
-            stroke="#8a8577"
+            stroke={CHART_THEME.axisStroke}
             fontSize={12}
-            label={{ value: 'Reps', angle: -90, position: 'insideLeft', fill: '#8a8577', fontSize: 12 }}
+            label={{ value: 'Reps', angle: -90, position: 'insideLeft', fill: CHART_THEME.axisStroke, fontSize: 12 }}
           />
           <YAxis
             yAxisId="time"
             orientation="right"
-            stroke="#8a8577"
+            stroke={CHART_THEME.axisStroke}
             fontSize={12}
             reversed
             tickFormatter={formatRunTime}
-            label={{ value: 'Run Time', angle: 90, position: 'insideRight', fill: '#8a8577', fontSize: 12 }}
+            label={{ value: 'Run Time', angle: 90, position: 'insideRight', fill: CHART_THEME.axisStroke, fontSize: 12 }}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1a1a17', border: '1px solid #2a2a25', borderRadius: '8px' }}
-            labelStyle={{ color: '#f0ece4' }}
+            contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '8px' }}
+            labelStyle={{ color: CHART_THEME.labelColor }}
             formatter={(value, name) => {
               if (name === 'Run Time') return [formatRunTime(value as number), name]
               return [value, name]
             }}
           />
-          <Legend wrapperStyle={{ color: '#c4bfb3', fontSize: '12px' }} />
-          <Line yAxisId="reps" type="monotone" dataKey="pushups" name="Pushups" stroke="#7c9a6e" strokeWidth={2} dot={{ r: 4 }} />
-          <Line yAxisId="reps" type="monotone" dataKey="situps" name="Situps" stroke="#c4880c" strokeWidth={2} dot={{ r: 4 }} />
-          <Line yAxisId="reps" type="monotone" dataKey="pullups" name="Pullups" stroke="#6b8cce" strokeWidth={2} dot={{ r: 4 }} />
-          <Line yAxisId="time" type="monotone" dataKey="runTime" name="Run Time" stroke="#ce6b6b" strokeWidth={2} dot={{ r: 4 }} />
+          <Legend wrapperStyle={{ color: CHART_THEME.legendColor, fontSize: '12px' }} />
+          <Line yAxisId="reps" type="monotone" dataKey="pushups" name="Pushups" stroke={BASELINE_LINE_COLORS.pushups} strokeWidth={2} dot={{ r: 4 }} />
+          <Line yAxisId="reps" type="monotone" dataKey="situps" name="Situps" stroke={BASELINE_LINE_COLORS.situps} strokeWidth={2} dot={{ r: 4 }} />
+          <Line yAxisId="reps" type="monotone" dataKey="pullups" name="Pullups" stroke={BASELINE_LINE_COLORS.pullups} strokeWidth={2} dot={{ r: 4 }} />
+          <Line yAxisId="time" type="monotone" dataKey="runTime" name="Run Time" stroke={BASELINE_LINE_COLORS.runTime} strokeWidth={2} dot={{ r: 4 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -1,20 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/challenges/respond — Accept or decline a challenge
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { challenge_id, action } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { challenge_id, action } = body
 
   if (!challenge_id || !action) {
-    return NextResponse.json({ error: 'challenge_id and action are required' }, { status: 400 })
+    return badRequest('challenge_id and action are required')
   }
 
   if (!['accept', 'decline'].includes(action)) {
-    return NextResponse.json({ error: 'action must be accept or decline' }, { status: 400 })
+    return badRequest('action must be accept or decline')
   }
 
   // Verify user is the challenged party
@@ -27,7 +30,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!challenge) {
-    return NextResponse.json({ error: 'Challenge not found or already responded' }, { status: 404 })
+    return notFound('Challenge not found or already responded')
   }
 
   if (action === 'decline') {
@@ -37,10 +40,10 @@ export async function POST(req: NextRequest) {
       .eq('id', challenge_id)
 
     if (error) {
-      console.error(error)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      console.error('[Fitness Challenge Respond] decline error:', error)
+      return serverError()
     }
-    return NextResponse.json({ status: 'declined' })
+    return apiOk({ status: 'declined' })
   }
 
   // Accept
@@ -53,9 +56,10 @@ export async function POST(req: NextRequest) {
     .eq('id', challenge_id)
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Challenge Respond] accept error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ status: 'accepted' })
-}
+  return apiOk({ status: 'accepted' })
+})
+

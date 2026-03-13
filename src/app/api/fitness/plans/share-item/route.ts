@@ -1,21 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/share-item — Share an individual workout/meal with a friend
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { recipient_id, item_type, item_snapshot, source_plan_id, message } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { recipient_id, item_type, item_snapshot, source_plan_id, message } = body
 
   if (!recipient_id || !item_type || !item_snapshot) {
-    return NextResponse.json({ error: 'recipient_id, item_type, and item_snapshot are required' }, { status: 400 })
+    return badRequest('recipient_id, item_type, and item_snapshot are required')
   }
 
   const validTypes = ['run_session', 'strength_session', 'meal']
   if (!validTypes.includes(item_type)) {
-    return NextResponse.json({ error: 'Invalid item_type' }, { status: 400 })
+    return badRequest('Invalid item_type')
   }
 
   // Verify recipient is an accepted friend
@@ -25,7 +28,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'accepted')
 
   const isFriend = friends?.some(f => f.friend_id === recipient_id)
-  if (!isFriend) return NextResponse.json({ error: 'Not a confirmed friend' }, { status: 403 })
+  if (!isFriend) return forbidden()
 
   const { data: item, error } = await supabase
     .from('fitness_shared_items')
@@ -41,18 +44,19 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Item] insert error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ item })
-}
+  return apiOk({ item }, 201)
+})
+
 
 // GET /api/fitness/plans/share-item — List received shared items
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const limit = parseInt(req.nextUrl.searchParams.get('limit') ?? '20', 10)
 
@@ -60,12 +64,12 @@ export async function GET(req: NextRequest) {
     .from('fitness_shared_items')
     .select('*')
     .eq('recipient_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
     .limit(limit)
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Item] fetch error:', error)
+    return serverError()
   }
 
   // Enrich with sender display names
@@ -84,5 +88,6 @@ export async function GET(req: NextRequest) {
     sender_name: profileMap.get(i.sender_id) ?? 'Unknown',
   }))
 
-  return NextResponse.json({ items: enriched })
-}
+  return apiOk({ items: enriched })
+})
+

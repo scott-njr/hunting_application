@@ -56,6 +56,7 @@ export default async function ComparePage({ params }: { params: Promise<{ shareI
     .from('fitness_plan_workout_logs')
     .select('plan_id, week_number, session_number, completed_at')
     .in('plan_id', [share.source_plan_id, share.target_plan_id])
+    .eq('completed', true)
 
   const logs = allLogs ?? []
   const sourceLogs = logs.filter(l => l.plan_id === share.source_plan_id)
@@ -139,12 +140,12 @@ export default async function ComparePage({ params }: { params: Promise<{ shareI
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-lg border border-accent/30 bg-surface p-4 text-center">
           <p className="text-muted text-xs uppercase tracking-wider mb-1">{isSource ? 'You' : sourceName}</p>
-          <p className="text-3xl font-bold text-accent">{sourcePct}%</p>
+          <p className="text-2xl sm:text-3xl font-bold text-accent">{sourcePct}%</p>
           <p className="text-muted text-xs mt-1">{sourceTotalCompleted}/{totalSessions} sessions</p>
         </div>
         <div className="rounded-lg border border-blue-400/30 bg-surface p-4 text-center">
           <p className="text-muted text-xs uppercase tracking-wider mb-1">{isSource ? partnerName : 'You'}</p>
-          <p className="text-3xl font-bold text-blue-400">{targetPct}%</p>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-400">{targetPct}%</p>
           <p className="text-muted text-xs mt-1">{targetTotalCompleted}/{totalSessions} sessions</p>
         </div>
       </div>

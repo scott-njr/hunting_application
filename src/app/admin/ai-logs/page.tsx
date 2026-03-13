@@ -21,7 +21,7 @@ interface AILog {
   flags: string[]
   duration_ms: number
   sanitized_input: string | null
-  created_at: string
+  created_on: string
 }
 
 const MODULE_FILTER_OPTIONS = [
@@ -112,7 +112,7 @@ export default function AdminAILogsPage() {
       `**Module:** ${log.module}`,
       `**Feature:** ${log.feature}`,
       `**User:** ${log.user_name || log.user_email}`,
-      `**Timestamp:** ${new Date(log.created_at).toLocaleString()}`,
+      `**Timestamp:** ${new Date(log.created_on).toLocaleString()}`,
       `**Duration:** ${log.duration_ms}ms`,
       `**Flags:** ${log.flags.length > 0 ? log.flags.join(', ') : 'none'}`,
       '',
@@ -220,7 +220,7 @@ export default function AdminAILogsPage() {
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-muted">
                         <span>{log.user_name || log.user_email || 'Unknown'}</span>
                         <span>·</span>
-                        <span>{new Date(log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                        <span>{new Date(log.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                         <span>·</span>
                         <span>{log.duration_ms}ms</span>
                         <span>·</span>

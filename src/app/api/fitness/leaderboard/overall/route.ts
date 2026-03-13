@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, serverError, withHandler } from '@/lib/api-response'
 
 function computeAgeGroup(dob: string | null): string | null {
   if (!dob) return null
@@ -16,10 +17,10 @@ function computeAgeGroup(dob: string | null): string | null {
   return null
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const range = req.nextUrl.searchParams.get('range') ?? 'all'
   const scaling = req.nextUrl.searchParams.get('scaling') ?? 'all'
@@ -53,11 +54,11 @@ export async function GET(req: NextRequest) {
   const { data: pointsData, error } = await query
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Leaderboard] error:', error)
+    return serverError()
   }
   if (!pointsData || pointsData.length === 0) {
-    return NextResponse.json({ standings: [], my_rank: null, total_participants: 0 })
+    return apiOk({ standings: [], my_rank: null, total_participants: 0 })
   }
 
   // Aggregate points per user
@@ -117,9 +118,10 @@ export async function GET(req: NextRequest) {
 
   const myRank = rankedStandings.find(s => s.is_mine)?.rank ?? null
 
-  return NextResponse.json({
+  return apiOk({
     standings: rankedStandings,
     my_rank: myRank,
     total_participants: rankedStandings.length,
   })
-}
+})
+

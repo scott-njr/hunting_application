@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ClipboardCheck } from 'lucide-react'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 export function BaselineLogForm() {
   const router = useRouter()
@@ -78,17 +79,9 @@ export function BaselineLogForm() {
         <h2 className="text-primary font-bold text-lg">Log Test Results</h2>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
-      {success && (
-        <div className="mb-4 p-3 rounded bg-green-950/50 border border-green-500/30 text-green-400 text-sm">
-          Test logged successfully!
-        </div>
-      )}
+      {success && <AlertBanner variant="success" message="Test logged successfully!" className="mb-4" />}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Ordered to match test protocol: Pullups → Pushups → Situps → Run */}

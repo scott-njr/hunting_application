@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota, MODULE_AI_QUOTA } from '@/lib/modules'
 import { aiCall, extractJSON } from '@/lib/ai'
+import { apiOk, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse } from '@/lib/api-response'
 
 type ReportSection = { key: string; title: string; rows: { label: string; value: string }[] }
 type POI = { label: string; lat: number; lng: number; type: string }
@@ -35,21 +36,20 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return unauthorized()
 
     // Check module-specific quota
     const subInfo = await getUserModuleSubscriptionInfo(supabase, user.id, 'hunting')
     const quota = MODULE_AI_QUOTA[subInfo.tier]
 
     if (!hasModuleAIQuota(subInfo.tier, subInfo.aiQueriesThisMonth)) {
-      return NextResponse.json(
-        { error: 'quota_exceeded', message: 'Monthly AI query limit reached for Hunting. Upgrade your plan for more.' },
-        { status: 403 }
-      )
+      return apiError('quota_exceeded', 403, { message: 'Monthly AI query limit reached for Hunting. Upgrade your plan for more.' })
     }
 
-    const { location_id } = await req.json()
-    if (!location_id) return NextResponse.json({ error: 'location_id required' }, { status: 400 })
+    const body = await parseBody(req)
+    if (isErrorResponse(body)) return body
+    const { location_id } = body
+    if (!location_id) return badRequest('location_id required')
 
     // Fetch location — only lat/lng are used for scouting. Filter by user ownership via hunt plan.
     const { data: loc, error: locErr } = await supabase
@@ -59,14 +59,11 @@ export async function POST(req: NextRequest) {
       .eq('hunting_plans.user_id', user.id)
       .single()
 
-    if (locErr || !loc) return NextResponse.json({ error: 'Location not found' }, { status: 404 })
+    if (locErr || !loc) return notFound('Location not found')
 
     // Scout requires GPS coordinates — the AI discovers everything from the pin location
     if (!loc.lat || !loc.lng) {
-      return NextResponse.json(
-        { error: 'GPS coordinates required. Drop a pin on the map to scout this location.' },
-        { status: 400 }
-      )
+      return badRequest('GPS coordinates required. Drop a pin on the map to scout this location.')
     }
 
     const pinLocation = `GPS coordinates: ${loc.lat}° N, ${loc.lng}° W`
@@ -107,18 +104,17 @@ IMPORTANT: Return ONLY the JSON object. No markdown code fences, no extra text.`
 
     const sectionsResult = await aiCall({
       module: 'hunting',
-      feature: 'scout_report',
+      feature: 'hunting_scout_report',
       userMessage: sectionsMessage,
       userId: user.id,
       maxTokens: 4000,
     })
 
     if (!sectionsResult.success) {
-      const status = sectionsResult.error?.includes('temporarily unavailable') ? 503 : 500
-      return NextResponse.json(
-        { error: status === 503 ? 'ai_unavailable' : 'ai_error', message: sectionsResult.error },
-        { status }
-      )
+      const isUnavailable = sectionsResult.error?.includes('temporarily unavailable')
+      return isUnavailable
+        ? apiError('ai_unavailable', 503, { message: sectionsResult.error })
+        : apiError('ai_error', 500, { message: sectionsResult.error })
     }
 
     // Parse sections
@@ -169,7 +165,7 @@ Every POI must be a REAL named place with accurate GPS coordinates. No markdown,
 
       const poisResult = await aiCall({
         module: 'hunting',
-        feature: 'scout_report',
+        feature: 'hunting_scout_report',
         userMessage: poisMessage,
         userId: user.id,
         maxTokens: 2000,
@@ -214,9 +210,9 @@ Every POI must be a REAL named place with accurate GPS coordinates. No markdown,
     })
 
     const truncated = parseFlags.includes('truncated') || poisTruncated
-    return NextResponse.json({ report: reportText, sections, pois, truncated, queries_used: subInfo.aiQueriesThisMonth + 1, quota })
+    return apiOk({ report: reportText, sections, pois, truncated, queries_used: subInfo.aiQueriesThisMonth + 1, quota })
   } catch (err) {
     console.error('[scout-data] error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return serverError()
   }
 }

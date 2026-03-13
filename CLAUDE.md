@@ -136,6 +136,38 @@ Map-first field map at `/hunting/field-map` using Leaflet.js:
 - `/api/community/posts` — Module-scoped community feed CRUD
 - `/api/contact` — Rate-limited contact form via Resend
 
+### API Response Conventions
+
+All API routes use helpers from `src/lib/api-response.ts` — no raw `NextResponse.json()`:
+
+```typescript
+import { apiOk, apiDone, apiError, unauthorized, forbidden, notFound, badRequest, serverError } from '@/lib/api-response'
+```
+
+| Scenario | Helper | Shape | Status |
+|---|---|---|---|
+| GET single resource | `apiOk({ plan })` | `{ plan: T }` | 200 |
+| GET list | `apiOk({ posts })` | `{ posts: T[] }` | 200 |
+| GET paginated list | `apiOk({ users, total, page, limit })` | `{ users: T[], total, page, limit }` | 200 |
+| POST create | `apiOk({ post }, 201)` | `{ post: T }` | **201** |
+| POST action (no resource) | `apiDone()` | `{ ok: true }` | 200 |
+| POST action with metadata | `apiDone({ sent: 5 })` | `{ ok: true, sent: 5 }` | 200 |
+| PATCH/PUT update | `apiOk({ issue })` or `apiDone()` | `{ issue: T }` or `{ ok: true }` | 200 |
+| DELETE | `apiDone()` | `{ ok: true }` | 200 |
+| Error | `apiError('msg', 4xx)` | `{ error: string }` | 4xx/5xx |
+| Toggle/check | `apiOk({ liked, count })` | `{ liked: boolean, ... }` | 200 |
+
+**Module resource names** (use these as wrapper keys):
+
+| Module | Singular | Plural |
+|---|---|---|
+| Community | `post`, `comment`, `friendship` | `posts`, `comments`, `friendships` |
+| Fitness | `plan`, `workout`, `log`, `challenge`, `submission`, `test`, `share`, `item` | `plans`, `workouts`, `logs`, `challenges`, `submissions`, `tests`, `shares`, `items` |
+| Hunting | `report`, `location`, `pin` | `reports`, `locations`, `pins` |
+| Admin | `user`, `issue`, `deploy`, `broadcast` | `users`, `issues`, `deploys`, `broadcasts` |
+| Messages | `message` | `messages` |
+| Blog | `post` | `posts` |
+
 ## Design System
 
 "Warm Wilderness" dark tactical theme defined in `src/app/globals.css` as CSS custom properties exposed via Tailwind `@theme`:

@@ -1,16 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/share/respond — Accept or decline a shared plan
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { share_id, action } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { share_id, action } = body
 
   if (!share_id || !['accept', 'decline'].includes(action)) {
-    return NextResponse.json({ error: 'share_id and action (accept|decline) are required' }, { status: 400 })
+    return badRequest('share_id and action (accept|decline) are required')
   }
 
   // Fetch the share — RLS ensures only target_user can update
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'pending')
     .maybeSingle()
 
-  if (!share) return NextResponse.json({ error: 'Share not found or already responded' }, { status: 404 })
+  if (!share) return notFound('Share not found or already responded')
 
   if (action === 'decline') {
     const { error } = await supabase
@@ -31,10 +34,10 @@ export async function POST(req: NextRequest) {
       .eq('id', share_id)
 
     if (error) {
-      console.error(error)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      console.error('[Fitness Share Respond] decline error:', error)
+      return serverError()
     }
-    return NextResponse.json({ status: 'declined' })
+    return apiOk({ status: 'declined' })
   }
 
   // Accept: copy the source plan for the recipient
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!sourcePlan) {
-    return NextResponse.json({ error: 'Source plan no longer exists' }, { status: 404 })
+    return notFound('Source plan no longer exists')
   }
 
   // Abandon any existing active plan of this type for the recipient
@@ -73,8 +76,8 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (insertError) {
-    console.error(insertError)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Respond] plan copy error:', insertError)
+    return serverError()
   }
 
   // Update the share with the new plan reference
@@ -88,9 +91,10 @@ export async function POST(req: NextRequest) {
     .eq('id', share_id)
 
   if (updateError) {
-    console.error(updateError)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Respond] status update error:', updateError)
+    return serverError()
   }
 
-  return NextResponse.json({ status: 'accepted', plan: newPlan })
-}
+  return apiOk({ status: 'accepted' as const, plan: newPlan })
+})
+

@@ -1,31 +1,31 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { apiOk, unauthorized, badRequest, serverError, withHandler } from '@/lib/api-response'
 
-export async function POST(request: Request) {
+export const POST = withHandler(async (request: Request) => {
   // Verify auth
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return unauthorized()
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey) {
     console.error('[profile-pic] SUPABASE_SERVICE_ROLE_KEY is not set')
-    return NextResponse.json({ error: 'Server config error' }, { status: 500 })
+    return serverError('Server config error')
   }
 
   const formData = await request.formData()
   const file = formData.get('file') as File | null
 
   if (!file || !file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'Image file required' }, { status: 400 })
+    return badRequest('Image file required')
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: 'Image must be under 5MB' }, { status: 400 })
+    return badRequest('Image must be under 5MB')
   }
 
   const admin = createServiceClient(
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
   if (uploadErr) {
     console.error('[profile-pic] upload error:', uploadErr)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
   const { data: { publicUrl } } = admin.storage
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('[profile-pic] update error:', error)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      return serverError()
     }
   } else {
     const { error } = await admin
@@ -81,9 +81,10 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('[profile-pic] insert error:', error)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      return serverError()
     }
   }
 
-  return NextResponse.json({ avatar_url })
-}
+  return apiOk({ avatar_url })
+})
+

@@ -22,7 +22,7 @@ type HuntApplication = {
   status: 'applied' | 'drawn' | 'not_drawn' | 'withdrawn' | 'hunt_started'
   date_applied: string | null
   notes: string | null
-  created_at: string
+  created_on: string
 }
 
 type StateGroup = {
@@ -330,8 +330,7 @@ export default function ApplicationsPage() {
                   {/* Rejected note — shown when any app in group is not_drawn */}
                   {group.apps.some(a => a.status === 'not_drawn') && (
                     <p className="text-muted text-xs mt-3">
-                      Unsuccessful draws — your preference points may have increased. Update in{' '}
-                      <Link href="/hunting/profile" className="text-muted hover:text-primary underline">My Profile</Link>.
+                      Unsuccessful draws — check your state&apos;s agency for updated preference or bonus point totals.
                     </p>
                   )}
                 </div>

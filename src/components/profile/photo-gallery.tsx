@@ -59,9 +59,9 @@ export function PhotoGallery({
             <button
               type="button"
               onClick={() => handleDelete(url)}
-              className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-1 right-1 bg-black/70 rounded-full p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
-              <X className="h-3 w-3 text-white" />
+              <X className="h-4 w-4 text-white" />
             </button>
           </div>
         ))}

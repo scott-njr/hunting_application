@@ -1,6 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
+import { apiOk, unauthorized, serverError, withHandler } from '@/lib/api-response'
 
 function getCurrentMonday(): string {
   const now = new Date()
@@ -61,11 +62,11 @@ Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
   }
 }`
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   // Verify the request is from Vercel Cron
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return unauthorized()
   }
 
   const weekStart = getCurrentMonday()
@@ -83,20 +84,20 @@ export async function GET(req: NextRequest) {
     .maybeSingle()
 
   if (existing) {
-    return NextResponse.json({ message: 'Workout already exists for this week', weekStart })
+    return apiOk({ message: 'Workout already exists for this week', weekStart })
   }
 
   // Generate workout via AI (use a system user ID for cron)
   const result = await aiCall({
     module: 'fitness',
-    feature: 'wow_generator',
+    feature: 'fitness_wow_generator',
     userMessage: WOW_PROMPT,
     userId: 'cron-system',
     maxTokens: 2048,
   })
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error ?? 'AI generation failed' }, { status: 500 })
+    return serverError(result.error ?? 'AI generation failed')
   }
 
   // Parse the AI response
@@ -104,7 +105,7 @@ export async function GET(req: NextRequest) {
   try {
     parsed = extractJSON(result.response) as typeof parsed
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+    return serverError('Failed to parse AI response')
   }
 
   // Insert into DB
@@ -120,8 +121,8 @@ export async function GET(req: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ workout })
-}
+  return apiOk({ workout })
+})

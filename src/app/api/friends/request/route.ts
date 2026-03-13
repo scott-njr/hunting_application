@@ -1,21 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // POST /api/friends/request — send a friend request to another user
 // Body: { recipient_id: string }
 
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const body = await req.json()
-  const { recipient_id } = body
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { recipient_id } = body as { recipient_id: string }
 
   if (!recipient_id || recipient_id === user.id || !UUID_RE.test(recipient_id)) {
-    return NextResponse.json({ error: 'Invalid recipient' }, { status: 400 })
+    return badRequest('Invalid recipient')
   }
 
   // Check if a friendship already exists in either direction
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle() as { data: { id: string; status: string } | null }
 
   if (existing) {
-    return NextResponse.json({ error: 'Friendship already exists', status: existing.status }, { status: 409 })
+    return apiError('Friendship already exists', 409, { status: existing.status })
   }
 
   const { data, error } = await supabase
@@ -36,9 +38,10 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Friends Request] insert error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ friendship: data }, { status: 201 })
-}
+  return apiOk({ friendship: data }, 201)
+})
+

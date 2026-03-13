@@ -1,14 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/revert — Revert to a previous (abandoned) plan
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { plan_id } = await req.json()
-  if (!plan_id) return NextResponse.json({ error: 'plan_id is required' }, { status: 400 })
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { plan_id } = body
+  if (!plan_id) return badRequest('plan_id is required')
 
   // Verify the plan belongs to the user and is abandoned
   const { data: targetPlan } = await supabase
@@ -20,7 +23,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!targetPlan) {
-    return NextResponse.json({ error: 'Plan not found or not abandoned' }, { status: 404 })
+    return notFound('Plan not found or not abandoned')
   }
 
   // Abandon the current active plan of the same type
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
     .eq('plan_type', targetPlan.plan_type)
     .eq('status', 'active')
 
-  if (abandonError) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (abandonError) return serverError()
 
   // Reactivate the target plan
   const { data: reactivated, error: reactivateError } = await supabase
@@ -44,7 +47,8 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (reactivateError) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (reactivateError) return serverError()
 
-  return NextResponse.json({ plan: reactivated })
-}
+  return apiOk({ plan: reactivated })
+})
+

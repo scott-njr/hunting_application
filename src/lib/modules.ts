@@ -15,6 +15,13 @@ export const MODULE_TIER_LABELS: Record<ModuleTier, string> = {
   pro: 'Pro',
 }
 
+/** Placeholder prices — will be replaced by Stripe price lookup when payments are wired */
+export const MODULE_TIER_PRICES: Record<ModuleTier, { amount: string; period: string }> = {
+  free: { amount: '$0', period: 'forever' },
+  basic: { amount: '$9', period: '/mo' },
+  pro: { amount: '$19', period: '/mo' },
+}
+
 // AI query quota per module tier per month
 export const MODULE_AI_QUOTA: Record<ModuleTier, number> = {
   free: 0,
@@ -26,6 +33,15 @@ export const MODULE_TIER_COLORS: Record<ModuleTier, string> = {
   free: 'tier-free',
   basic: 'tier-basic',
   pro: 'tier-pro',
+}
+
+export const MODULE_BADGE_COLORS: Record<string, string> = {
+  hunting: 'bg-emerald-500/15 text-emerald-400',
+  archery: 'bg-blue-500/15 text-blue-400',
+  firearms: 'bg-red-500/15 text-red-400',
+  medical: 'bg-pink-500/15 text-pink-400',
+  fishing: 'bg-cyan-500/15 text-cyan-400',
+  fitness: 'bg-amber-500/15 text-amber-400',
 }
 
 export function hasModuleAccess(userTier: ModuleTier, requiredTier: ModuleTier): boolean {

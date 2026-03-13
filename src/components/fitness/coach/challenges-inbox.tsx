@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Swords, Check, X, Trophy, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SCALING_BADGE, SCALING_ACTIVE_RING } from '@/lib/fitness/constants'
+import type { ScalingLevel } from '@/lib/fitness/constants'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 interface ChallengeSubmission {
   score_value: number
@@ -25,7 +28,7 @@ interface Challenge {
   partner_name: string
   my_submission: ChallengeSubmission | null
   opponent_submission: ChallengeSubmission | null
-  created_at: string
+  created_on: string
 }
 
 export function ChallengesInbox() {
@@ -82,11 +85,7 @@ export function ChallengesInbox() {
         <Swords className="h-3.5 w-3.5" /> Challenges
       </h3>
 
-      {respondError && (
-        <div className="p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-xs">
-          {respondError}
-        </div>
-      )}
+      {respondError && <AlertBanner variant="error" message={respondError} className="text-xs" />}
 
       {/* Pending incoming */}
       {pending.map(c => (
@@ -227,7 +226,7 @@ function ActiveChallengeCard({
               Submit Score
             </button>
           )}
-          <button onClick={onToggle} className="text-muted hover:text-secondary p-1">
+          <button onClick={onToggle} className="text-muted hover:text-secondary p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
         </div>
@@ -369,13 +368,11 @@ function ChallengeScoreForm({
               className={cn(
                 'py-2.5 rounded text-xs font-semibold transition-colors',
                 scaling === s
-                  ? s === 'rx' ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/40' :
-                    s === 'scaled' ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40' :
-                    'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/40'
+                  ? `${SCALING_BADGE[s].className} ${SCALING_ACTIVE_RING[s]}`
                   : 'bg-elevated text-secondary hover:text-primary'
               )}
             >
-              {s === 'rx' ? 'RX' : s === 'scaled' ? 'Scaled' : 'Beginner'}
+              {SCALING_BADGE[s].label}
             </button>
           ))}
         </div>

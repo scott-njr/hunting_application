@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useCallback } from 'react'
 import {
-  LayoutDashboard, Users, AlertCircle, Activity, MessageSquare, FileText, Rocket, Shield,
+  LayoutDashboard, Users, AlertCircle, Activity, MessageSquare, FileText, Rocket, Shield, Mail, BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type ModuleTier } from '@/lib/modules'
@@ -21,6 +21,8 @@ const NAV_ITEMS = [
   { href: '/admin/ai-usage', label: 'AI Usage', icon: Activity },
   { href: '/admin/ai-logs', label: 'AI Logs', icon: FileText },
   { href: '/admin/community', label: 'Community', icon: MessageSquare },
+  { href: '/admin/broadcast', label: 'Broadcast', icon: Mail },
+  { href: '/admin/blog', label: 'Blog', icon: BookOpen },
 ]
 
 interface AdminSidebarProps {

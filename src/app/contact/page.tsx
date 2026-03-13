@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { Nav2 } from '@/components/layout/nav2'
 import { Send, CheckCircle, MessageSquare } from 'lucide-react'
 import { PublicFooter } from '@/components/layout/public-footer'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 export default function ContactPage() {
   const [name, setName] = useState('')
@@ -89,11 +90,7 @@ export default function ContactPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <AlertBanner variant="error" message={error} />}
 
             <div>
               <label htmlFor="name" className="block text-secondary text-sm mb-1.5">

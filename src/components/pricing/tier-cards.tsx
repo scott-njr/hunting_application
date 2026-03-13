@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ALL_MODULES, MODULE_TIER_LABELS, type ModuleSlug, type ModuleTier } from '@/lib/modules'
+import { ALL_MODULES, MODULE_TIER_LABELS, MODULE_TIER_PRICES as TIER_PRICES, type ModuleSlug, type ModuleTier } from '@/lib/modules'
 import { Crosshair, Target, Shield, Heart, Fish, Dumbbell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthModal } from '@/components/auth/auth-modal-provider'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 const MODULE_ICONS: Record<ModuleSlug, React.ElementType> = {
   hunting: Crosshair,
@@ -19,11 +20,6 @@ const MODULE_ICONS: Record<ModuleSlug, React.ElementType> = {
 
 const TIERS: ModuleTier[] = ['free', 'basic', 'pro']
 
-const TIER_PRICES: Record<ModuleTier, { amount: string; period: string }> = {
-  free: { amount: '$0', period: 'forever' },
-  basic: { amount: '$9', period: '/mo' },
-  pro: { amount: '$19', period: '/mo' },
-}
 
 interface TierCardsProps {
   onTierChanged?: () => void
@@ -49,9 +45,7 @@ export function TierCards({ onTierChanged }: TierCardsProps = {}) {
         return
       }
       setLoggedIn(true)
-      // module_subscriptions not in generated types — cast to bypass
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(supabase as any)
+      supabase
         .from('module_subscriptions')
         .select('module_slug, tier, status')
         .eq('user_id', user.id)
@@ -225,11 +219,7 @@ export function TierCards({ onTierChanged }: TierCardsProps = {}) {
       })}
 
       {/* Error message */}
-      {error && (
-        <div className="mx-4 p-3 bg-red-950/30 border border-red-500/20 rounded text-xs text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="mx-4 text-xs" />}
 
       {/* Save button */}
       {loggedIn && !loading && (

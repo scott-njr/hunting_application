@@ -1,22 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import type { Json } from '@/types/database.types'
+import { apiDone, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/[planId]/accept-adjustment
 // Accepts a draft adjustment: snapshots current plan to history, then saves the draft
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { planId } = await params
-  const { draft, goal } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { draft, goal } = body
 
   if (!draft) {
-    return NextResponse.json({ error: 'Draft plan data is required' }, { status: 400 })
+    return badRequest('Draft plan data is required')
   }
 
   // Fetch current plan and verify ownership
@@ -28,7 +31,7 @@ export async function POST(
     .eq('status', 'active')
     .single()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+  if (!plan) return notFound('Plan not found')
 
   // Snapshot current plan as abandoned (preserves history for revert)
   const { error: snapshotError } = await supabase
@@ -45,7 +48,7 @@ export async function POST(
     })
 
   if (snapshotError) {
-    return NextResponse.json({ error: 'Failed to save plan history' }, { status: 500 })
+    return serverError('Failed to save plan history')
   }
 
   // Apply the accepted draft to the active plan
@@ -58,8 +61,9 @@ export async function POST(
     .eq('id', planId)
 
   if (updateError) {
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ success: true })
-}
+  return apiDone()
+})
+

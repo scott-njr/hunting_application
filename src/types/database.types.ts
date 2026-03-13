@@ -12,6 +12,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      blog_post: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          content: string
+          excerpt: string | null
+          cover_image_url: string | null
+          category: 'field_reports' | 'gear_reviews' | 'strategy_breakdowns' | 'scouting_intel' | 'community_stories' | 'how_to_guides'
+          status: 'draft' | 'published' | 'archived'
+          author_id: string | null
+          published_on: string | null
+          targets: string[]
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          slug: string
+          content?: string
+          excerpt?: string | null
+          cover_image_url?: string | null
+          category: 'field_reports' | 'gear_reviews' | 'strategy_breakdowns' | 'scouting_intel' | 'community_stories' | 'how_to_guides'
+          status?: 'draft' | 'published' | 'archived'
+          author_id?: string | null
+          published_on?: string | null
+          targets?: string[]
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          title?: string
+          slug?: string
+          content?: string
+          excerpt?: string | null
+          cover_image_url?: string | null
+          category?: 'field_reports' | 'gear_reviews' | 'strategy_breakdowns' | 'scouting_intel' | 'community_stories' | 'how_to_guides'
+          status?: 'draft' | 'published' | 'archived'
+          published_on?: string | null
+          targets?: string[]
+          updated_on?: string
+        }
+        Relationships: []
+      }
+      email_broadcast: {
+        Row: {
+          id: string
+          sent_by: string | null
+          category: 'release_notes' | 'newsletter' | 'blog' | 'announcement'
+          subject: string
+          body_markdown: string
+          body_html: string
+          recipient_count: number
+          status: 'draft' | 'sending' | 'sent' | 'failed'
+          error_message: string | null
+          created_on: string
+          updated_on: string
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          sent_by: string
+          category: 'release_notes' | 'newsletter' | 'blog' | 'announcement'
+          subject: string
+          body_markdown: string
+          body_html: string
+          recipient_count?: number
+          status?: 'draft' | 'sending' | 'sent' | 'failed'
+          error_message?: string | null
+          created_on?: string
+          updated_on?: string
+          sent_at?: string | null
+        }
+        Update: {
+          status?: 'draft' | 'sending' | 'sent' | 'failed'
+          recipient_count?: number
+          error_message?: string | null
+          updated_on?: string
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
+      email_unsubscribe: {
+        Row: {
+          id: string
+          email: string
+          category: 'release_notes' | 'newsletter' | 'blog' | 'announcement' | 'all'
+          created_on: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          category: 'release_notes' | 'newsletter' | 'blog' | 'announcement' | 'all'
+          created_on?: string
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
       ai_responses: {
         Row: {
           id: string
@@ -27,7 +128,7 @@ export type Database = {
           flags: string[]
           duration_ms: number
           sanitized_input: string | null
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -43,7 +144,7 @@ export type Database = {
           flags?: string[]
           duration_ms: number
           sanitized_input?: string | null
-          created_at?: string
+          created_on?: string
         }
         Update: {
           [_ in never]: never
@@ -237,8 +338,8 @@ export type Database = {
           community_guidelines_accepted_at: string | null
           community_guidelines_version: number
           is_admin: boolean
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id: string
@@ -249,8 +350,8 @@ export type Database = {
           community_guidelines_accepted_at?: string | null
           community_guidelines_version?: number
           is_admin?: boolean
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -261,8 +362,8 @@ export type Database = {
           community_guidelines_accepted_at?: string | null
           community_guidelines_version?: number
           is_admin?: boolean
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -277,8 +378,8 @@ export type Database = {
           points: number
           point_type: 'preference' | 'bonus'
           notes: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -290,8 +391,8 @@ export type Database = {
           points?: number
           point_type?: 'preference' | 'bonus'
           notes?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -303,8 +404,8 @@ export type Database = {
           points?: number
           point_type?: 'preference' | 'bonus'
           notes?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -324,9 +425,8 @@ export type Database = {
           second_choice: string | null
           third_choice: string | null
           notes: string | null
-          result_date: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -343,9 +443,8 @@ export type Database = {
           second_choice?: string | null
           third_choice?: string | null
           notes?: string | null
-          result_date?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -362,9 +461,8 @@ export type Database = {
           second_choice?: string | null
           third_choice?: string | null
           notes?: string | null
-          result_date?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -394,8 +492,8 @@ export type Database = {
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           print_recipients: Json
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -422,8 +520,8 @@ export type Database = {
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           print_recipients?: Json
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -450,8 +548,8 @@ export type Database = {
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           print_recipients?: Json
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -467,8 +565,8 @@ export type Database = {
           tag_status: 'pending' | 'applied' | 'drawn' | 'not_drawn'
 
           is_scout_user: boolean
-          added_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -481,8 +579,8 @@ export type Database = {
           tag_status?: 'pending' | 'applied' | 'drawn' | 'not_drawn'
 
           is_scout_user?: boolean
-          added_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -495,8 +593,8 @@ export type Database = {
           tag_status?: 'pending' | 'applied' | 'drawn' | 'not_drawn'
 
           is_scout_user?: boolean
-          added_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -509,8 +607,8 @@ export type Database = {
           lat: number | null
           lng: number | null
           scout_report: Json | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -520,8 +618,8 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           scout_report?: Json | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -531,8 +629,8 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           scout_report?: Json | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -544,8 +642,8 @@ export type Database = {
           category: string
           brand: string | null
           notes: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -554,8 +652,8 @@ export type Database = {
           category?: string
           brand?: string | null
           notes?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -564,8 +662,8 @@ export type Database = {
           category?: string
           brand?: string | null
           notes?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -578,7 +676,7 @@ export type Database = {
           status: 'triggered' | 'building' | 'success' | 'failed'
           github_pr_url: string | null
           admin_notes: string | null
-          created_at: string
+          created_on: string
           completed_at: string | null
         }
         Insert: {
@@ -589,7 +687,7 @@ export type Database = {
           status?: 'triggered' | 'building' | 'success' | 'failed'
           github_pr_url?: string | null
           admin_notes?: string | null
-          created_at?: string
+          created_on?: string
           completed_at?: string | null
         }
         Update: {
@@ -613,8 +711,8 @@ export type Database = {
           gmu_notes: string | null
           state_warning: string | null
           shared_requirements: Json
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -625,8 +723,8 @@ export type Database = {
           gmu_notes?: string | null
           state_warning?: string | null
           shared_requirements?: Json
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -637,8 +735,8 @@ export type Database = {
           gmu_notes?: string | null
           state_warning?: string | null
           shared_requirements?: Json
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -660,9 +758,8 @@ export type Database = {
           leftover_date: string | null
           status: 'open' | 'upcoming' | 'closed'
           note: string | null
-          species_requirements: Json
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -681,9 +778,8 @@ export type Database = {
           leftover_date?: string | null
           status?: 'open' | 'upcoming' | 'closed'
           note?: string | null
-          species_requirements?: Json
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -702,9 +798,8 @@ export type Database = {
           leftover_date?: string | null
           status?: 'open' | 'upcoming' | 'closed'
           note?: string | null
-          species_requirements?: Json
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -723,8 +818,8 @@ export type Database = {
           user_rankings: Json | null
           status: 'draft' | 'final' | 'shared'
           shared_with: string[]
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -740,8 +835,8 @@ export type Database = {
           user_rankings?: Json | null
           status?: 'draft' | 'final' | 'shared'
           shared_with?: string[]
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -757,8 +852,8 @@ export type Database = {
           user_rankings?: Json | null
           status?: 'draft' | 'final' | 'shared'
           shared_with?: string[]
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -768,20 +863,20 @@ export type Database = {
           requester_id: string
           recipient_id: string
           status: 'pending' | 'accepted' | 'declined' | 'blocked'
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
           requester_id: string
           recipient_id: string
           status?: 'pending' | 'accepted' | 'declined' | 'blocked'
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           status?: 'pending' | 'accepted' | 'declined' | 'blocked'
-          updated_at?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -794,8 +889,8 @@ export type Database = {
           content: string
           module: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           metadata: Record<string, unknown> | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -805,8 +900,8 @@ export type Database = {
           content: string
           module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           metadata?: Record<string, unknown> | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           post_type?: 'discussion' | 'unit_review' | 'hunt_report' | 'guide_review' | 'progress' | 'gear_review' | 'tip' | 'catch_report' | 'spot_review' | 'range_report' | 'training_log' | 'wow_result'
@@ -814,7 +909,7 @@ export type Database = {
           content?: string
           module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
           metadata?: Record<string, unknown> | null
-          updated_at?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -825,7 +920,7 @@ export type Database = {
           recipient_id: string
           content: string
           read_at: string | null
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -833,7 +928,7 @@ export type Database = {
           recipient_id: string
           content: string
           read_at?: string | null
-          created_at?: string
+          created_on?: string
         }
         Update: {
           read_at?: string | null
@@ -846,14 +941,14 @@ export type Database = {
           post_id: string
           user_id: string
           content: string
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
           post_id: string
           user_id: string
           content: string
-          created_at?: string
+          created_on?: string
         }
         Update: {
           content?: string
@@ -865,13 +960,13 @@ export type Database = {
           id: string
           post_id: string
           user_id: string
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
           post_id: string
           user_id: string
-          created_at?: string
+          created_on?: string
         }
         Update: { [_ in never]: never }
         Relationships: []
@@ -897,8 +992,8 @@ export type Database = {
           ai_proposed_fix: string | null
           github_issue_url: string | null
           admin_deploy_notes: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -920,8 +1015,8 @@ export type Database = {
           ai_proposed_fix?: string | null
           github_issue_url?: string | null
           admin_deploy_notes?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           module?: 'hunting' | 'archery' | 'firearms' | 'fishing' | 'medical' | 'fitness'
@@ -941,7 +1036,7 @@ export type Database = {
           ai_proposed_fix?: string | null
           github_issue_url?: string | null
           admin_deploy_notes?: string | null
-          updated_at?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -965,8 +1060,8 @@ export type Database = {
           moon_phase: string | null
           moon_illumination: number | null
           source_hunt_plan_id: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -987,8 +1082,8 @@ export type Database = {
           moon_phase?: string | null
           moon_illumination?: number | null
           source_hunt_plan_id?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -1009,8 +1104,8 @@ export type Database = {
           moon_phase?: string | null
           moon_illumination?: number | null
           source_hunt_plan_id?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -1043,8 +1138,8 @@ export type Database = {
           sort_order: number
           published: boolean
           published_at: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -1062,8 +1157,8 @@ export type Database = {
           sort_order?: number
           published?: boolean
           published_at?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -1081,8 +1176,8 @@ export type Database = {
           sort_order?: number
           published?: boolean
           published_at?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -1093,8 +1188,8 @@ export type Database = {
           course_id: string
           completed: boolean
           completed_at: string | null
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -1102,8 +1197,8 @@ export type Database = {
           course_id: string
           completed?: boolean
           completed_at?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -1111,8 +1206,8 @@ export type Database = {
           course_id?: string
           completed?: boolean
           completed_at?: string | null
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -1155,8 +1250,8 @@ export type Database = {
           current_period_end: string | null
           ai_queries_this_month: number
           ai_queries_reset_date: string
-          created_at: string
-          updated_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -1169,8 +1264,8 @@ export type Database = {
           current_period_end?: string | null
           ai_queries_this_month?: number
           ai_queries_reset_date?: string
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -1183,10 +1278,321 @@ export type Database = {
           current_period_end?: string | null
           ai_queries_this_month?: number
           ai_queries_reset_date?: string
-          created_at?: string
-          updated_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
+      }
+      firearms_course_of_fire: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          strings_count: number
+          shots_per_string: number
+          delay_mode: 'fixed' | 'random' | 'instant'
+          delay_min_ms: number
+          delay_max_ms: number
+          par_times_ms: number[]
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          strings_count: number
+          shots_per_string: number
+          delay_mode?: 'fixed' | 'random' | 'instant'
+          delay_min_ms?: number
+          delay_max_ms?: number
+          par_times_ms?: number[]
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          name?: string
+          description?: string | null
+          strings_count?: number
+          shots_per_string?: number
+          delay_mode?: 'fixed' | 'random' | 'instant'
+          delay_min_ms?: number
+          delay_max_ms?: number
+          par_times_ms?: number[]
+          updated_on?: string
+        }
+        Relationships: []
+      }
+      firearms_match: {
+        Row: {
+          id: string
+          organizer_id: string
+          course_of_fire_id: string
+          name: string
+          match_date: string | null
+          status: 'setup' | 'active' | 'complete'
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id?: string
+          organizer_id: string
+          course_of_fire_id: string
+          name: string
+          match_date?: string | null
+          status?: 'setup' | 'active' | 'complete'
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          name?: string
+          course_of_fire_id?: string
+          match_date?: string | null
+          status?: 'setup' | 'active' | 'complete'
+          updated_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'firearms_match_course_of_fire_id_fkey'
+            columns: ['course_of_fire_id']
+            isOneToOne: false
+            referencedRelation: 'firearms_course_of_fire'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      firearms_match_member: {
+        Row: {
+          id: string
+          match_id: string
+          user_id: string
+          squad: string | null
+          division: 'open' | 'limited' | 'production' | 'carry_optics' | 'single_stack' | 'revolver' | 'pcc' | 'limited_10' | null
+          power_factor: 'major' | 'minor'
+          classification: 'gm' | 'm' | 'a' | 'b' | 'c' | 'd' | 'u' | null
+          session_id: string | null
+          shoot_order: number | null
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          user_id: string
+          squad?: string | null
+          division?: 'open' | 'limited' | 'production' | 'carry_optics' | 'single_stack' | 'revolver' | 'pcc' | 'limited_10' | null
+          power_factor?: 'major' | 'minor'
+          classification?: 'gm' | 'm' | 'a' | 'b' | 'c' | 'd' | 'u' | null
+          session_id?: string | null
+          shoot_order?: number | null
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          squad?: string | null
+          division?: 'open' | 'limited' | 'production' | 'carry_optics' | 'single_stack' | 'revolver' | 'pcc' | 'limited_10' | null
+          power_factor?: 'major' | 'minor'
+          classification?: 'gm' | 'm' | 'a' | 'b' | 'c' | 'd' | 'u' | null
+          session_id?: string | null
+          shoot_order?: number | null
+          updated_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'firearms_match_member_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'user_profile'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'firearms_match_member_session_id_fkey'
+            columns: ['session_id']
+            isOneToOne: false
+            referencedRelation: 'firearms_shot_session'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      firearms_profile: {
+        Row: {
+          id: string
+          dominant_hand: 'left' | 'right' | null
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id: string
+          dominant_hand?: 'left' | 'right' | null
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          dominant_hand?: 'left' | 'right' | null
+          updated_on?: string
+        }
+        Relationships: []
+      }
+      firearms_shot_session: {
+        Row: {
+          id: string
+          user_id: string
+          name: string | null
+          mode: 'timer' | 'stopwatch' | 'spy'
+          sensitivity: number
+          band_thresholds: number[]
+          delay_mode: 'fixed' | 'random' | 'instant'
+          delay_min_ms: number
+          delay_max_ms: number
+          par_times_ms: number[]
+          points: number
+          notes: string | null
+          total_strings: number
+          started_at: string | null
+          ended_at: string | null
+          course_name: string | null
+          status: 'review' | 'dq' | 'dnf' | null
+          procedurals: number
+          additional_penalty: number
+          hit_factor: number | null
+          shots_per_string: number | null
+          alpha: number
+          bravo: number
+          charlie: number
+          delta: number
+          miss: number
+          match_id: string | null
+          match_member_id: string | null
+          target_photo_url: string | null
+          target_analysis: Json | null
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name?: string | null
+          mode?: 'timer' | 'stopwatch' | 'spy'
+          sensitivity?: number
+          band_thresholds?: number[]
+          delay_mode?: 'fixed' | 'random' | 'instant'
+          delay_min_ms?: number
+          delay_max_ms?: number
+          par_times_ms?: number[]
+          points?: number
+          notes?: string | null
+          total_strings?: number
+          started_at?: string | null
+          ended_at?: string | null
+          course_name?: string | null
+          status?: 'review' | 'dq' | 'dnf' | null
+          procedurals?: number
+          additional_penalty?: number
+          hit_factor?: number | null
+          shots_per_string?: number | null
+          alpha?: number
+          bravo?: number
+          charlie?: number
+          delta?: number
+          miss?: number
+          match_id?: string | null
+          match_member_id?: string | null
+          target_photo_url?: string | null
+          target_analysis?: Json | null
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          name?: string | null
+          mode?: 'timer' | 'stopwatch' | 'spy'
+          sensitivity?: number
+          band_thresholds?: number[]
+          delay_mode?: 'fixed' | 'random' | 'instant'
+          delay_min_ms?: number
+          delay_max_ms?: number
+          par_times_ms?: number[]
+          points?: number
+          notes?: string | null
+          total_strings?: number
+          started_at?: string | null
+          ended_at?: string | null
+          course_name?: string | null
+          status?: 'review' | 'dq' | 'dnf' | null
+          procedurals?: number
+          additional_penalty?: number
+          hit_factor?: number | null
+          shots_per_string?: number | null
+          alpha?: number
+          bravo?: number
+          charlie?: number
+          delta?: number
+          miss?: number
+          match_id?: string | null
+          match_member_id?: string | null
+          target_photo_url?: string | null
+          target_analysis?: Json | null
+          updated_on?: string
+        }
+        Relationships: []
+      }
+      firearms_shot_string: {
+        Row: {
+          id: string
+          session_id: string
+          user_id: string
+          string_number: number
+          shots_ms: number[]
+          shot_amplitudes: number[]
+          amplitude_samples: Json | null
+          split_times_ms: number[]
+          total_time_ms: number | null
+          shot_count: number
+          points: number | null
+          hit_factor: number | null
+          par_hit: boolean | null
+          created_on: string
+          updated_on: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          user_id: string
+          string_number: number
+          shots_ms?: number[]
+          shot_amplitudes?: number[]
+          amplitude_samples?: Json | null
+          split_times_ms?: number[]
+          total_time_ms?: number | null
+          shot_count?: number
+          points?: number | null
+          hit_factor?: number | null
+          par_hit?: boolean | null
+          created_on?: string
+          updated_on?: string
+        }
+        Update: {
+          shots_ms?: number[]
+          shot_amplitudes?: number[]
+          amplitude_samples?: Json | null
+          split_times_ms?: number[]
+          total_time_ms?: number | null
+          shot_count?: number
+          points?: number | null
+          hit_factor?: number | null
+          par_hit?: boolean | null
+          updated_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firearms_shot_string_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "firearms_shot_session"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       fitness_weekly_workouts: {
         Row: {
@@ -1195,7 +1601,7 @@ export type Database = {
           title: string
           description: string
           workout_details: Json
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -1203,7 +1609,7 @@ export type Database = {
           title: string
           description: string
           workout_details?: Json
-          created_at?: string
+          created_on?: string
         }
         Update: {
           id?: string
@@ -1211,7 +1617,7 @@ export type Database = {
           title?: string
           description?: string
           workout_details?: Json
-          created_at?: string
+          created_on?: string
         }
         Relationships: []
       }
@@ -1225,7 +1631,7 @@ export type Database = {
           score_display: string
           notes: string | null
           community_post_id: string | null
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -1236,7 +1642,7 @@ export type Database = {
           score_display: string
           notes?: string | null
           community_post_id?: string | null
-          created_at?: string
+          created_on?: string
         }
         Update: {
           id?: string
@@ -1247,7 +1653,7 @@ export type Database = {
           score_display?: string
           notes?: string | null
           community_post_id?: string | null
-          created_at?: string
+          created_on?: string
         }
         Relationships: []
       }
@@ -1261,7 +1667,7 @@ export type Database = {
           pullups: number
           notes: string | null
           tested_at: string
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -1272,7 +1678,7 @@ export type Database = {
           pullups: number
           notes?: string | null
           tested_at?: string
-          created_at?: string
+          created_on?: string
         }
         Update: {
           id?: string
@@ -1283,7 +1689,7 @@ export type Database = {
           pullups?: number
           notes?: string | null
           tested_at?: string
-          created_at?: string
+          created_on?: string
         }
         Relationships: []
       }
@@ -1296,7 +1702,7 @@ export type Database = {
           scaling: 'rx' | 'scaled' | 'beginner'
           placement: number
           points: number
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -1306,7 +1712,7 @@ export type Database = {
           scaling: 'rx' | 'scaled' | 'beginner'
           placement: number
           points: number
-          created_at?: string
+          created_on?: string
         }
         Update: {
           id?: string
@@ -1316,7 +1722,7 @@ export type Database = {
           scaling?: 'rx' | 'scaled' | 'beginner'
           placement?: number
           points?: number
-          created_at?: string
+          created_on?: string
         }
         Relationships: []
       }
@@ -1329,7 +1735,7 @@ export type Database = {
           item_snapshot: Json
           source_plan_id: string | null
           message: string | null
-          created_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -1339,7 +1745,7 @@ export type Database = {
           item_snapshot: Json
           source_plan_id?: string | null
           message?: string | null
-          created_at?: string
+          created_on?: string
         }
         Update: {
           [_ in never]: never
@@ -1356,7 +1762,7 @@ export type Database = {
           status: 'pending' | 'accepted' | 'declined' | 'completed'
           scoring_type: 'time' | 'reps'
           message: string | null
-          created_at: string
+          created_on: string
           accepted_at: string | null
           completed_at: string | null
         }
@@ -1369,7 +1775,7 @@ export type Database = {
           status?: 'pending' | 'accepted' | 'declined' | 'completed'
           scoring_type: 'time' | 'reps'
           message?: string | null
-          created_at?: string
+          created_on?: string
           accepted_at?: string | null
           completed_at?: string | null
         }
@@ -1382,7 +1788,7 @@ export type Database = {
           status?: 'pending' | 'accepted' | 'declined' | 'completed'
           scoring_type?: 'time' | 'reps'
           message?: string | null
-          created_at?: string
+          created_on?: string
           accepted_at?: string | null
           completed_at?: string | null
         }
@@ -1397,7 +1803,7 @@ export type Database = {
           score_display: string
           scaling: 'rx' | 'scaled' | 'beginner'
           notes: string | null
-          submitted_at: string
+          created_on: string
         }
         Insert: {
           id?: string
@@ -1407,7 +1813,7 @@ export type Database = {
           score_display: string
           scaling?: 'rx' | 'scaled' | 'beginner'
           notes?: string | null
-          submitted_at?: string
+          created_on?: string
         }
         Update: {
           id?: string
@@ -1417,7 +1823,7 @@ export type Database = {
           score_display?: string
           scaling?: 'rx' | 'scaled' | 'beginner'
           notes?: string | null
-          submitted_at?: string
+          created_on?: string
         }
         Relationships: []
       }
@@ -1429,7 +1835,8 @@ export type Database = {
           target_plan_id: string | null
           target_user_id: string
           status: 'pending' | 'accepted' | 'declined'
-          shared_at: string
+          created_on: string
+          updated_on: string
           accepted_at: string | null
         }
         Insert: {
@@ -1439,7 +1846,8 @@ export type Database = {
           target_plan_id?: string | null
           target_user_id: string
           status?: 'pending' | 'accepted' | 'declined'
-          shared_at?: string
+          created_on?: string
+          updated_on?: string
           accepted_at?: string | null
         }
         Update: {
@@ -1449,7 +1857,8 @@ export type Database = {
           target_plan_id?: string | null
           target_user_id?: string
           status?: 'pending' | 'accepted' | 'declined'
-          shared_at?: string
+          created_on?: string
+          updated_on?: string
           accepted_at?: string | null
         }
         Relationships: []
@@ -1465,7 +1874,8 @@ export type Database = {
           goal: string | null
           weeks_total: number
           started_at: string
-          created_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -1477,7 +1887,8 @@ export type Database = {
           goal?: string | null
           weeks_total?: number
           started_at?: string
-          created_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -1489,7 +1900,8 @@ export type Database = {
           goal?: string | null
           weeks_total?: number
           started_at?: string
-          created_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -1501,8 +1913,10 @@ export type Database = {
           week_number: number
           session_number: number
           notes: string | null
+          completed: boolean
           completed_at: string
-          created_at: string
+          created_on: string
+          updated_on: string
         }
         Insert: {
           id?: string
@@ -1511,8 +1925,10 @@ export type Database = {
           week_number: number
           session_number: number
           notes?: string | null
+          completed?: boolean
           completed_at?: string
-          created_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Update: {
           id?: string
@@ -1521,8 +1937,10 @@ export type Database = {
           week_number?: number
           session_number?: number
           notes?: string | null
+          completed?: boolean
           completed_at?: string
-          created_at?: string
+          created_on?: string
+          updated_on?: string
         }
         Relationships: []
       }
@@ -1536,7 +1954,7 @@ export type Database = {
           email: string
           direction: 'sent' | 'received'
           status: 'pending' | 'accepted' | 'declined' | 'blocked'
-          created_at: string
+          created_on: string
         }
         Relationships: []
       }

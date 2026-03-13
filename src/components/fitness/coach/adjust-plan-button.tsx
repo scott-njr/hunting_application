@@ -242,28 +242,8 @@ export function AdjustPlanButton({ planId, planType }: AdjustPlanButtonProps) {
 }
 
 /** Compact summary of what changed in the draft */
-function DraftSummary({ draft, planType }: { draft: Record<string, unknown>; planType?: string }) {
-  if (planType === 'meal') {
-    const days = (draft.days ?? []) as Array<Record<string, unknown>>
-    const totalMeals = days.reduce((sum, d) => {
-      const meals = (d.meals ?? []) as unknown[]
-      return sum + meals.length
-    }, 0)
-    return (
-      <div className="text-xs text-muted space-y-1 bg-elevated rounded p-3">
-        <p>{days.length} days &middot; {totalMeals} meals total</p>
-        {days.slice(0, 3).map((d, i) => {
-          const dayLabel = (d.day as string) ?? `Day ${i + 1}`
-          const meals = (d.meals ?? []) as Array<Record<string, unknown>>
-          const names = meals.map(m => (m.title as string) ?? (m.name as string) ?? '?').join(', ')
-          return <p key={i} className="text-secondary truncate"><span className="text-muted">{dayLabel}:</span> {names}</p>
-        })}
-        {days.length > 3 && <p className="text-muted italic">+{days.length - 3} more days</p>}
-      </div>
-    )
-  }
-
-  // Run or strength plan
+function DraftSummary({ draft }: { draft: Record<string, unknown>; planType?: string }) {
+  // All plan types (run, strength, meal) now use weeks[].sessions[] structure
   const weeks = (draft.weeks ?? []) as Array<Record<string, unknown>>
   return (
     <div className="text-xs text-muted space-y-1 bg-elevated rounded p-3">

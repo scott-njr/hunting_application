@@ -82,15 +82,59 @@ Flag routes that:
 - Have inconsistent naming patterns compared to sibling routes
 - Use verbs in URL paths where nouns would be more RESTful (explain trade-offs)
 
-### 3. Audit response contracts
+### 3. Audit response contracts (ENFORCED STANDARD)
 
-Read each route handler and check:
-- [ ] Success responses use consistent shape (e.g., `{ data: ... }` or direct payload — pick one)
-- [ ] Error responses use consistent shape (e.g., `{ error: string }` with appropriate status code)
-- [ ] HTTP status codes are correct (200 for GET, 201 for POST create, 204 for DELETE, 400 for validation, 401 for unauth, 403 for forbidden, 404 for not found, 429 for rate limit)
+All API routes MUST use helpers from `src/lib/api-response.ts`. No raw `NextResponse.json()` is allowed in API routes.
+
+**Required helpers:**
+```typescript
+import { apiOk, apiDone, apiError, unauthorized, forbidden, notFound, badRequest, serverError } from '@/lib/api-response'
+```
+
+**Enforced convention table:**
+
+| Scenario | Helper | Shape | Status |
+|---|---|---|---|
+| GET single resource | `apiOk({ resourceName })` | `{ resourceName: T }` | 200 |
+| GET list | `apiOk({ resourcePlural })` | `{ resourcePlural: T[] }` | 200 |
+| GET paginated list | `apiOk({ resourcePlural, total, page, limit })` | `{ resourcePlural: T[], ... }` | 200 |
+| POST create | `apiOk({ resourceName }, 201)` | `{ resourceName: T }` | **201** |
+| POST action (no resource) | `apiDone()` | `{ ok: true }` | 200 |
+| POST action with metadata | `apiDone({ sent: 5 })` | `{ ok: true, sent: 5 }` | 200 |
+| PATCH/PUT update | `apiOk({ resourceName })` or `apiDone()` | varies | 200 |
+| DELETE | `apiDone()` | `{ ok: true }` | 200 |
+| Error | `apiError('msg', status)` or shortcut | `{ error: string }` | 4xx/5xx |
+
+**Module resource names** (use these as wrapper keys):
+
+| Module | Singular | Plural |
+|---|---|---|
+| Community | `post`, `comment`, `friendship` | `posts`, `comments`, `friendships` |
+| Fitness | `plan`, `workout`, `log`, `challenge`, `submission`, `test`, `share`, `item` | `plans`, `workouts`, `logs`, `challenges`, `submissions`, `tests`, `shares`, `items` |
+| Hunting | `report`, `location`, `pin` | `reports`, `locations`, `pins` |
+| Admin | `user`, `issue`, `deploy`, `broadcast` | `users`, `issues`, `deploys`, `broadcasts` |
+| Messages | `message` | `messages` |
+| Blog | `post` | `posts` |
+
+For each route, check:
+- [ ] Uses `apiOk()` / `apiDone()` / `apiError()` helpers — **no raw `NextResponse.json()`**
+- [ ] Success responses wrap data in named resource keys (not bare objects/arrays)
+- [ ] Error responses use `{ error: string }` shape via helpers
+- [ ] POST creates return **201** status (not 200)
+- [ ] Uses `{ ok: true }` for action acknowledgment (not `{ success: true }`)
+- [ ] HTTP status codes are correct (200 GET, 201 POST create, 400 validation, 401 unauth, 403 forbidden, 404 not found, 429 rate limit)
 - [ ] No routes return 200 with an error message in the body (anti-pattern)
 - [ ] Large list endpoints have pagination or reasonable limits
 - [ ] Response payloads don't leak sensitive data (emails, internal IDs, admin flags)
+
+**Grep checks to run:**
+```bash
+# Must return ZERO results:
+grep -r "NextResponse.json" src/app/api/ --include="*.ts"
+grep -r "success: true" src/app/api/ --include="*.ts"
+# All routes should import from api-response:
+grep -rL "api-response" src/app/api/**/route.ts
+```
 
 ### 4. Audit error handling patterns
 
@@ -198,12 +242,15 @@ Print results in this format:
 | Misplaced route | /api/hunting/[huntId]/share | Move to /api/hunting/[huntId]/share |
 | ... | ... | ... |
 
-### Response Contract Consistency
-| Pattern | Count | Routes | Issue |
-|---------|-------|--------|-------|
-| { error: string } | 45 | All | Consistent ✅ |
-| { data: ... } wrapper | 12 | Fitness routes | Inconsistent — some return raw arrays |
-| ... | ... | ... | ... |
+### Response Contract Compliance
+| Check | Status | Details |
+|-------|--------|---------|
+| All routes use api-response helpers | ✅ / ❌ | X routes still use raw NextResponse.json |
+| Named resource keys (no bare objects) | ✅ / ❌ | X routes return unwrapped arrays/objects |
+| POST creates return 201 | ✅ / ❌ | X POST creates still return 200 |
+| { ok: true } not { success: true } | ✅ / ❌ | X routes use wrong acknowledgment key |
+| Error shape { error: string } | ✅ / ❌ | X routes use non-standard error shapes |
+| Module resource names correct | ✅ / ❌ | X routes use wrong wrapper key names |
 
 ### Mobile App Readiness
 | Category | Status | Details |

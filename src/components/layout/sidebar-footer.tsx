@@ -27,7 +27,7 @@ export function SidebarFooter({ memberName, memberEmail, memberTier }: SidebarFo
       </div>
       <button
         onClick={handleSignOut}
-        className="flex items-center gap-2 text-muted hover:text-primary text-xs transition-colors"
+        className="flex items-center gap-2 text-muted hover:text-primary text-xs transition-colors min-h-[44px]"
       >
         <LogOut className="h-3.5 w-3.5" />
         Sign out

@@ -22,7 +22,7 @@ interface Issue {
   ai_proposed_fix: string | null
   ai_classified_at: string | null
   github_issue_url: string | null
-  created_at: string
+  created_on: string
   members: { email: string; display_name: string | null } | null
 }
 
@@ -197,38 +197,45 @@ export default function AdminIssuesPage() {
     const resolution = resolutionRefs.current[issueId]?.value ?? ''
     const status = statusOverrides[issueId]
     setSaving(issueId)
-    const updates: Record<string, unknown> = {
-      issueId,
-      release_tag: releaseTag || null,
-      admin_notes: adminNotes || null,
-      resolution: resolution || null,
-    }
-    if (status) updates.status = status
-    const res = await fetch('/api/admin/issues', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    })
-    if (res.ok) {
-      setIssues(prev => prev.map(i =>
-        i.id === issueId ? {
-          ...i,
-          release_tag: releaseTag || null,
-          admin_notes: adminNotes || null,
-          resolution: resolution || null,
-          ...(status ? { status } : {}),
-        } as Issue : i
-      ))
-      setStatusOverrides(prev => {
-        const next = { ...prev }
-        delete next[issueId]
-        return next
+    try {
+      const updates: Record<string, unknown> = {
+        issueId,
+        release_tag: releaseTag || null,
+        admin_notes: adminNotes || null,
+        resolution: resolution || null,
+      }
+      if (status) updates.status = status
+      const res = await fetch('/api/admin/issues', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
       })
-      setSavedField(`${issueId}:all`)
-      setTimeout(() => setSavedField(null), 2000)
-      setExpanded(null)
+      if (res.ok) {
+        setIssues(prev => prev.map(i =>
+          i.id === issueId ? {
+            ...i,
+            release_tag: releaseTag || null,
+            admin_notes: adminNotes || null,
+            resolution: resolution || null,
+            ...(status ? { status } : {}),
+          } as Issue : i
+        ))
+        setStatusOverrides(prev => {
+          const next = { ...prev }
+          delete next[issueId]
+          return next
+        })
+        setSavedField(`${issueId}:all`)
+        setTimeout(() => setSavedField(null), 2000)
+        setExpanded(null)
+      } else {
+        setError('Failed to save changes. Please try again.')
+      }
+    } catch {
+      setError('Network error saving changes.')
+    } finally {
+      setSaving(null)
     }
-    setSaving(null)
   }
 
   async function triggerAutoFix(issue: Issue) {
@@ -475,7 +482,7 @@ export default function AdminIssuesPage() {
                       <span>&middot;</span>
                       <span>{issue.category}</span>
                       <span>&middot;</span>
-                      <span>{new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <span>{new Date(issue.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

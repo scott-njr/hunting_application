@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { aiCall } from '@/lib/ai'
 import { getCoachContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
+import { apiOk, apiError, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 /** Maximum conversation turns to serialize into the prompt */
 const MAX_HISTORY_TURNS = 6
@@ -12,30 +13,28 @@ type ConversationTurn = {
   content: string
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return unauthorized()
   }
 
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { message, history } = body as {
     message: string
     history: ConversationTurn[]
   }
 
   if (!message?.trim()) {
-    return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    return badRequest('Message is required')
   }
 
   // Check module-specific quota
   const subInfo = await getUserModuleSubscriptionInfo(supabase, user.id, 'fitness')
   if (!hasModuleAIQuota(subInfo.tier, subInfo.aiQueriesThisMonth)) {
-    return NextResponse.json(
-      { error: 'quota_exceeded', message: 'Monthly AI query limit reached for Fitness. Upgrade your plan for more.' },
-      { status: 403 }
-    )
+    return apiError('quota_exceeded', 403, { message: 'Monthly AI query limit reached for Fitness. Upgrade your plan for more.' })
   }
 
   // Fetch all user fitness data for context injection
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   const result = await aiCall({
     module: 'fitness',
-    feature: 'fitness_coach',
+    feature: 'fitness_coach_chat',
     userMessage,
     context: coachContext,
     userId: user.id,
@@ -62,10 +61,7 @@ export async function POST(req: NextRequest) {
   })
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: result.error ?? 'Coach unavailable. Please try again.' },
-      { status: 500 },
-    )
+    return serverError(result.error ?? 'Coach unavailable. Please try again.')
   }
 
   await supabase.rpc('increment_module_ai_queries', {
@@ -73,5 +69,6 @@ export async function POST(req: NextRequest) {
     module_slug_param: 'fitness',
   })
 
-  return NextResponse.json({ response: result.response })
-}
+  return apiOk({ response: result.response })
+})
+

@@ -1,16 +1,16 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiDone, unauthorized, serverError } from '@/lib/api-response'
 
 export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return unauthorized()
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('[cancel-all] SUPABASE_SERVICE_ROLE_KEY not set')
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+      return serverError('Server configuration error')
     }
 
     const admin = createServiceClient(
@@ -27,12 +27,12 @@ export async function POST() {
 
     if (subError) {
       console.error('[cancel-all] subscription update error:', subError.message)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      return serverError()
     }
 
-    return NextResponse.json({ ok: true })
+    return apiDone()
   } catch (err) {
     console.error('[cancel-all] unexpected error:', err)
-    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 })
+    return serverError('An unexpected error occurred')
   }
 }

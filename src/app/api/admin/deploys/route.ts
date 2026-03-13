@@ -1,15 +1,16 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiOk, apiDone, forbidden, badRequest, notFound, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_REPO = 'scott-njr/hunting_application'
 
 /** GET — Fetch deploy queue (triaged issues) + deploy history */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function GET(_req: NextRequest) {
+export const GET = withHandler(async (_req: NextRequest) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +24,7 @@ export async function GET(_req: NextRequest) {
     .not('severity', 'is', null)
     .in('status', ['open', 'in_progress'])
     .order('severity', { ascending: true }) // easy first
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
     .limit(50)
 
   // Enrich queue with email and display_name
@@ -45,7 +46,7 @@ export async function GET(_req: NextRequest) {
   const { data: history } = await admin
     .from('deploy_log')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
     .limit(20)
 
   // Stats
@@ -67,9 +68,9 @@ export async function GET(_req: NextRequest) {
   const { count: deploysThisWeek } = await admin
     .from('deploy_log')
     .select('*', { count: 'exact', head: true })
-    .gte('created_at', weekAgo.toISOString())
+    .gte('created_on', weekAgo.toISOString())
 
-  return NextResponse.json({
+  return apiOk({
     queue: queue ?? [],
     history: history ?? [],
     stats: {
@@ -79,18 +80,20 @@ export async function GET(_req: NextRequest) {
       deploysThisWeek: deploysThisWeek ?? 0,
     },
   })
-}
+})
+
 
 /** POST — Trigger fix & deploy via GitHub Action workflow_dispatch */
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { issueId, adminNotes } = body
 
   if (!issueId) {
-    return NextResponse.json({ error: 'issueId required' }, { status: 400 })
+    return badRequest('issueId required')
   }
 
   const admin = createServiceClient(
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (issueError || !issue) {
-    return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
+    return notFound('Issue not found')
   }
 
   // Save admin notes if provided
@@ -119,7 +122,7 @@ export async function POST(req: NextRequest) {
 
   // Trigger GitHub Action via workflow_dispatch
   if (!GITHUB_TOKEN) {
-    return NextResponse.json({ error: 'GITHUB_TOKEN not configured' }, { status: 500 })
+    return serverError('GITHUB_TOKEN not configured')
   }
 
   const dispatchResponse = await fetch(
@@ -149,7 +152,7 @@ export async function POST(req: NextRequest) {
   if (!dispatchResponse.ok) {
     const errText = await dispatchResponse.text()
     console.error('[Deploy] GitHub Action dispatch failed:', errText)
-    return NextResponse.json({ error: 'Failed to trigger GitHub Action', details: errText }, { status: 500 })
+    return serverError(`Failed to trigger GitHub Action: ${errText}`)
   }
 
   // Log the deploy
@@ -167,5 +170,6 @@ export async function POST(req: NextRequest) {
     .update({ status: 'in_progress' })
     .eq('id', issueId)
 
-  return NextResponse.json({ ok: true, message: 'GitHub Action triggered' })
-}
+  return apiDone({ message: 'GitHub Action triggered' })
+})
+

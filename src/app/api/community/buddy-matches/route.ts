@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { apiOk, unauthorized, withHandler, serverError } from '@/lib/api-response'
 
 type MergedProfile = {
   id: string
@@ -123,12 +123,12 @@ function scoreBuddy(me: MergedProfile, candidate: MergedProfile): { score: numbe
   return { score, reasons }
 }
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return unauthorized()
   }
 
   // Get current user's profile from both tables
@@ -146,15 +146,15 @@ export async function GET() {
   ])
 
   if (!myUserProfile || !myHuntingProfile) {
-    return NextResponse.json({ matches: [], mentors: [], incomplete_profile: true })
+    return apiOk({ matches: [], mentors: [], incomplete_profile: true })
   }
 
   if (!myUserProfile.is_verified) {
-    return NextResponse.json({ matches: [], mentors: [], not_verified: true })
+    return apiOk({ matches: [], mentors: [], not_verified: true })
   }
 
   if (!myHuntingProfile.states_of_interest?.length && !myHuntingProfile.target_species?.length) {
-    return NextResponse.json({ matches: [], mentors: [], incomplete_profile: true })
+    return apiOk({ matches: [], mentors: [], incomplete_profile: true })
   }
 
   const myProfile: MergedProfile = {
@@ -193,7 +193,7 @@ export async function GET() {
   ])
 
   if (!candidateUserProfiles || !candidateHuntingProfiles) {
-    return NextResponse.json({ matches: [], mentors: [] })
+    return apiOk({ matches: [], mentors: [] })
   }
 
   // Build map of user profiles by id
@@ -249,5 +249,6 @@ export async function GET() {
   const matches = scored.filter(m => m.looking_for_buddy).slice(0, 5)
   const mentors = scored.filter(m => m.willing_to_mentor).slice(0, 3)
 
-  return NextResponse.json({ matches, mentors })
-}
+  return apiOk({ matches, mentors })
+})
+

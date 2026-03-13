@@ -1,32 +1,32 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { getFitnessProfileContext } from '@/lib/ai/fitness-profile'
 import { getUserModuleSubscriptionInfo, hasModuleAIQuota } from '@/lib/modules'
 import { getCurrentWeek, getPassedSessionNumbers } from '@/lib/fitness/date-helpers'
+import { apiOk, apiError, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { planId } = await params
-  const { feedback } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { feedback } = body
 
   if (!feedback?.trim()) {
-    return NextResponse.json({ error: 'Feedback is required' }, { status: 400 })
+    return badRequest('Feedback is required')
   }
 
   // Check module-specific quota
   const subInfo = await getUserModuleSubscriptionInfo(supabase, user.id, 'fitness')
   if (!hasModuleAIQuota(subInfo.tier, subInfo.aiQueriesThisMonth)) {
-    return NextResponse.json(
-      { error: 'quota_exceeded', message: 'Monthly AI query limit reached for Fitness. Upgrade your plan for more.' },
-      { status: 403 }
-    )
+    return apiError('quota_exceeded', 403, { message: 'Monthly AI query limit reached for Fitness. Upgrade your plan for more.' })
   }
 
   // Fetch plan and verify ownership
@@ -38,37 +38,40 @@ export async function POST(
     .eq('status', 'active')
     .single()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+  if (!plan) return notFound('Plan not found')
 
   const feature = plan.plan_type === 'run'
-    ? 'run_plan_generator'
+    ? 'fitness_run_coach'
     : plan.plan_type === 'strength'
-    ? 'strength_plan_generator'
-    : 'meal_plan_generator' as const
+    ? 'fitness_strength_coach'
+    : 'fitness_meal_prep' as const
 
   const profileContext = await getFitnessProfileContext(supabase, user.id)
   const planData = plan.plan_data as Record<string, unknown>
   const currentPlan = JSON.stringify(planData, null, 2)
   const config = plan.config as Record<string, unknown>
 
-  // For workout plans, determine current week so AI only adjusts remaining weeks
-  const currentWeek = plan.plan_type !== 'meal'
-    ? getCurrentWeek(plan.started_at, plan.weeks_total)
-    : 0
+  // Determine current week so AI only adjusts remaining weeks
+  const currentWeek = getCurrentWeek(plan.started_at, plan.weeks_total)
 
   // Find sessions in the current week that must be preserved:
   // 1. Sessions the user has logged (completed)
   // 2. Sessions whose scheduled day has already passed (even if not completed)
   let frozenSessionNumbers: number[] = []
-  if (currentWeek >= 1 && plan.plan_type !== 'meal') {
+  if (currentWeek >= 1) {
     const { data: logs } = await supabase
       .from('fitness_plan_workout_logs')
       .select('session_number')
       .eq('plan_id', planId)
       .eq('week_number', currentWeek)
+      .eq('completed', true)
 
     const loggedSessions = (logs ?? []).map(l => l.session_number)
-    const daysPerWeek = (config.daysPerWeek as number) ?? 3
+    // For meal plans, freeze based on day-of-week (meals have sessions for every day)
+    // For workout plans, freeze based on training day schedule
+    const daysPerWeek = plan.plan_type === 'meal'
+      ? 7 // meals have sessions for every day
+      : ((config.daysPerWeek as number) ?? 3)
     const passedSessions = getPassedSessionNumbers(daysPerWeek)
 
     // Merge logged + passed, deduplicate
@@ -76,7 +79,7 @@ export async function POST(
   }
 
   let weekContext = ''
-  if (plan.plan_type !== 'meal' && (currentWeek > 1 || frozenSessionNumbers.length > 0)) {
+  if (currentWeek > 1 || frozenSessionNumbers.length > 0) {
     const parts: string[] = []
     if (currentWeek > 1) {
       parts.push(`Keep weeks 1 through ${currentWeek - 1} EXACTLY as they are — those are already completed.`)
@@ -89,8 +92,12 @@ export async function POST(
     weekContext = `\n\nIMPORTANT: The user is currently on week ${currentWeek} of ${plan.weeks_total}. ${parts.join(' ')}`
   }
 
+  const planTypeLabel = plan.plan_type === 'run' ? '8-week running'
+    : plan.plan_type === 'strength' ? '8-week strength training'
+    : '8-week meal'
+
   const basePrompt = plan.plan_type === 'meal'
-    ? `Adjust this existing 7-day meal plan based on user feedback.
+    ? `Adjust this existing 8-week meal plan based on user feedback.
 
 Current meal plan:
 ${currentPlan}
@@ -101,10 +108,10 @@ User config:
 - Weekly budget: $${config.weeklyBudget ?? 100}
 ${config.notes ? `- Notes: ${config.notes}` : ''}
 
-User feedback: "${feedback}"
+User feedback: "${feedback}"${weekContext}
 
-Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted meal plan using the exact same structure as the current plan. Apply the user's feedback while maintaining nutritional balance. Keep the same JSON structure with all fields (days, meals, grocery_list, costs, etc).`
-    : `Adjust this existing ${plan.plan_type === 'run' ? '8-week running' : '8-week strength training'} plan based on user feedback.
+Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted meal plan using the exact same structure as the current plan. Apply the user's feedback while maintaining nutritional balance. Keep the same JSON structure with all fields (goal_summary, weeks, sessions, grocery_list, costs, etc).`
+    : `Adjust this existing ${planTypeLabel} plan based on user feedback.
 
 Current plan:
 ${currentPlan}
@@ -121,8 +128,8 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
 
   const prompt = basePrompt + profileContext
 
-  const tokenLimit = plan.plan_type === 'strength' ? 16384
-    : plan.plan_type === 'meal' ? 12288
+  const tokenLimit = plan.plan_type === 'meal' ? 32768
+    : plan.plan_type === 'strength' ? 16384
     : 8192
 
   const result = await aiCall({
@@ -134,7 +141,7 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
   })
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error ?? 'AI adjustment failed' }, { status: 500 })
+    return serverError(result.error ?? 'AI adjustment failed')
   }
 
   let parsed: Record<string, unknown>
@@ -142,15 +149,13 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
     parsed = extractJSON(result.response)
   } catch {
     const truncated = result.flags.includes('truncated')
-    return NextResponse.json({
-      error: truncated
-        ? 'AI response was too long and got cut off. Please try again.'
-        : 'Failed to parse AI response. Please try again.',
-    }, { status: 500 })
+    return serverError(truncated
+      ? 'AI response was too long and got cut off. Please try again.'
+      : 'Failed to parse AI response. Please try again.')
   }
 
-  // For workout plans, preserve completed weeks and sessions in case AI modified them
-  if (plan.plan_type !== 'meal' && (currentWeek > 1 || frozenSessionNumbers.length > 0)) {
+  // Preserve completed weeks and sessions in case AI modified them
+  if (currentWeek > 1 || frozenSessionNumbers.length > 0) {
     const originalWeeks = (planData.weeks ?? []) as Array<Record<string, unknown>>
     const adjustedWeeks = (parsed.weeks ?? []) as Array<Record<string, unknown>>
 
@@ -189,8 +194,9 @@ Return ONLY valid JSON (no markdown, no code fences) with the COMPLETE adjusted 
   })
 
   // Return draft for user preview — not saved until accepted
-  return NextResponse.json({
-    draft: parsed,
-    goal: (parsed.goal_summary as string) ?? plan.goal,
+  return apiOk({
+    draft: parsed as Record<string, unknown>,
+    goal: ((parsed.goal_summary as string) ?? plan.goal) as string,
   })
-}
+})
+

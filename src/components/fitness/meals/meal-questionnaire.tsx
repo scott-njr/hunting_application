@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Sparkles } from 'lucide-react'
 import { TacticalSelect } from '@/components/ui/tactical-select'
 import { AIProgressModal } from '@/components/ui/ai-progress-modal'
+import { AlertBanner } from '@/components/ui/alert-banner'
+import { MEAL_DISCLAIMER } from '@/lib/fitness/constants'
 
 const MEAL_GOALS = [
   { value: 'weight_loss', label: 'Weight Loss' },
@@ -46,6 +48,8 @@ export function MealQuestionnaire() {
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
+
+  const canSubmit = goal && selectedMeals.size > 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -99,14 +103,10 @@ export function MealQuestionnaire() {
         <h2 className="text-primary font-bold text-lg">AI Meal Prep</h2>
       </div>
       <p className="text-secondary text-sm mb-6">
-        Tell us about your dietary goals and we&apos;ll generate a personalized 7-day meal plan with grocery list and cost estimates.
+        Tell us about your dietary goals and we&apos;ll generate a personalized 8-week meal plan with grocery list and cost estimates.
       </p>
 
-      {error && (
-        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -189,7 +189,7 @@ export function MealQuestionnaire() {
 
         <button
           type="submit"
-          disabled={generating}
+          disabled={generating || !canSubmit}
           className="btn-primary w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed font-semibold rounded transition-colors"
         >
           {generating ? (
@@ -210,7 +210,7 @@ export function MealQuestionnaire() {
       </form>
 
       <p className="text-muted text-xs mt-4">
-        AI-generated meal plan is general guidance. Consult a healthcare provider for specific dietary needs.
+        {MEAL_DISCLAIMER}
       </p>
     </div>
     </>

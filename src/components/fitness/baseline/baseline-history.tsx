@@ -1,6 +1,7 @@
 'use client'
 
 import { ClipboardList, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export interface BaselineTest {
   id: string
@@ -16,6 +17,45 @@ function formatRunTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+// Scoring constants
+const RUN_MAX_PTS = 40
+const RUN_BEST_SEC = 720   // 12:00 = max points
+const RUN_WORST_SEC = 1440 // 24:00 = 0 points
+
+const PUSHUP_MAX_PTS = 20
+const PUSHUP_BEST = 80     // 80+ = max points
+
+const SITUP_MAX_PTS = 20
+const SITUP_BEST = 80      // 80+ = max points
+
+const PULLUP_MAX_PTS = 20
+const PULLUP_BEST = 25     // 25+ = max points
+
+/** Composite fitness score 0–100 based on all four events */
+export function calculateFitnessScore(test: BaselineTest): number {
+  // Run: 40 pts max — lower time is better, linear scale
+  const runClamped = Math.max(RUN_BEST_SEC, Math.min(RUN_WORST_SEC, test.run_time_seconds))
+  const runScore = ((RUN_WORST_SEC - runClamped) / (RUN_WORST_SEC - RUN_BEST_SEC)) * RUN_MAX_PTS
+
+  // Pushups: 20 pts max — linear scale
+  const pushupScore = Math.min(1, test.pushups / PUSHUP_BEST) * PUSHUP_MAX_PTS
+
+  // Situps: 20 pts max — linear scale
+  const situpScore = Math.min(1, test.situps / SITUP_BEST) * SITUP_MAX_PTS
+
+  // Pullups: 20 pts max — linear scale
+  const pullupScore = Math.min(1, test.pullups / PULLUP_BEST) * PULLUP_MAX_PTS
+
+  return Math.round(runScore + pushupScore + situpScore + pullupScore)
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 80) return 'text-green-400'
+  if (score >= 60) return 'text-amber-400'
+  if (score >= 40) return 'text-orange-400'
+  return 'text-red-400'
 }
 
 /** Calculate overall progression: compare 4 metrics, majority wins */
@@ -65,6 +105,8 @@ export function BaselineHistory({ tests }: { tests: BaselineTest[] }) {
           const prev = i + 1 < tests.length ? tests[i + 1] : null
           const progression = prev ? getProgression(test, prev) : null
 
+          const score = calculateFitnessScore(test)
+
           return (
             <div key={test.id} className="flex items-center gap-3 rounded bg-elevated p-3 border border-subtle">
               <div className="flex-1 min-w-0">
@@ -79,7 +121,11 @@ export function BaselineHistory({ tests }: { tests: BaselineTest[] }) {
                   <span className="text-primary">{test.pullups} PL</span>
                 </div>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="text-right">
+                  <div className={cn('font-bold text-lg font-mono leading-tight', getScoreColor(score))}>{score}</div>
+                  <div className="text-muted text-[10px] uppercase tracking-wide">Score</div>
+                </div>
                 {progression === 'up' && (
                   <div className="flex items-center gap-1 text-green-400">
                     <TrendingUp className="h-5 w-5" />

@@ -3,25 +3,18 @@ import {
   Activity, Dumbbell, UtensilsCrossed, Flame, Crosshair, ClipboardList, Calendar,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TYPE_COLORS } from '@/lib/fitness/constants'
 
-/** Color coding for run session types — matches PlanTableView */
-const TYPE_COLORS: Record<string, { border: string; badge: string }> = {
-  easy_run:     { border: 'border-l-green-500', badge: 'bg-green-950/30 text-green-300 border-green-500/30' },
-  tempo_run:    { border: 'border-l-amber-500', badge: 'bg-amber-950/30 text-amber-300 border-amber-500/30' },
-  intervals:    { border: 'border-l-red-400', badge: 'bg-red-950/30 text-red-300 border-red-400/30' },
-  long_run:     { border: 'border-l-blue-400', badge: 'bg-blue-950/30 text-blue-300 border-blue-400/30' },
-  recovery_run: { border: 'border-l-violet-400', badge: 'bg-violet-950/30 text-violet-300 border-violet-400/30' },
-  cross_train:  { border: 'border-l-cyan-400', badge: 'bg-cyan-950/30 text-cyan-300 border-cyan-400/30' },
-  strength:     { border: 'border-l-orange-400', badge: 'bg-orange-950/30 text-orange-300 border-orange-400/30' },
-  meal:         { border: 'border-l-accent', badge: 'bg-accent/10 text-accent border-accent/30' },
-  trip:         { border: 'border-l-accent', badge: 'bg-accent/10 text-accent border-accent/30' },
-  deadline:     { border: 'border-l-amber-500', badge: 'bg-amber-950/30 text-amber-300 border-amber-500/30' },
+/** Extra type colors specific to the weekly preview (not in shared constants) */
+const EXTRA_TYPE_COLORS: Record<string, { border: string; badge: string }> = {
+  trip:     { border: 'border-l-accent', badge: 'bg-accent/10 text-accent border-accent/30' },
+  deadline: { border: 'border-l-amber-500', badge: 'bg-amber-950/30 text-amber-300 border-amber-500/30' },
 }
 
 const DEFAULT_TYPE_COLOR = { border: 'border-l-accent', badge: 'bg-surface border-subtle text-muted' }
 
 function getTypeColor(sessionType: string) {
-  return TYPE_COLORS[sessionType] ?? DEFAULT_TYPE_COLOR
+  return TYPE_COLORS[sessionType] ?? EXTRA_TYPE_COLORS[sessionType] ?? DEFAULT_TYPE_COLOR
 }
 
 const CATEGORY_ICONS = {

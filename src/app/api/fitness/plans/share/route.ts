@@ -1,16 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, apiError, unauthorized, notFound, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 // POST /api/fitness/plans/share — Share a plan with a friend
-export async function POST(req: NextRequest) {
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { plan_id, friend_id } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { plan_id, friend_id } = body
 
   if (!plan_id || !friend_id) {
-    return NextResponse.json({ error: 'plan_id and friend_id are required' }, { status: 400 })
+    return badRequest('plan_id and friend_id are required')
   }
 
   // Verify plan belongs to the current user and is active
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'active')
     .maybeSingle()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found or not active' }, { status: 404 })
+  if (!plan) return notFound('Plan not found or not active')
 
   // Verify friend_id is an accepted friend
   const { data: friends } = await supabase
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'accepted')
 
   const isFriend = friends?.some(f => f.friend_id === friend_id)
-  if (!isFriend) return NextResponse.json({ error: 'Not a confirmed friend' }, { status: 403 })
+  if (!isFriend) return forbidden()
 
   // Check for existing share (allow re-share if previously declined)
   const { data: existing } = await supabase
@@ -43,24 +46,24 @@ export async function POST(req: NextRequest) {
 
   if (existing) {
     if (existing.status === 'pending') {
-      return NextResponse.json({ error: 'Already shared and pending' }, { status: 409 })
+      return apiError('Already shared and pending', 409)
     }
     if (existing.status === 'accepted') {
-      return NextResponse.json({ error: 'Already shared and accepted' }, { status: 409 })
+      return apiError('Already shared and accepted', 409)
     }
     // Declined — re-share by updating back to pending
     const { data: updated, error } = await supabase
       .from('fitness_shared_plans')
-      .update({ status: 'pending' as const, shared_at: new Date().toISOString(), target_plan_id: null, accepted_at: null })
+      .update({ status: 'pending' as const, created_on: new Date().toISOString(), target_plan_id: null, accepted_at: null })
       .eq('id', existing.id)
       .select()
       .single()
 
     if (error) {
-      console.error(error)
-      return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+      console.error('[Fitness Share Plan] re-share error:', error)
+      return serverError()
     }
-    return NextResponse.json({ share: updated })
+    return apiOk({ share: updated })
   }
 
   // Create new share
@@ -75,25 +78,26 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Plan] insert error:', error)
+    return serverError()
   }
 
-  return NextResponse.json({ share })
-}
+  return apiOk({ share }, 201)
+})
+
 
 // GET /api/fitness/plans/share — List shared plans
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const direction = req.nextUrl.searchParams.get('direction') ?? 'all'
 
   let query = supabase
     .from('fitness_shared_plans')
     .select('*')
-    .order('shared_at', { ascending: false })
+    .order('created_on', { ascending: false })
 
   if (direction === 'sent') {
     query = query.eq('source_user_id', user.id)
@@ -105,8 +109,8 @@ export async function GET(req: NextRequest) {
   const { data: shares, error } = await query
 
   if (error) {
-    console.error(error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[Fitness Share Plan] fetch error:', error)
+    return serverError()
   }
 
   // Enrich with partner display names and plan info
@@ -125,16 +129,38 @@ export async function GET(req: NextRequest) {
         .in('id', [...userIds])
     : { data: [] }
 
-  // Fetch plan info (type + goal)
+  // Fetch plan info (type + goal + plan_data for preview)
   const { data: plans } = planIds.size > 0
     ? await supabase
         .from('fitness_training_plans')
-        .select('id, plan_type, goal')
+        .select('id, plan_type, goal, weeks_total, plan_data')
         .in('id', [...planIds])
     : { data: [] }
 
   const profileMap = new Map((profiles ?? []).map(p => [p.id, p.display_name]))
-  const planMap = new Map((plans ?? []).map(p => [p.id, { plan_type: p.plan_type, goal: p.goal }]))
+
+  interface PlanWeek {
+    theme?: string
+    sessions?: { title?: string; type?: string; meal_type?: string }[]
+  }
+
+  const planMap = new Map((plans ?? []).map(p => {
+    // Build a lightweight preview from plan_data
+    const weeks = (p.plan_data as { weeks?: PlanWeek[] })?.weeks ?? []
+    const totalSessions = weeks.reduce((sum: number, w: PlanWeek) => sum + (w.sessions?.length ?? 0), 0)
+    const weekPreviews = weeks.slice(0, 2).map((w: PlanWeek) => ({
+      theme: w.theme ?? null,
+      session_count: w.sessions?.length ?? 0,
+    }))
+
+    return [p.id, {
+      plan_type: p.plan_type,
+      goal: p.goal,
+      weeks_total: p.weeks_total,
+      total_sessions: totalSessions,
+      week_previews: weekPreviews,
+    }]
+  }))
 
   const enriched = (shares ?? []).map(s => {
     const partnerId = s.source_user_id === user.id ? s.target_user_id : s.source_user_id
@@ -145,8 +171,12 @@ export async function GET(req: NextRequest) {
       partner_name: profileMap.get(partnerId) ?? 'Unknown',
       plan_type: planInfo?.plan_type ?? null,
       plan_goal: planInfo?.goal ?? null,
+      weeks_total: planInfo?.weeks_total ?? null,
+      total_sessions: planInfo?.total_sessions ?? null,
+      week_previews: planInfo?.week_previews ?? null,
     }
   })
 
-  return NextResponse.json({ shares: enriched })
-}
+  return apiOk({ shares: enriched })
+})
+

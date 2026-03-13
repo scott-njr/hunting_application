@@ -1,13 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, notFound, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { planId } = await params
 
@@ -19,15 +20,17 @@ export async function POST(
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+  if (!plan) return notFound('Plan not found')
 
-  const { week_number, session_number, notes } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { week_number, session_number, notes } = body
 
   if (week_number == null || session_number == null) {
-    return NextResponse.json({ error: 'week_number and session_number are required' }, { status: 400 })
+    return badRequest('week_number and session_number are required')
   }
 
-  // Upsert (one log per session per plan)
+  // Upsert (one log per session per plan), mark as completed
   const { data: log, error } = await supabase
     .from('fitness_plan_workout_logs')
     .upsert({
@@ -36,25 +39,28 @@ export async function POST(
       week_number,
       session_number,
       notes: notes || null,
+      completed: true,
+      completed_at: new Date().toISOString(),
     }, { onConflict: 'plan_id,week_number,session_number' })
     .select()
     .single()
 
   if (error) {
     console.error('[fitness/plans/logs POST] upsert error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ log })
-}
+  return apiOk({ log }, 201)
+})
 
-export async function DELETE(
+
+export const PATCH = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { planId } = await params
 
@@ -66,26 +72,31 @@ export async function DELETE(
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+  if (!plan) return notFound('Plan not found')
 
-  const { week_number, session_number } = await req.json()
+  const patchBody = await parseBody(req)
+  if (isErrorResponse(patchBody)) return patchBody
+  const { week_number, session_number, completed } = patchBody
 
-  if (week_number == null || session_number == null) {
-    return NextResponse.json({ error: 'week_number and session_number are required' }, { status: 400 })
+  if (week_number == null || session_number == null || completed == null) {
+    return badRequest('week_number, session_number, and completed are required')
   }
 
-  const { error } = await supabase
+  const { data: log, error } = await supabase
     .from('fitness_plan_workout_logs')
-    .delete()
+    .update({ completed })
     .eq('plan_id', planId)
     .eq('user_id', user.id)
     .eq('week_number', week_number)
     .eq('session_number', session_number)
+    .select()
+    .single()
 
   if (error) {
-    console.error('[fitness/plans/logs DELETE] delete error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('[fitness/plans/logs PATCH] update error:', error.message)
+    return serverError()
   }
 
-  return NextResponse.json({ success: true })
-}
+  return apiOk({ log })
+})
+

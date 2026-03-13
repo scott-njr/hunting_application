@@ -51,19 +51,19 @@ export default async function AdminDashboard() {
     admin.from('issue_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
     admin
       .from('members')
-      .select('id, email, created_at')
-      .order('created_at', { ascending: false })
+      .select('id, email, created_on')
+      .order('created_on', { ascending: false })
       .limit(10),
     admin.from('ai_responses').select('*', { count: 'exact', head: true })
       .eq('parse_success', true)
-      .gte('created_at', monthStart),
+      .gte('created_on', monthStart),
     admin.from('ai_responses').select('*', { count: 'exact', head: true })
       .eq('parse_success', false)
-      .gte('created_at', monthStart),
+      .gte('created_on', monthStart),
     admin.from('ai_responses')
-      .select('id, user_id, module, feature, flags, sanitized_input, raw_response, duration_ms, created_at')
+      .select('id, user_id, module, feature, flags, sanitized_input, raw_response, duration_ms, created_on')
       .eq('parse_success', false)
-      .order('created_at', { ascending: false })
+      .order('created_on', { ascending: false })
       .limit(10),
   ])
 
@@ -162,7 +162,7 @@ export default async function AdminDashboard() {
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
                   <p className="text-muted text-[10px]">
-                    {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(user.created_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
               </div>

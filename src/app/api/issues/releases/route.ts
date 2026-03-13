@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiOk, serverError, withHandler } from '@/lib/api-response'
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
 
   // Fetch resolved issues with release tags — RLS allows public read for these
@@ -12,7 +12,7 @@ export async function GET() {
     .not('release_tag', 'is', null)
     .order('resolved_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
   // Group by release_tag
   const releaseMap = new Map<string, typeof issues>()
@@ -27,5 +27,6 @@ export async function GET() {
     issues: items,
   }))
 
-  return NextResponse.json({ releases })
-}
+  return apiOk({ releases })
+})
+

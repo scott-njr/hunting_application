@@ -6,6 +6,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
 import { safeRedirect } from '@/lib/safe-redirect'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -40,9 +41,7 @@ function LoginForm() {
       <h1 className="text-xl font-semibold text-primary mb-6">Sign in to your account</h1>
 
       {(error || urlError) && (
-        <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-          {error ?? 'Authentication failed. Please try again.'}
-        </div>
+        <AlertBanner variant="error" message={error ?? 'Authentication failed. Please try again.'} className="mb-4" />
       )}
 
       <form onSubmit={handleLogin} className="space-y-4">

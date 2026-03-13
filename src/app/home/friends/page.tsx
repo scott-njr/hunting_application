@@ -1,46 +1,23 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Search, UserPlus, Check, X, Users, Clock, UserMinus, MessageSquare, Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-
-type Friend = {
-  friendship_id: string
-  friend_id: string
-  display_name: string | null
-  email: string
-  direction: 'sent' | 'received'
-  status: 'pending' | 'accepted' | 'declined' | 'blocked'
-  created_at: string
-}
-
-type SearchResult = {
-  user_id: string
-  display_name: string | null
-  user_name: string | null
-  avatar_url: string | null
-}
-
-function initials(name: string | null, email: string): string {
-  if (name) return name.slice(0, 2).toUpperCase()
-  return email.slice(0, 2).toUpperCase()
-}
-
-function displayLabel(f: Friend) { return f.display_name || f.email }
+import { initials, displayLabel } from '@/lib/format'
+import { useFriendActions } from '@/hooks/use-friend-actions'
 
 export default function FriendsPage() {
-  const [friends, setFriends] = useState<Friend[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
-  const [searching, setSearching] = useState(false)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const {
+    friends, setFriends, searchQuery, setSearchQuery, searchResults, searching,
+    actionLoading, error, accepted, pendingIn, pendingOut,
+    sendRequest, respond, removeFriend,
+  } = useFriendActions({ initialFriends: [], currentUserId })
 
   // Load friends + current user
   useEffect(() => {
@@ -58,79 +35,7 @@ export default function FriendsPage() {
       setLoading(false)
     }
     load()
-  }, [])
-
-  const accepted = friends.filter(f => f.status === 'accepted')
-  const pendingIn = friends.filter(f => f.status === 'pending' && f.direction === 'received')
-  const pendingOut = friends.filter(f => f.status === 'pending' && f.direction === 'sent')
-
-  // Search users
-  useEffect(() => {
-    if (searchQuery.length < 2) { setSearchResults([]); return }
-    if (searchRef.current) clearTimeout(searchRef.current)
-    searchRef.current = setTimeout(async () => {
-      setSearching(true)
-      try {
-        const res = await fetch(`/api/users/find?q=${encodeURIComponent(searchQuery)}`)
-        const data = await res.json()
-        const existingIds = new Set([currentUserId, ...friends.map(f => f.friend_id)])
-        setSearchResults((data.results ?? []).filter((r: SearchResult) => !existingIds.has(r.user_id)))
-      } finally { setSearching(false) }
-    }, 400)
-    return () => { if (searchRef.current) clearTimeout(searchRef.current) }
-  }, [searchQuery, friends, currentUserId])
-
-  async function sendRequest(recipientId: string) {
-    setActionLoading(recipientId)
-    setError(null)
-    try {
-      const res = await fetch('/api/friends/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipient_id: recipientId }),
-      })
-      if (!res.ok) { const d = await res.json(); setError(d.error ?? 'Failed to send request'); return }
-      const target = searchResults.find(r => r.user_id === recipientId)
-      if (target) {
-        setFriends(prev => [...prev, {
-          friendship_id: crypto.randomUUID(),
-          friend_id: recipientId,
-          display_name: target.display_name,
-          email: '',
-          direction: 'sent' as const,
-          status: 'pending' as const,
-          created_at: new Date().toISOString(),
-        }])
-        setSearchResults(prev => prev.filter(r => r.user_id !== recipientId))
-      }
-    } finally { setActionLoading(null) }
-  }
-
-  async function respond(friendshipId: string, action: 'accept' | 'decline') {
-    setActionLoading(friendshipId)
-    try {
-      const res = await fetch('/api/friends/respond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ friendship_id: friendshipId, action }),
-      })
-      if (!res.ok) return
-      if (action === 'accept') {
-        setFriends(prev => prev.map(f => f.friendship_id === friendshipId ? { ...f, status: 'accepted' as const } : f))
-      } else {
-        setFriends(prev => prev.filter(f => f.friendship_id !== friendshipId))
-      }
-    } finally { setActionLoading(null) }
-  }
-
-  async function removeFriend(friendshipId: string) {
-    setActionLoading(friendshipId)
-    try {
-      const res = await fetch(`/api/friends/${friendshipId}`, { method: 'DELETE' })
-      if (!res.ok) { setError('Failed to remove friend'); return }
-      setFriends(prev => prev.filter(f => f.friendship_id !== friendshipId))
-    } finally { setActionLoading(null) }
-  }
+  }, [setFriends])
 
   if (loading) {
     return (

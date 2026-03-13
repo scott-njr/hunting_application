@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { PraeviusWordmark } from '@/components/ui/praevius-wordmark'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 const MAX_ATTEMPTS = 3
 const WINDOW_MS = 60 * 60 * 1000 // 1 hour
@@ -136,11 +137,7 @@ export default function ForgotPasswordPage() {
           <h1 className="text-xl font-semibold text-primary mb-1">Reset your password</h1>
           <p className="text-muted text-sm mb-6">We&apos;ll send a reset link to your email.</p>
 
-          {error && (
-            <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+          {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
           {isRateLimited ? (
             <div className="p-4 rounded bg-amber-950/30 border border-amber-500/30 text-center">

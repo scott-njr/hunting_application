@@ -1,16 +1,6 @@
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
-
-function timeAgo(dateStr: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (seconds < 60) return 'just now'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  return `${days}d`
-}
+import { timeAgo } from '@/lib/format'
 
 interface MessagePreview {
   senderName: string
@@ -48,7 +38,7 @@ export function MessagesPreview({ unreadCount, previews }: MessagesPreviewProps)
             <div key={i} className="px-4 py-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-primary text-xs font-medium">{msg.senderName}</span>
-                <span className="text-[10px] text-muted">{timeAgo(msg.createdAt)}</span>
+                <span className="text-[10px] text-muted">{timeAgo(msg.createdAt, { compact: true, daysOnly: true })}</span>
               </div>
               <p className="text-muted text-xs mt-0.5 truncate">{msg.content}</p>
             </div>

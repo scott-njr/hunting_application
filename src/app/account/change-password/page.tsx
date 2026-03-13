@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, KeyRound } from 'lucide-react'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 export default function ChangePasswordPage() {
   const router = useRouter()
@@ -62,11 +63,7 @@ export default function ChangePasswordPage() {
           <div className="glass-card border border-subtle rounded-lg p-6">
             <p className="text-muted text-sm mb-6">Enter a new password for your account. Must be at least 8 characters.</p>
 
-            {error && (
-              <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

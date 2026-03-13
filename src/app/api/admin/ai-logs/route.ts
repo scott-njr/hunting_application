@@ -1,10 +1,11 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiOk, forbidden, serverError, withHandler } from '@/lib/api-response'
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   const params = req.nextUrl.searchParams
   const moduleParam = params.get('module')
@@ -23,8 +24,8 @@ export async function GET(req: NextRequest) {
   // Build query
   let query = admin
     .from('ai_responses')
-    .select('id, user_id, module, feature, input_length, output_length, raw_response, tokens_input, tokens_output, parse_success, flags, duration_ms, sanitized_input, created_at', { count: 'exact' })
-    .order('created_at', { ascending: false })
+    .select('id, user_id, module, feature, input_length, output_length, raw_response, tokens_input, tokens_output, parse_success, flags, duration_ms, sanitized_input, created_on', { count: 'exact' })
+    .order('created_on', { ascending: false })
     .range(offset, offset + limit - 1)
 
   if (moduleParam) query = query.eq('module', moduleParam)
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
 
   const { data: logs, count, error } = await query
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
   // Fetch user emails and display names
   const userIds = [...new Set((logs ?? []).map(l => l.user_id))]
@@ -65,5 +66,6 @@ export async function GET(req: NextRequest) {
 
   const distinctFeatures = [...new Set((features ?? []).map(f => f.feature))].sort()
 
-  return NextResponse.json({ logs: enrichedLogs, total: count ?? 0, features: distinctFeatures })
-}
+  return apiOk({ logs: enrichedLogs, total: count ?? 0, features: distinctFeatures })
+})
+

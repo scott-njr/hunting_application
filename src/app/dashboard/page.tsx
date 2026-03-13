@@ -8,6 +8,7 @@ import {
   Calendar, BarChart3, BookOpen, Users, Bot, MapPin, ArrowRight,
 } from 'lucide-react'
 import { ModuleCta } from '@/components/ui/module-cta'
+import { PublicFooter } from '@/components/layout/public-footer'
 
 export const metadata: Metadata = {
   title: 'Command Center — Your Central Hub',
@@ -210,9 +211,7 @@ export default function DashboardPage() {
       </section>
 
       </main>
-      <footer className="border-t border-subtle py-10 text-center text-muted text-xs">
-        <p>&copy; {new Date().getFullYear()} Praevius LLC. All rights reserved.</p>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

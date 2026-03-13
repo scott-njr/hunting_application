@@ -102,7 +102,7 @@ export function MealCard({ meal, planId, dayNumber, isLogged, compact }: MealCar
           <button
             onClick={handleLog}
             disabled={logging}
-            className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-40 ${
+            className={`mt-0.5 h-7 w-7 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-40 ${
               logged
                 ? 'bg-green-500/20 hover:bg-red-500/20'
                 : 'border border-subtle hover:border-accent'
@@ -146,19 +146,19 @@ export function MealCard({ meal, planId, dayNumber, isLogged, compact }: MealCar
               <button
                 onClick={handleSwap}
                 disabled={swapping}
-                className="text-muted hover:text-secondary p-1 disabled:opacity-40"
+                className="text-muted hover:text-secondary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-40"
                 title="Swap meal"
               >
                 {swapping ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-3.5 w-3.5" />
+                  <RefreshCw className="h-4 w-4" />
                 )}
               </button>
             )}
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-muted hover:text-secondary p-1"
+              className="text-muted hover:text-secondary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>

@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { Plus, ArrowLeft, Share2, CheckCircle2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { AIProgressModal } from '@/components/ui/ai-progress-modal'
+import { AlertBanner } from '@/components/ui/alert-banner'
 import { ResearchWizard } from './research-wizard'
 import { ResearchResults } from './research-results'
 import { ResearchChat } from './research-chat'
@@ -272,11 +273,7 @@ export function DrawResearchPage({
       {/* ── WIZARD VIEW ── */}
       {view === 'wizard' && (
         <div>
-          {error && (
-            <div className="mb-4 p-3 rounded border border-red-500/30 bg-red-950/20 text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+          {error && <AlertBanner variant="error" message={error} className="mb-4" />}
           <ResearchWizard
             autoContext={autoContext}
             onSubmit={handleWizardSubmit}

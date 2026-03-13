@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { WowCard, type Workout, type WorkoutDetails } from '@/components/fitness/wow-card'
+import type { Workout, WorkoutDetails } from '@/components/fitness/wow-card'
+import { WowChallengeCard } from '@/components/fitness/wow-challenge-card'
 import { WowLeaderboard } from '@/components/fitness/wow-leaderboard'
-import { WowSubmitForm } from '@/components/fitness/wow-submit-form'
 import { Dumbbell } from 'lucide-react'
 
 function getCurrentMonday(): string {
@@ -74,22 +74,19 @@ export default async function WeeklyChallengePage() {
     title: workoutRow.title,
     description: workoutRow.description,
     workout_details: workoutRow.workout_details as unknown as WorkoutDetails,
-    created_at: workoutRow.created_at,
+    created_on: workoutRow.created_on,
   }
 
   return (
     <div className="space-y-6">
-      {/* Workout + Submit side by side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <WowCard workout={workout} />
-        <WowSubmitForm
-          workoutId={workout.id}
+      <div>
+        <WowChallengeCard
+          workout={workout}
           scoringType={workout.workout_details.scoring}
           existing={existing as { scaling: 'rx' | 'scaled' | 'beginner'; score_value: number; score_display: string; notes: string | null } | null}
         />
       </div>
 
-      {/* Leaderboard full width */}
       <WowLeaderboard workoutId={workout.id} />
     </div>
   )

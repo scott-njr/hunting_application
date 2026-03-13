@@ -1,10 +1,11 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { verifyAdmin } from '@/lib/admin-utils'
+import { apiOk, apiDone, forbidden, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET(req: NextRequest) {
+export const GET = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
   const status = req.nextUrl.searchParams.get('status') ?? 'open'
   const moduleParam = req.nextUrl.searchParams.get('module')
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
   let query = admin
     .from('issue_reports')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('created_on', { ascending: false })
     .limit(50)
 
   if (status !== 'all') {
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
   // Enrich issues with email from members and display_name from user_profile
   const issueUserIds = [...new Set((data ?? []).map(i => i.user_id))]
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
   }))
 
   if (!includeStats) {
-    return NextResponse.json({ issues: enrichedIssues })
+    return apiOk({ issues: enrichedIssues })
   }
 
   // Fetch stats and resolved issues for changelog
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
       .eq('status', 'resolved')
       .gte('resolved_at', monthStart),
     admin.from('issue_reports')
-      .select('id, user_id, module, category, title, resolution, resolved_at, created_at, release_tag')
+      .select('id, user_id, module, category, title, resolution, resolved_at, created_on, release_tag')
       .eq('status', 'resolved')
       .order('resolved_at', { ascending: false })
       .limit(200),
@@ -78,8 +79,8 @@ export async function GET(req: NextRequest) {
   const byModule: Record<string, number> = {}
 
   for (const issue of resolvedIssues ?? []) {
-    if (issue.resolved_at && issue.created_at) {
-      totalResolutionMs += new Date(issue.resolved_at).getTime() - new Date(issue.created_at).getTime()
+    if (issue.resolved_at && issue.created_on) {
+      totalResolutionMs += new Date(issue.resolved_at).getTime() - new Date(issue.created_on).getTime()
       resolutionCount++
     }
     byModule[issue.module] = (byModule[issue.module] ?? 0) + 1
@@ -105,7 +106,7 @@ export async function GET(req: NextRequest) {
     members: { email: resolvedEmailMap.get(i.user_id) ?? '', display_name: resolvedProfileMap.get(i.user_id) ?? null },
   }))
 
-  return NextResponse.json({
+  return apiOk({
     issues: enrichedIssues,
     stats: {
       totalResolved: totalResolved ?? 0,
@@ -115,16 +116,18 @@ export async function GET(req: NextRequest) {
     },
     resolvedIssues: enrichedResolved,
   })
-}
+})
 
-export async function PATCH(req: NextRequest) {
+
+export const PATCH = withHandler(async (req: NextRequest) => {
   const adminUser = await verifyAdmin()
-  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!adminUser) return forbidden()
 
-  const body = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
   const { issueId, status, admin_notes, resolution, release_tag } = body
 
-  if (!issueId) return NextResponse.json({ error: 'Missing issueId' }, { status: 400 })
+  if (!issueId) return badRequest('Missing issueId')
 
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -146,7 +149,8 @@ export async function PATCH(req: NextRequest) {
     .update(update)
     .eq('id', issueId)
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
-  return NextResponse.json({ ok: true })
-}
+  return apiDone()
+})
+

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect, useCallback } from 'react'
 import { X } from 'lucide-react'
 import Link from 'next/link'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -187,11 +188,7 @@ export function AuthModal({ isOpen, onClose, defaultView, redirectTo }: AuthModa
               </button>
             </div>
 
-            {error && (
-              <div className="mb-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <AlertBanner variant="error" message={error} className="mb-4" />}
 
             {view === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-4">

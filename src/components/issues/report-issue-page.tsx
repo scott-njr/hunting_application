@@ -16,8 +16,8 @@ type IssueReport = {
   status: string
   resolution: string | null
   resolved_at: string | null
-  created_at: string
-  updated_at: string
+  created_on: string
+  updated_on: string
 }
 
 const CATEGORY_OPTIONS = [
@@ -203,7 +203,7 @@ export default function ReportIssuePage({ moduleSlug }: { moduleSlug: ModuleSlug
                     <p className="text-xs text-muted mt-0.5">
                       {CATEGORY_OPTIONS.find(c => c.value === issue.category)?.label ?? issue.category}
                       {' · '}
-                      {new Date(issue.created_at).toLocaleDateString()}
+                      {new Date(issue.created_on).toLocaleDateString()}
                     </p>
                   </div>
                   <span className={cn(

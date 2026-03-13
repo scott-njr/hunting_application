@@ -29,7 +29,7 @@ export default async function AdminAIUsagePage() {
     admin
       .from('ai_responses')
       .select('module, feature, tokens_input, tokens_output, parse_success')
-      .gte('created_at', monthStart),
+      .gte('created_on', monthStart),
     admin
       .from('module_subscriptions')
       .select('user_id, ai_queries_this_month')
@@ -38,7 +38,7 @@ export default async function AdminAIUsagePage() {
     admin.from('ai_responses').select('*', { count: 'exact', head: true }),
     admin.from('ai_responses').select('*', { count: 'exact', head: true })
       .eq('parse_success', false)
-      .gte('created_at', monthStart),
+      .gte('created_on', monthStart),
   ])
 
   // Aggregate by feature

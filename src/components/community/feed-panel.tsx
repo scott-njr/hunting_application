@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import {
   MessageSquare, Send, FileText, Map, Star, BookOpen,
-  ThumbsUp, MessageCircle, Trash2, Trophy,
+  ThumbsUp, MessageCircle, Trash2, Trophy, Newspaper, ArrowRight,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { timeAgo } from '@/lib/format'
+import { SCALING_BADGE } from '@/lib/fitness/constants'
 
 type Post = {
   id: string
@@ -14,7 +16,7 @@ type Post = {
   post_type: string
   entity_name: string | null
   content: string
-  created_at: string
+  created_on: string
   display_name: string | null
   user_name: string | null
   avatar_url: string | null
@@ -22,6 +24,10 @@ type Post = {
   reaction_count: number
   liked_by_me: boolean
   metadata: Record<string, unknown> | null
+  is_blog?: boolean
+  blog_title?: string
+  blog_slug?: string
+  blog_cover_image_url?: string | null
 }
 
 type Comment = {
@@ -29,7 +35,7 @@ type Comment = {
   post_id: string
   user_id: string
   content: string
-  created_at: string
+  created_on: string
   display_name: string | null
   user_name: string | null
   avatar_url: string | null
@@ -98,18 +104,9 @@ for (const mod of Object.values(MODULE_POST_TYPES)) {
     ALL_POST_TYPE_COLORS[key] = cfg.color
   }
 }
-
-function timeAgo(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
+ALL_POST_TYPE_LABELS['blog'] = 'Blog'
+ALL_POST_TYPE_ICONS['blog'] = Newspaper
+ALL_POST_TYPE_COLORS['blog'] = 'text-purple-400 bg-purple-900/30'
 
 export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId: string; module?: string }) {
   const [posts, setPosts] = useState<Post[]>([])
@@ -230,18 +227,18 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
       {/* Filter + create */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1 flex-wrap">
-          {['all', ...postTypeKeys].map(t => (
+          {['all', ...postTypeKeys, 'blog'].map(t => (
             <button
               key={t}
               onClick={() => setFeedFilter(t)}
               className={cn(
-                'text-xs px-2.5 py-1 rounded-full transition-colors',
+                'text-xs px-2.5 py-1.5 rounded-full transition-colors min-h-[36px]',
                 feedFilter === t
                   ? 'bg-accent text-primary'
                   : 'bg-elevated text-secondary hover:bg-strong hover:text-primary'
               )}
             >
-              {t === 'all' ? 'All' : postTypes[t]?.label ?? t}
+              {t === 'all' ? 'All' : t === 'blog' ? 'Blog' : postTypes[t]?.label ?? t}
             </button>
           ))}
         </div>
@@ -284,7 +281,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
               value={newPostEntity}
               onChange={e => setNewPostEntity(e.target.value)}
               placeholder={postTypes[newPostType].entityPlaceholder}
-              className="w-full bg-elevated border border-default text-primary rounded px-3 py-1.5 text-sm focus:border-accent focus:outline-none placeholder:text-muted"
+              className="w-full bg-elevated border border-default text-primary rounded px-3 py-1.5 text-base sm:text-sm focus:border-accent focus:outline-none placeholder:text-muted"
             />
           )}
           <textarea
@@ -292,7 +289,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
             onChange={e => setNewPostContent(e.target.value)}
             placeholder={postTypes[newPostType]?.contentPlaceholder ?? "What's on your mind?"}
             rows={4}
-            className="w-full bg-elevated border border-default text-primary rounded px-3 py-2 text-sm focus:border-accent focus:outline-none placeholder:text-muted resize-none"
+            className="w-full bg-elevated border border-default text-primary rounded px-3 py-2 text-base sm:text-sm focus:border-accent focus:outline-none placeholder:text-muted resize-none"
           />
           {postError && <p className="text-red-400 text-xs">{postError}</p>}
           <div className="flex gap-2 justify-end">
@@ -318,6 +315,33 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
       ) : (
         <div className="space-y-3">
           {posts.map(post => {
+            // Blog announcement card — read-only, no comments/likes
+            if (post.is_blog) {
+              return (
+                <Link key={post.id} href={`/blog/${post.blog_slug}`} className="block bg-elevated border border-subtle rounded-lg hover:border-default transition-colors group">
+                  {post.blog_cover_image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={post.blog_cover_image_url} alt={post.blog_title ?? 'Blog post'} className="w-full h-40 object-cover rounded-t-lg" />
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded text-purple-400 bg-purple-900/30">
+                        <Newspaper className="w-3 h-3" />
+                        Blog
+                      </span>
+                      <span className="text-muted text-xs">{timeAgo(post.created_on)}</span>
+                      <span className="text-muted text-xs ml-auto">by {post.display_name ?? 'Lead the Wild'}</span>
+                    </div>
+                    <h3 className="text-primary text-sm font-semibold mb-1 group-hover:text-accent transition-colors">{post.blog_title}</h3>
+                    {post.content && <p className="text-secondary text-xs leading-relaxed line-clamp-2">{post.content}</p>}
+                    <span className="inline-flex items-center gap-1 text-xs text-accent mt-2 group-hover:gap-2 transition-all">
+                      Read more <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </Link>
+              )
+            }
+
             const Icon = ALL_POST_TYPE_ICONS[post.post_type] ?? BookOpen
             const isExpanded = expandedPostId === post.id
             const comments = postComments[post.id] ?? []
@@ -328,7 +352,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                     <Link href={`/home/profile/${post.user_id}`} className="shrink-0">
                       {post.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={post.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        <img src={post.avatar_url} alt={post.display_name ?? 'Member'} className="w-8 h-8 rounded-full object-cover" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-elevated flex items-center justify-center text-xs font-semibold text-primary">
                           {post.display_name ? post.display_name.slice(0, 2).toUpperCase() : '??'}
@@ -344,7 +368,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                           {ALL_POST_TYPE_LABELS[post.post_type] ?? post.post_type}
                         </span>
                         {post.entity_name && <span className="text-muted text-xs bg-elevated px-1.5 py-0.5 rounded">{post.entity_name}</span>}
-                        <span className="text-muted text-xs ml-auto">{timeAgo(post.created_at)}</span>
+                        <span className="text-muted text-xs ml-auto">{timeAgo(post.created_on)}</span>
                       </div>
                       <p className="text-secondary text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
                       {/* Enhanced WOW result card */}
@@ -359,11 +383,9 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                             </div>
                             <span className={cn(
                               'text-xs font-bold px-2 py-0.5 rounded shrink-0',
-                              meta.scaling === 'rx' ? 'bg-green-500/20 text-green-400' :
-                              meta.scaling === 'scaled' ? 'bg-amber-500/20 text-amber-400' :
-                              'bg-blue-500/20 text-blue-400'
+                              SCALING_BADGE[meta.scaling as keyof typeof SCALING_BADGE]?.className ?? SCALING_BADGE.scaled.className
                             )}>
-                              {meta.scaling === 'rx' ? 'RX' : meta.scaling === 'scaled' ? 'Scaled' : 'Beginner'}
+                              {SCALING_BADGE[meta.scaling as keyof typeof SCALING_BADGE]?.label ?? meta.scaling}
                             </span>
                             <span className="text-primary font-mono text-sm font-semibold shrink-0">{meta.score_display}</span>
                           </div>
@@ -400,7 +422,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                             <Link href={`/home/profile/${c.user_id}`} className="shrink-0 mt-0.5">
                               {c.avatar_url ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={c.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                                <img src={c.avatar_url} alt={c.display_name ?? 'Member'} className="w-6 h-6 rounded-full object-cover" />
                               ) : (
                                 <div className="w-6 h-6 rounded-full bg-elevated flex items-center justify-center text-xs font-semibold text-primary">
                                   {c.display_name ? c.display_name.slice(0, 2).toUpperCase() : '??'}
@@ -412,9 +434,9 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                                 <Link href={`/home/profile/${c.user_id}`} className="text-xs font-medium text-primary hover:text-accent-hover transition-colors">{c.display_name ?? 'Member'}</Link>
                                 {c.user_name && <span className="text-muted text-[10px]">@{c.user_name}</span>}
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <span className="text-muted text-xs">{timeAgo(c.created_at)}</span>
+                                  <span className="text-muted text-xs">{timeAgo(c.created_on)}</span>
                                   {c.user_id === currentUserId && (
-                                    <button onClick={() => deleteComment(post.id, c.id)} className="text-muted hover:text-red-400 transition-colors" title="Delete">
+                                    <button onClick={() => deleteComment(post.id, c.id)} className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-red-400 transition-colors" title="Delete">
                                       <Trash2 className="w-3 h-3" />
                                     </button>
                                   )}
@@ -438,7 +460,7 @@ export function FeedPanel({ currentUserId, module = 'hunting' }: { currentUserId
                           }}
                           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id) } }}
                           placeholder="Write a comment..."
-                          className="flex-1 bg-elevated border border-default text-primary rounded-full px-3 py-1.5 text-xs focus:border-accent focus:outline-none placeholder:text-muted"
+                          className="flex-1 bg-elevated border border-default text-primary rounded-full px-3 py-1.5 text-base sm:text-xs focus:border-accent focus:outline-none placeholder:text-muted"
                         />
                         <button
                           onClick={() => submitComment(post.id)}

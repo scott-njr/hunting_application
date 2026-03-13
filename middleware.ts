@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
-const PUBLIC_ROUTES = ['/', '/pricing', '/about', '/blog', '/newsletter', '/contact', '/spearfishing', '/butcher-block', '/mindset', '/dashboard', '/changelog', '/auth/login', '/auth/signup', '/auth/callback', '/auth/forgot-password', '/auth/reset-password', '/api/webhooks']
+const PUBLIC_ROUTES = ['/', '/pricing', '/about', '/blog', '/newsletter', '/contact', '/spearfishing', '/butcher-block', '/mindset', '/dashboard', '/changelog', '/unsubscribe', '/api/unsubscribe', '/auth/login', '/auth/signup', '/auth/callback', '/auth/forgot-password', '/auth/reset-password']
 
 // Module root pages are publicly viewable (landing pages), but sub-routes require auth
 const PUBLIC_MODULE_ROOTS = ['/hunting', '/archery', '/firearms', '/fishing', '/fitness', '/medical']
@@ -18,8 +18,24 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Webhook endpoints bypass all gates (authenticated via shared secret, not cookies)
-  if (pathname.startsWith('/api/webhooks')) {
+  if (pathname === '/api/webhooks/deploy-status' || pathname === '/api/webhooks/issue-triage') {
     return NextResponse.next()
+  }
+
+  // CSRF: Block cross-origin state-changing requests to API routes
+  if (pathname.startsWith('/api/') && request.method !== 'GET') {
+    const origin = request.headers.get('origin')
+    const host = request.headers.get('host')
+    if (origin && host) {
+      try {
+        const originHost = new URL(origin).host
+        if (originHost !== host) {
+          return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+        }
+      } catch {
+        return NextResponse.json({ error: 'Cross-origin request blocked' }, { status: 403 })
+      }
+    }
   }
 
   // Preview password gate — only active when PREVIEW_PASSWORD is set (Vercel deploys only)

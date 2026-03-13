@@ -1,7 +1,7 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
 import { aiCall, extractJSON } from '@/lib/ai'
 import { timingSafeEqual } from 'crypto'
+import { apiDone, unauthorized, badRequest, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
 const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
@@ -12,19 +12,20 @@ function secureCompare(a: string, b: string): boolean {
   return timingSafeEqual(Buffer.from(a), Buffer.from(b))
 }
 
-export async function POST(req: Request) {
+export const POST = withHandler(async (req: Request) => {
   // 1. Verify webhook secret
   const secret = req.headers.get('x-webhook-secret')
   if (!WEBHOOK_SECRET || !secret || !secureCompare(secret, WEBHOOK_SECRET)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return unauthorized()
   }
 
   // 2. Parse Supabase webhook payload
-  const payload = await req.json()
+  const payload = await parseBody(req)
+  if (isErrorResponse(payload)) return payload
   const record = payload.record
 
   if (!record?.id || !record?.title || !record?.description) {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    return badRequest('Invalid payload')
   }
 
   const admin = createServiceClient(
@@ -39,8 +40,8 @@ export async function POST(req: Request) {
 
   try {
     const result = await aiCall({
-      module: 'system',
-      feature: 'bug_triage',
+      module: 'admin',
+      feature: 'admin_bug_triage',
       userId: 'system',
       maxTokens: 512,
       userMessage: `Classify this bug report and propose a fix.
@@ -96,7 +97,7 @@ ${record.description}`,
     .single()
 
   if (freshIssue?.github_issue_url) {
-    return NextResponse.json({ ok: true, severity, githubIssueUrl: freshIssue.github_issue_url })
+    return apiDone({ severity, githubIssueUrl: freshIssue.github_issue_url })
   }
 
   if (GITHUB_TOKEN) {
@@ -148,8 +149,8 @@ ${record.description}`,
       console.error('[Issue Triage] GitHub API error:', err)
     }
   } else {
-    console.log('[Issue Triage] GITHUB_TOKEN not set, skipping GitHub Issue creation')
+    console.warn('[Issue Triage] GITHUB_TOKEN not set, skipping GitHub Issue creation')
   }
 
-  return NextResponse.json({ ok: true, severity, githubIssueUrl })
-}
+  return apiDone({ severity, githubIssueUrl })
+})

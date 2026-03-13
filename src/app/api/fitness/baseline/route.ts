@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { apiOk, unauthorized, badRequest, serverError, parseBody, isErrorResponse, withHandler } from '@/lib/api-response'
 
-export async function GET() {
+export const GET = withHandler(async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { data: tests, error } = await supabase
     .from('fitness_baseline_tests')
@@ -14,21 +15,24 @@ export async function GET() {
 
   if (error) {
     console.error('[fitness/baseline GET] fetch error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ tests: tests ?? [] })
-}
+  return apiOk({ tests: tests ?? [] })
+})
 
-export async function POST(req: NextRequest) {
+
+export const POST = withHandler(async (req: NextRequest) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
-  const { run_time_seconds, pushups, situps, pullups, notes } = await req.json()
+  const body = await parseBody(req)
+  if (isErrorResponse(body)) return body
+  const { run_time_seconds, pushups, situps, pullups, notes } = body
 
   if (run_time_seconds == null || pushups == null || situps == null || pullups == null) {
-    return NextResponse.json({ error: 'All four test fields are required' }, { status: 400 })
+    return badRequest('All four test fields are required')
   }
 
   if (
@@ -37,7 +41,7 @@ export async function POST(req: NextRequest) {
     typeof situps !== 'number' || situps < 0 ||
     typeof pullups !== 'number' || pullups < 0
   ) {
-    return NextResponse.json({ error: 'Invalid field values' }, { status: 400 })
+    return badRequest('Invalid field values')
   }
 
   const { data: test, error } = await supabase
@@ -55,8 +59,9 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[fitness/baseline POST] insert error:', error.message)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    return serverError()
   }
 
-  return NextResponse.json({ test })
-}
+  return apiOk({ test }, 201)
+})
+

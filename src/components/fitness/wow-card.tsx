@@ -1,5 +1,6 @@
 import { Clock, Dumbbell, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SCALING_BADGE, WOW_DISCLAIMER } from '@/lib/fitness/constants'
 
 type Movement = {
   name: string
@@ -33,7 +34,7 @@ export type Workout = {
   title: string
   description: string
   workout_details: WorkoutDetails
-  created_at: string
+  created_on: string
 }
 
 interface WowCardProps {
@@ -82,9 +83,7 @@ export function WowCard({ workout, compact = false, className }: WowCardProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <span className={cn(
                       'text-xs font-bold uppercase px-2 py-0.5 rounded',
-                      level === 'rx' ? 'bg-green-500/20 text-green-400' :
-                      level === 'scaled' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-blue-500/20 text-blue-400'
+                      SCALING_BADGE[level].className
                     )}>
                       {scale.label}
                     </span>
@@ -116,7 +115,7 @@ export function WowCard({ workout, compact = false, className }: WowCardProps) {
             </div>
 
             <p className="text-muted text-xs italic">
-              This workout is AI-generated general guidance. Consult a physician before starting any new exercise program. You assume all risk of injury.
+              {WOW_DISCLAIMER}
             </p>
           </div>
         )}

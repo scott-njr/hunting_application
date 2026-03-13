@@ -1,0 +1,47 @@
+/** Generate a URL-safe slug from a title */
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+/** Category value → display label mapping */
+export const BLOG_CATEGORY_LABELS: Record<string, string> = {
+  field_reports: 'Field Reports',
+  gear_reviews: 'Gear Reviews',
+  strategy_breakdowns: 'Strategy Breakdowns',
+  scouting_intel: 'Scouting Intel',
+  community_stories: 'Community Stories',
+  how_to_guides: 'How-To Guides',
+}
+
+/** For TacticalSelect options */
+export const BLOG_CATEGORY_OPTIONS = Object.entries(BLOG_CATEGORY_LABELS).map(
+  ([value, label]) => ({ value, label })
+)
+
+export const BLOG_STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Published' },
+  { value: 'archived', label: 'Archived' },
+]
+
+/** Blog post publish targets */
+export const BLOG_TARGET_OPTIONS = [
+  { value: 'public', label: 'Public Blog' },
+  { value: 'hunting', label: 'Hunting' },
+  { value: 'archery', label: 'Archery' },
+  { value: 'firearms', label: 'Firearms' },
+  { value: 'fishing', label: 'Fishing' },
+  { value: 'fitness', label: 'Fitness' },
+  { value: 'medical', label: 'Medical' },
+]
+
+/** Target value → display label */
+export const BLOG_TARGET_LABELS: Record<string, string> = Object.fromEntries(
+  BLOG_TARGET_OPTIONS.map(o => [o.value, o.label])
+)

@@ -2,7 +2,7 @@
  * Fitness module rules — applied to workout generation, training plans, and WOW AI.
  */
 
-export const FITNESS_SYSTEM_RULES = `
+export const FITNESS_MODULE_RULES = `
 ## Fitness Module — Scope
 - You generate workout plans, training programs, and fitness guidance for athletes of all levels.
 - You focus on functional fitness — strength, endurance, and conditioning for everyday life and sport.

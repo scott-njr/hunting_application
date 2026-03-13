@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentWeek, getWeekMonday } from '@/lib/fitness/date-helpers'
+import { apiDone, unauthorized, notFound, badRequest, serverError, withHandler } from '@/lib/api-response'
 
 const TRAINING_DAYS: Record<number, number[]> = {
   1: [1],
@@ -14,13 +15,13 @@ const TRAINING_DAYS: Record<number, number[]> = {
 // POST /api/fitness/plans/[planId]/catch-up
 // Shifts the plan timeline so the next unfinished workout falls on today.
 // No AI call — pure schedule adjustment.
-export async function POST(
+export const POST = withHandler(async (
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
-) {
+) => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return unauthorized()
 
   const { planId } = await params
 
@@ -32,9 +33,9 @@ export async function POST(
     .eq('status', 'active')
     .single()
 
-  if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+  if (!plan) return notFound('Plan not found')
   if (plan.plan_type === 'meal') {
-    return NextResponse.json({ error: 'Catch up is not available for meal plans' }, { status: 400 })
+    return badRequest('Catch up is not available for meal plans')
   }
 
   const config = plan.config as Record<string, unknown>
@@ -47,6 +48,7 @@ export async function POST(
     .from('fitness_plan_workout_logs')
     .select('week_number, session_number')
     .eq('plan_id', planId)
+    .eq('completed', true)
 
   const completedSet = new Set((logs ?? []).map(l => `${l.week_number}:${l.session_number}`))
 
@@ -68,7 +70,7 @@ export async function POST(
   }
 
   if (!target) {
-    return NextResponse.json({ error: 'All sessions are already completed' }, { status: 400 })
+    return badRequest('All sessions are already completed')
   }
 
   // Calculate new started_at so that target session falls on today.
@@ -104,14 +106,14 @@ export async function POST(
     .update({ started_at: newStartedAt })
     .eq('id', planId)
 
-  if (error) return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  if (error) return serverError()
 
   const newCurrentWeek = getCurrentWeek(newStartedAt, plan.weeks_total)
 
-  return NextResponse.json({
-    success: true,
+  return apiDone({
     started_at: newStartedAt,
     current_week: newCurrentWeek,
-    next_session: target,
+    next_session: target as Record<string, unknown>,
   })
-}
+})
+

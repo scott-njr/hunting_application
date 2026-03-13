@@ -8,6 +8,7 @@ import { CheckCircle, ChevronDown, ChevronUp, Trash2, Plus, AlertTriangle, Penci
 import { TacticalSelect } from '@/components/ui/tactical-select'
 import { US_STATES, SEASONS, SPECIES, HUNT_STYLES, SEASON_OPTS } from '@/components/profile/profile-constants'
 import { INPUT_CLASS, Chip, Divider, SectionHeader } from '@/components/profile/profile-ui'
+import { AlertBanner } from '@/components/ui/alert-banner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,8 +37,8 @@ type PointsRow = {
   season: string
   points: number
   point_type: 'preference' | 'bonus'
-  created_at?: string
-  updated_at?: string
+  created_on?: string
+  updated_on?: string
   dirty?: boolean
   isNew?: boolean
 }
@@ -224,7 +225,7 @@ export default function HuntingPreferencesForm() {
       await supabase.from('hunting_points').update({
         state: row.state, state_name: row.state_name, species: row.species,
         season: row.season || 'general', points: row.points,
-        point_type: row.point_type, updated_at: new Date().toISOString(),
+        point_type: row.point_type, updated_on: new Date().toISOString(),
       }).eq('id', row.id)
     } else {
       await supabase.from('hunting_points').upsert({
@@ -270,7 +271,7 @@ export default function HuntingPreferencesForm() {
         )}
       </div>
 
-      {error && <div className="mb-2 p-2 rounded bg-red-950/50 border border-red-500/30 text-red-400 text-sm">{error}</div>}
+      {error && <AlertBanner variant="error" message={error} className="mb-2 p-2" />}
 
       {/* Identity Summary (read-only) */}
       <div className="glass-card border border-subtle rounded-lg p-3 space-y-2 mb-2">

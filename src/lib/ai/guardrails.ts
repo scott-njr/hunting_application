@@ -1,42 +1,43 @@
 import { BASE_SYSTEM_RULES, BASE_RESPONSE_RULES } from './rules/base.rules'
-import { HUNTING_SYSTEM_RULES, SCOUT_REPORT_RULES, DRAW_ASSISTANT_RULES, UNIT_SCOUT_RULES } from './rules/hunting.rules'
-import { FITNESS_SYSTEM_RULES } from './rules/fitness.rules'
+import { HUNTING_MODULE_RULES, HUNTING_SCOUT_RULES, HUNTING_DRAW_RULES, HUNTING_UNIT_SCOUT_RULES } from './rules/hunting.rules'
+import { FITNESS_MODULE_RULES } from './rules/fitness.rules'
 import { FITNESS_COACH_RULES } from './rules/fitness-coach.rules'
-import { FIREARMS_SYSTEM_RULES } from './rules/firearms.rules'
-import { BUG_TRIAGE_RULES } from './rules/system.rules'
+import { FIREARMS_MODULE_RULES, FIREARMS_TARGET_ANALYSIS_RULES } from './rules/firearms.rules'
+import { ADMIN_BUG_TRIAGE_RULES } from './rules/admin.rules'
 
 // ─── Module types ──────────────────────────────────────────────────────────────
 
-export type AIModule = 'hunting' | 'fitness' | 'firearms' | 'system'
+export type AIModule = 'hunting' | 'fitness' | 'firearms' | 'admin'
 export type AIFeature =
-  | 'scout_report'
-  | 'draw_assistant'
-  | 'general_chat'
-  | 'workout_generator'
-  | 'wow_generator'
-  | 'run_plan_generator'
-  | 'strength_plan_generator'
-  | 'meal_plan_generator'
-  | 'fitness_coach'
+  | 'hunting_scout_report'
+  | 'hunting_draw_assistant'
+  | 'hunting_unit_scout'
+  | 'fitness_wow_generator'
+  | 'fitness_run_coach'
+  | 'fitness_strength_coach'
+  | 'fitness_meal_prep'
+  | 'fitness_coach_chat'
   | 'firearms_education'
-  | 'unit_scout'
-  | 'bug_triage'
+  | 'firearms_target_analysis'
+  | 'admin_bug_triage'
+  | 'general_chat'
 
 // ─── System prompt builder ─────────────────────────────────────────────────────
 
 const MODULE_RULES: Record<AIModule, string> = {
-  hunting: HUNTING_SYSTEM_RULES,
-  fitness: FITNESS_SYSTEM_RULES,
-  firearms: FIREARMS_SYSTEM_RULES,
-  system: '',
+  hunting: HUNTING_MODULE_RULES,
+  fitness: FITNESS_MODULE_RULES,
+  firearms: FIREARMS_MODULE_RULES,
+  admin: '',
 }
 
 const FEATURE_RULES: Partial<Record<AIFeature, string>> = {
-  scout_report: SCOUT_REPORT_RULES,
-  draw_assistant: DRAW_ASSISTANT_RULES,
-  fitness_coach: FITNESS_COACH_RULES,
-  unit_scout: UNIT_SCOUT_RULES,
-  bug_triage: BUG_TRIAGE_RULES,
+  hunting_scout_report: HUNTING_SCOUT_RULES,
+  hunting_draw_assistant: HUNTING_DRAW_RULES,
+  hunting_unit_scout: HUNTING_UNIT_SCOUT_RULES,
+  fitness_coach_chat: FITNESS_COACH_RULES,
+  firearms_target_analysis: FIREARMS_TARGET_ANALYSIS_RULES,
+  admin_bug_triage: ADMIN_BUG_TRIAGE_RULES,
 }
 
 /**
