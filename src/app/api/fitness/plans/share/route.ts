@@ -129,16 +129,38 @@ export const GET = withHandler(async (req: NextRequest) => {
         .in('id', [...userIds])
     : { data: [] }
 
-  // Fetch plan info (type + goal)
+  // Fetch plan info (type + goal + plan_data for preview)
   const { data: plans } = planIds.size > 0
     ? await supabase
         .from('fitness_training_plans')
-        .select('id, plan_type, goal')
+        .select('id, plan_type, goal, weeks_total, plan_data')
         .in('id', [...planIds])
     : { data: [] }
 
   const profileMap = new Map((profiles ?? []).map(p => [p.id, p.display_name]))
-  const planMap = new Map((plans ?? []).map(p => [p.id, { plan_type: p.plan_type, goal: p.goal }]))
+
+  interface PlanWeek {
+    theme?: string
+    sessions?: { title?: string; type?: string; meal_type?: string }[]
+  }
+
+  const planMap = new Map((plans ?? []).map(p => {
+    // Build a lightweight preview from plan_data
+    const weeks = (p.plan_data as { weeks?: PlanWeek[] })?.weeks ?? []
+    const totalSessions = weeks.reduce((sum: number, w: PlanWeek) => sum + (w.sessions?.length ?? 0), 0)
+    const weekPreviews = weeks.slice(0, 2).map((w: PlanWeek) => ({
+      theme: w.theme ?? null,
+      session_count: w.sessions?.length ?? 0,
+    }))
+
+    return [p.id, {
+      plan_type: p.plan_type,
+      goal: p.goal,
+      weeks_total: p.weeks_total,
+      total_sessions: totalSessions,
+      week_previews: weekPreviews,
+    }]
+  }))
 
   const enriched = (shares ?? []).map(s => {
     const partnerId = s.source_user_id === user.id ? s.target_user_id : s.source_user_id
@@ -149,6 +171,9 @@ export const GET = withHandler(async (req: NextRequest) => {
       partner_name: profileMap.get(partnerId) ?? 'Unknown',
       plan_type: planInfo?.plan_type ?? null,
       plan_goal: planInfo?.goal ?? null,
+      weeks_total: planInfo?.weeks_total ?? null,
+      total_sessions: planInfo?.total_sessions ?? null,
+      week_previews: planInfo?.week_previews ?? null,
     }
   })
 

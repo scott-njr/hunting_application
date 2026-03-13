@@ -1,7 +1,7 @@
 Run all audit skills and produce a consolidated report.
 
 Arguments: $ARGUMENTS
-(Optional — "auth", "security", "seo", "cell", "editor", "buttons", "memberships", "duplicates", "duplicate-components", "database-design", "api-configurations" to run a single audit. "fix" to auto-apply safe fixes. Defaults to running ALL audits.)
+(Optional — "auth", "security", "seo", "cell", "editor", "buttons", "memberships", "duplicates", "duplicate-components", "database-design", "api-configurations", "shot-timer", "hardcoded-features" to run a single audit. "fix" to auto-apply safe fixes. Defaults to running ALL audits.)
 
 ## Your Task
 
@@ -22,6 +22,8 @@ The following audits exist in `.claude/skills/`:
 9. **audit-duplicate-components** — Duplicate UI components (near-identical markup/logic repeated across multiple files that should be shared)
 10. **audit-database-design** — Database design (naming conventions, module prefixing, unused/duplicate columns, normalization, indexing, constraints)
 11. **audit-api-configurations** — API architecture (route organization, module namespacing, RESTful conventions, response contracts, error handling, mobile app readiness)
+12. **audit-shot-timer** — Shot timer functionality (detection, timing, scoring, courses, beep, review, history, match integration)
+13. **audit-hardcoded-features** — Hardcoded values (colors, strings, numbers, patterns that should be design tokens, shared constants, or shared components)
 
 ## Steps
 
@@ -60,6 +62,8 @@ After all audits complete, merge the results into a single report.
 | Dup Components | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
 | Database Design | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
 | API Config | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
+| Shot Timer | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
+| Hardcoded | ✅ Pass / ❌ Fail | 0 | 0 | 0 | 0 |
 
 ### Overall: X critical, X high, X medium, X low
 
@@ -117,6 +121,16 @@ After all audits complete, merge the results into a single report.
 
 ### API Architecture Audit
 [Full API architecture audit report from audit-api-configurations.md]
+
+---
+
+### Shot Timer Audit
+[Full shot timer audit report from audit-shot-timer.md]
+
+---
+
+### Hardcoded Features Audit
+[Full hardcoded features audit report from audit-hardcoded-features.md]
 
 ---
 
